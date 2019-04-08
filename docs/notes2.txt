@@ -1,0 +1,7 @@
+movement through gaps, around walls, and across other difficult terrain costs more energy to perform.
+
+sprinting increases msp by 6 but decreases sight to 1.
+
+make a window class that stores locations of the windows (hud window, msg window, game view window) and makes that info available to rog?
+
+make it so that the game will automatically make a new default key bindings doc if the old one is deleted

@@ -1,0 +1,4 @@
+
+4-23-18
+Monsters would freeze when a monster of the same type was killed. List and grid did not agree. The problem lay in the remove method for lists and the fact that the "__eq__" method for things was set to equate names only. This made it so the release_creature method would remove the first entity with the same name from the list, thereby removing the wrong entity from the list.
+
