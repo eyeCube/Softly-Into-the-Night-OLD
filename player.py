@@ -163,9 +163,20 @@ def init(pc):
 #   and get/set the starting conditions for the player
 #
 def chargen():
+    # init
     x1 = 0; y1 = 0;
     xx = 0; yy = 4;
     ww = rog.window_w(); hh = 5;
+
+    # _printElement - local function
+    # draw the string to con_game at (x1,y1) then move y vars down
+    def _printElement(elemStr):
+        global x1,y1
+        rog.dbox(x1,y1,ROOMW,3,text=elemStr,
+            wrap=False,border=None,con=rog.con_game(),disp='mono')
+        rog.blit_to_final(rog.con_game(),0,0)
+        rog.refresh()
+        y1+=1; yy+=1;
     
     # get char data from player
     
@@ -173,12 +184,14 @@ def chargen():
     _name=rog.prompt(x1,y1,ww,hh,maxw=20, question="What is your name?", mode="text")
     _title = ""
     print("Name chosen: ", _name)
+    _printElement("Name: {}".format(_name))
     
     # gender
     _gender = ''
     while (_gender != 'm' and _gender != 'f' and _gender != 'n'):
-        _gender=rog.prompt(x1,y1,ww,hh,maxw=1,
-            question="What is your gender? m/f/n (n=other/nonbinary)",mode="wait")
+        _menuList={'m':'male','f':'female','n':'nonbinary','*':'random'}
+        
+        _gender=rog.menu("Gender Select",xx,yy,_menuList)
         if _gender == 'n':
             #select gender from list of added genders
                 #[...]
@@ -194,39 +207,50 @@ def chargen():
                 _genderName = "female"
                 _pronouns = ('she','her','hers',)
     #set pronouns
-    print("Gender chosen: ", _gender)
+    print("Gender chosen: ", _genderName)
+    _printElement("Gender: {}".format(_genderName))
     
     # class
     libtcod.console_clear(rog.con_final())
     rog.dbox(x1,y1,ROOMW,3,text="What is your profession?",
         wrap=True,border=None,con=rog.con_final(),disp='mono')
     #rog.refresh()
-        #get list of all playable classes
-    _classList={} #stores {className : (classChar, classID,)}
-    _menuList={} #stores {classChar : className}
+    _classList={} #stores {className : (classChar, classID,)} #all classes
+    _menuList={} #stores {classChar : className} #all playable classes
     for k,v in CLASSES.items(): # k=ID v=charType
+        #if k not in rog.playableClasses(): continue #only playable classes
         n=monsters.bestiary[v][0]   # get name of the class
         ID=k                        # get ID of the class
         _classList.update({n:(v,ID,)})
         typ=monsters.bestiary[v][0]
         _menuList.update({v:n})
+    _menuList.update({'*':'random'})
     _className = rog.menu("Class Select",xx,yy,_menuList)
+    if _className == 'random':
+        choice = dice.roll(len(_menuList.keys())-1) #random is not an option
+        _className = _menuList[choice-1] #index goes from 0 to (choice-1)
     _type = _classList[_className][0] # get the class Char value
     _classID = _classList[_className][1]
-    print("Class chosen: ", _class)
+    print("Class chosen: ", _className)
+    _printElement("Class: {}".format(_className))
 
     # skill
     libtcod.console_clear(rog.con_final())
-    rog.dbox(x1,y1,ROOMW,3,text="Select one (1) skill to learn in childhood...",
+    rog.dbox(x1,y1,ROOMW,3,text="What skill did you learn in childhood?",
         wrap=True,border=None,con=rog.con_final(),disp='mono')
     #rog.refresh()
-        #get list of all playable classes
-    _skill = rog.menu("Skill Select",xx,yy,SKILLS.keys())
-    _skillID = SKILLS[_skill]
-    print("Skill chosen: ", _skill)
-    
-    _gift = 0
+        #get list of all skills
+    _skillName = rog.menu("Skill Select",xx,yy,SKILLS.keys())
+    _skillID = SKILLS[_skillName]
+    print("Skill chosen: ", _skillName)
+    #should show ALL skills you're skilled in, not just the one you pick
+    #for skill in jobs.getSkills(_skillID):
+    _printElement("Skilled in: {}".format(_skillName))
+
+    #stats
     _stats = {}
+    #gift
+    _gift = 0
     
     pc = rog.create_monster(_type,0,0,COLORS['white'])
     pc.name = _name

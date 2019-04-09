@@ -39,7 +39,12 @@ A_HAZM = AMMO_HAZMATS
 A_ACID = AMMO_ACID
 #A_ARRO = AMMO_ARROWS
 
-
+PH = ELEM_PHYS
+FI = ELEM_FIRE
+BI = ELEM_BIO
+CH = ELEM_CHEM
+EL = ELEM_ELEC
+RA = ELEM_RADS
 
 
 
@@ -55,25 +60,25 @@ WEAPONS = {
 # FIR,BIO,          FIRE damage, BIO damage
 # Ammo              Ammunition / Fuel required to use weapon
     
-           ##------- Type, $$$$, KG,  Dur, Mat, (Rn,At,Dm, DV, AV, Asp,Msp,FIR,BIO,),Ammo,{Misc.Mods},
+           ##------- Type, $$$$, KG,  Dur, Mat, (Rn,At,Dm, DV, AV, Asp,Msp,ELEM),Ammo,{Misc.Mods},
     # melee weapons
-"pocket knife"      :(MEL, 15,   0.25,120, METL,(1, 6, 3,   1,  0,  40, 0, 0,  0,  ),None,),
-"baton"             :(MEL, 45,   0.75,310, PLAS,(1, 7, 2,   1,  0,  5, -3, 0,  0,  ),None,),
-"graphene baton"    :(MEL, 900,  0.6, 480, CARB,(1, 9, 4,   2,  0,  10,-3, 0,  0,  ),None,),
-"cudgel"            :(MEL, 15,   1.5, 680, METL,(1, 3, 15, -1,  0, -33,-9, 0,  0,  ),None,),
-"axe"               :(MEL, 120,  1.25,350, METL,(1, 5, 12,  0,  0, -22,-6, 0,  0,  ),None,),
-"sword"             :(MEL, 1450, 1.25,260, METL,(1, 12,6,   2,  0,  33,-6, 0,  0,  ),None,),
-"spring-blade"      :(MEL, 9660, 2.8, 150, CARB,(1, 8, 22, -2,  0, -60,-15,0,  0,  ),A_ELEC,),
-"buzz saw"          :(MEL, 7500, 3.5, 480, METL,(1, 15,5,  -5,  0,  66,-18,0,  0,  ),A_ELEC,),
+"pocket knife"      :(MEL, 15,   0.25,120, METL,(1, 6, 3,   1,  0,  40, 0, PH,),None,),
+"baton"             :(MEL, 45,   0.75,310, PLAS,(1, 7, 2,   1,  0,  5, -3, PH,),None,),
+"graphene baton"    :(MEL, 900,  0.6, 480, CARB,(1, 9, 4,   2,  0,  10,-3, PH,),None,),
+"cudgel"            :(MEL, 15,   1.5, 680, METL,(1, 3, 15, -1,  0, -33,-9, PH,),None,),
+"axe"               :(MEL, 120,  1.25,350, METL,(1, 5, 12,  0,  0, -22,-6, PH,),None,),
+"sword"             :(MEL, 1450, 1.25,260, METL,(1, 12,6,   2,  0,  33,-6, PH,),None,),
+"spring-blade"      :(MEL, 9660, 2.8, 150, CARB,(1, 8, 22, -2,  0, -60,-15,PH,),A_ELEC,),
+"buzz saw"          :(MEL, 7500, 3.5, 480, METL,(1, 15,5,  -5,  0,  66,-18,PH,),A_ELEC,),
     # chemical weapons
-"shitstormer"       :(CHEM,1090, 2.5, 220, PLAS,(4, 5, 1,  -4,  0, -25,-15,0,  25,  ),A_HAZM,),
-"raingun"           :(CHEM,2000, 2.85,175, PLAS,(3, 26,0,  -5,  0,  50,-18,0,  40,  ),A_ACID,),
-"battery gun"       :(CHEM,2000, 4.20,175, PLAS,(2, 40,0,  -8,  0, -60,-24,0,  70,  ),A_ELEC,),
-"plasma sword"      :(CHEM,84490,2.0, 250, METL,(1, 11,3,  -2,  0, -40,-12,100,0,  ),A_OIL,),
+"shitstormer"       :(CHEM,1090, 2.5, 220, PLAS,(4, 5, 25, -4,  0, -25,-15,BI,),A_HAZM,),
+"raingun"           :(CHEM,2000, 2.85,175, PLAS,(3, 26,40, -5,  0,  50,-18,CH,),A_ACID,),
+"battery gun"       :(CHEM,2000, 4.20,175, PLAS,(2, 40,70, -8,  0, -60,-24,EL,),A_ELEC,),
+"plasma sword"      :(CHEM,84490,2.0, 250, METL,(1, 11,100,-2,  0, -40,-12,FI,),A_OIL,),
     # guns
-"pistol"            :(GUN, 2990, 1.0, 200, METL,(10,25,10,  0,  0,  33,-3, 0,  0,  ),A_BULL,),
-"rifle"             :(GUN, 4200, 2.2, 240, METL,(16,35,18, -3,  0, -45,-12,0,  0,  ),A_BULL,),
-"carbine"           :(GUN, 3750, 1.7, 280, METL,(12,30,16, -2,  0, -15,-9, 0,  0,  ),A_BULL,),
+"pistol"            :(GUN, 2990, 1.0, 200, METL,(10,25,10,  0,  0,  33,-3, PH,),A_BULL,),
+"rifle"             :(GUN, 4200, 2.2, 240, METL,(16,35,18, -3,  0, -45,-12,PH,),A_BULL,),
+"carbine"           :(GUN, 3750, 1.7, 280, METL,(12,30,16, -2,  0, -15,-9, PH,),A_BULL,),
 }
 
 '''
@@ -134,7 +139,12 @@ WEAPONS = {
 
 
 
-
+def create_weapon(name, x,y):
+    weap = Thing()
+    weap.name = name
+    weap.x = x
+    weap.y = y
+    #weap.element = []
 
 
 class Weapon(thing.Thing):
@@ -147,7 +157,6 @@ class Weapon(thing.Thing):
         
         self.type       = data[0]
         self.mask       = self.type
-        self.str_req    = data[1]   # strength required to wield
         self.value      = data[2]   # $$$
         self.stats.mass = data[3]   # kg
         self.stats.hpmax= data[4]   # durability

@@ -46,6 +46,18 @@ CLS_SMUGGLER    : (60, 1000,0,'', {'hpmax':5,'carry':10,},(SKL_PERSUA,SKL_GUNS,)
     }
 
 
+def getMass(jobID): #int
+    return JOBS[jobID][0]
+def getMoney(jobID): #int
+    return JOBS[jobID][1]
+def getClearance(jobID): #int- security clearance level
+    return JOBS[jobID][2]
+def getKey(jobID): #char
+    return JOBS[jobID][3]
+def getStats(jobID): #dict of stat bonuses
+    return JOBS[jobID][4]
+def getSkills(jobID): #tuple of flag values
+    return JOBS[jobID][5]
 
 
 

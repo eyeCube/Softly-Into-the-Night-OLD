@@ -130,6 +130,7 @@ NRGSAVED_FASTSHOT   = 50
 DMG_FIRE            = 1    
 DMG_BIO             = 1
 SKILLMAX            = 2     # highest skill level you can attain
+CHEM_DAMAGE         = 5     # damage chem effect causes when exposure meter fills
 
 DIRECTIONS={
     (-1,-1) : 'northwest',
@@ -167,31 +168,44 @@ DIRECTIONS_TERSE={
 i = 1
 DEAD        = i; i+=1;
 RAVAGED     = i; i+=1;  # Creature is starved: strong desire for food
-MEAN        = i; i+=1;  # Creature is always hostile to rogues
 THIEF       = i; i+=1;  # Creature desires gold / treasure and will steal it
+MEAN        = i; i+=1;  # Creature is always hostile to rogues
 CONFU       = i; i+=1;  # Is confused
 TRIPN       = i; i+=1;  # Is hallucinating
-PRLZD       = i; i+=1;  # Is paralyzed
 SLEEP       = i; i+=1;  # Is asleep
 FIRE        = i; i+=1;  # Is burning
 WET         = i; i+=1;  # Is wet
-POISN       = i; i+=1;  # Is poisoned
+SICK        = i; i+=1;  # Is poisoned / ill
+IRRIT       = i; i+=1;  # Is irritated
+BLIND       = i; i+=1;  # Is blinded
+PARAL       = i; i+=1;  # Is paralyzed
+COUGH       = i; i+=1;  # Is in a coughing fit
+VOMIT       = i; i+=1;  # Is in a vomiting fit
+DEAF        = i; i+=1;  # Is deafened
 INVIS       = i; i+=1;  # Is invisible
-DEAF        = i; i+=1;
-BLIND       = i; i+=1;
-NVISION     = i; i+=1;  # Night vision
+NVISION     = i; i+=1;  # Has Night vision
 IMMUNE      = i; i+=1;  # Immune to poison
 SEEINV      = i; i+=1;  # Can see invisible
 SEEXRAY     = i; i+=1;  # LOS not blocked by walls
-CANTALK     = i; i+=1;
-CANFLY      = i; i+=1;
-FLYING      = i; i+=1;
-LUCKY       = i; i+=1;
-UNLUCKY     = i; i+=1;
+CANTALK     = i; i+=1;  # Can engage in jolly conversation
+CANFLY      = i; i+=1;  # Can fly
+FLYING      = i; i+=1;  # Is currently flying
 CANEAT      = i; i+=1;  # Can be eaten
 CANQUAFF    = i; i+=1;  # Can be quaffed
 CANEQUIP    = i; i+=1;  # Can be equipped
 CANUSE      = i; i+=1;  # Can be used
+
+
+#
+# Elements (types of damage)
+#
+i=0;
+ELEM_PHYS   = i; i+=1;
+ELEM_BIO    = i; i+=1;
+ELEM_RADS   = i; i+=1;
+ELEM_CHEM   = i; i+=1;
+ELEM_FIRE   = i; i+=1;
+ELEM_ELEC   = i; i+=1;
 
 
 
@@ -282,6 +296,7 @@ SKILLS = {
 #
 # Classes
 #
+#includes all jobs including non-playable jobs
 i=0;
 CLS_ENGINEER    = i; i+=1;
 CLS_TECHNICIAN  = i; i+=1;
@@ -294,6 +309,7 @@ CLS_POLITICIAN  = i; i+=1;
 CLS_RIOTPOLICE  = i; i+=1;
 CLS_JANITOR     = i; i+=1;
 CLS_DEPRIVED    = i; i+=1;
+CLS_SOLDIER     = i; i+=1;
 
 CLASSES = {
 CLS_ENGINEER    : "E",
@@ -307,6 +323,7 @@ CLS_POLITICIAN  : "I",
 CLS_RIOTPOLICE  : "R",
 CLS_JANITOR     : "j",
 CLS_DEPRIVED    : "d",
+CLS_SOLDIER     : 'S',
     }
 
 

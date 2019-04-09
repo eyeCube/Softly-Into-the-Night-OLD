@@ -147,7 +147,7 @@ NONE
 
 // Examine
 x
-NONE
+Shift+/
 NONE
 
 // Move view

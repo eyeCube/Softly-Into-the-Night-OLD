@@ -13,6 +13,7 @@ from const import *
 import rogue as rog
 from observer import Observable
 from colors import COLORS as COL
+import dice
 
 
 
@@ -63,6 +64,7 @@ class Thing(Observable):
         self.material   = None  # what's it made of?
         
     #   values for creatures
+        self.mutations  = None  # number of mutations this thing has undergone
         self.gender     = None
         self.job        = None  # what class/profession?
         self.faction    = None  # for diplomacy
@@ -128,11 +130,11 @@ class Stats():  # Stats and attributes of a Thing
         self.hpmax      = 0     # maximum life
         self.mp         = 0     # current mana
         self.mpmax      = 0     # maximum mana
+        self.element    = 0     # what type of damage does it deal?
         self.resfire    = 0     # resist fire and heat
         self.resbio     = 0     # resist hazards (bio, chem, rads)
         self.reselec    = 0     # resist electricity
         self.temp       = 0     # temperature (fire damage)
-        self.elec       = 0     # electricity (elec damage)
         self.rads       = 0     # radiation (rad damage)
         self.expo       = 0     # exposure (chem damage)
         self.sick       = 0     # sickness (bio damage)
@@ -210,20 +212,72 @@ def effect_add(thing,mod):
 def effect_remove(thing,modID):
     del thing.stats.mods[modID]
 
-'''def set_fire(thing):
-    rog.make(thing,FIRE)'''
+#fire damage
+def burn(thing, dmg):
+    res = thing.stats.resfire
+    #increase temperature
+    dmg = int( dmg*(1-(res/100)) )
+    thing.stats.temp += max(0, dmg )
+    if thing.stats.temp >= 100:
+        thing.stats.temp = 100
+        rog.set_fire(thing) 
+#bio damage
+def disease(thing, dmg):
+    res = thing.stats.resbio
+    #increase sickness meter
+    dmg = int( dmg*(1-(res/100)) )
+    thing.stats.sick += max(0, dmg )
+    if thing.stats.sick >= 100:
+        thing.stats.sick = 100
+        rog.make(thing, SICK) 
+#rad damage
+def irradiate(thing, dmg):
+    res = thing.stats.resbio
+    #increase rads meter
+    dmg = int( dmg*(1-(res/100)) )
+    thing.stats.rads += max(0, dmg )
+    if thing.stats.rads >= 100:
+        thing.stats.rads = 100
+        thing.stats.rads = 0 # reset rads meter after mutation
+        mutate(thing) 
+#chem damage
+def exposure(thing, dmg):
+    res = thing.stats.resbio
+    #increase exposure meter
+    dmg = int( dmg*(1-(res/100)) )
+    thing.stats.expo += max(0, dmg )
+    if thing.stats.expo >= 100:
+        rog.hurt(thing, CHEM_DAMAGE) #instant damage when expo meter fills
+        _random_chemical_effect(thing) #inflict chem status effect
+#elec damage  
+def electrify(thing, dmg):
+    res = thing.stats.reselec
+    dmg *= (1-(res/100))
+    dmg /= 25
+    dmg = 1+int(dmg)
+    rog.sap(thing, dmg) # MP damage from lightning
+    if dmg >= 2:
+        rog.paralyze(thing, 1) # paralysis from high damage
+    if dmg >= 4:
+        rog.kill(thing) # insta-death from massive electric shock
 
-def burn(thing):
-    if rog.on(thing,WET):
-        #rog.makenot(thing,FIRE)
-        return False
-    rog.hurt(thing,DMG_FIRE)
+# SHOULD THESE BE IN rogue.py???
+def mutate(thing):
+    if not thing.isCreature: return False
+    thing.mutations += 1
     return True
+def paralyze(thing, turns):
+    if not thing.isCreature: return False
+    rog.set_paral(thing, turns)
+    return True
+
+
+
+#functions for building things
 
 #create_creature
 #this function does not set the individual monster stats
-#it just creates a thing and gives it some default values
-#   and initializes some stuff
+#it just creates a thing and gives it some default values / init stuff
 def create_creature(name, typ, xs,ys, col):
     creat=Thing()
     creat.name          = name
@@ -234,9 +288,11 @@ def create_creature(name, typ, xs,ys, col):
     creat.color         = col
     creat.material      = MAT_FLESH
     creat.isCreature    = True
+    creat.mutations     = 0
+    creat.gender        = dice.roll(2) - 1
     creat.inv           = []
-    creat.fov_map=rog.fov_init()
-    creat.path=rog.path_init_movement()
+    creat.fov_map       = rog.fov_init()
+    creat.path          = rog.path_init_movement()
     return creat
 
 def create_corpse(obj):
@@ -264,10 +320,51 @@ def create_ashes(obj):
     ashes.y         = obj.y
     ashes.color     = COL['white']
     ashes.material  = MAT_DUST
-    ashes.mass      = .5
+    ashes.mass      = max(0.5, int(obj.mass/20))
     return ashes
 
 
+
+
+#-----------------#
+# LOCAL FUNCTIONS #
+#-----------------#
+
+#cause some random horrible chemical warfare effect
+#   only for creatures
+def _random_chemical_effect(thing):
+    roll = dice.roll(6)
+    if roll == 1:
+        power = CHEM_BLIND_POWER
+        if power >= res:
+            duration = dice.roll(CHEM_BLIND_TIME)
+            rog.set_status(thing, BLIND, duration)
+    elif roll == 2:
+        power = CHEM_PARAL_POWER
+        if power >= res:
+            duration = dice.roll(CHEM_PARAL_TIME)
+            rog.set_status(thing, PARAL, duration)
+    elif roll == 3:
+        power = CHEM_COUGH_POWER
+        if power >= res:
+            duration = dice.roll(CHEM_COUGH_TIME)
+            rog.set_status(thing, COUGH, duration)
+    elif roll == 4:
+        power = CHEM_VOMIT_POWER
+        if power >= res:
+            duration = dice.roll(CHEM_VOMIT_TIME)
+            rog.set_status(thing, VOMIT, duration)
+    elif roll == 5:
+        power = CHEM_CONFU_POWER
+        if power >= res:
+            duration = dice.roll(CHEM_CONFU_TIME)
+            rog.set_status(thing, CONFU, duration)
+    elif roll == 6:
+        power = CHEM_IRRIT_POWER
+        if power >= res:
+            duration = dice.roll(CHEM_IRRIT_TIME)
+            rog.set_status(thing, IRRIT, duration)
+       
 
 
 

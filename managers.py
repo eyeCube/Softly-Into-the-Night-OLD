@@ -98,11 +98,52 @@ class Manager_Timers(Manager):
         self.data.append(obj)
     def remove(self,obj):
         self.data.remove(obj)
+
+
+
+#
+# Status Meters
+#
+    #Status Meters are the build-up counters for status effects like fire, sickness, etc.
         
+class Manager_Meters(Manager):
+
+    def __init__(self):
+        super(Manager_Meters, self).__init__()
+
+        pass
+
+    def run(self):
+        super(Manager_Meters, self).run()
+
+        for thing in rog.list_things():
+            # cool down temperature meter if not currently burning
+            if (thing.stats.temp > 0 and not rog.on(thing,FIRE)):
+                thing.stats.temp -= 1
+            # sickness meter
+            if (thing.stats.sick > 0):
+                thing.stats.sick -= 1
+            # rads meter
+            if (thing.stats.rads > 0):
+                thing.stats.rads -= 1
+            # exposure meter
+            if (thing.stats.expo > 0):
+                thing.stats.expo -= 1
+        
+
+    def close(self):
+        super(Manager_Meters, self).close()
+        
+        pass
+
+
+
 #
 # Fires
 #
-
+    #manager for all FIRE status effects
+    # also controls light from fire, fire spreading,
+    #   messages from fires, putting out fires
 class Manager_Fires(Manager):
 
     def __init__(self):
@@ -119,21 +160,21 @@ class Manager_Fires(Manager):
 
         for obj in self.thingsOnFire:
             x,y=obj.x,obj.y
-            if rog.burn(obj):
-                if not obj.isCreature:
-                    if rog.on(obj,DEAD):
-                        textSee="{t}{n} burns to ashes.".format(
-                            t=obj.title,n=obj.name)
-                        rog.event_sight(x,y, textSee)
-                        continue
-                    else: textSee=""
-                else:
-                    textSee="{t}{n} burns.".format(t=obj.title,n=obj.name)
-                rog.event_sight(x,y, textSee)
-                rog.event_sound(x,y, SND_FIRE)
-                self.fire_spread(obj)
+            rog.hurt(obj, 1)
+            if not obj.isCreature:
+                if rog.on(obj,DEAD):
+                    textSee="{t}{n} burns to ashes.".format(
+                        t=obj.title,n=obj.name)
+                    rog.event_sight(x,y, textSee)
+                    continue
+                else: textSee=""
             else:
-                self.remove(obj)
+                textSee="{t}{n} burns.".format(t=obj.title,n=obj.name)
+            rog.event_sight(x,y, textSee)
+            rog.event_sound(x,y, SND_FIRE)
+            self.fire_spread(obj)
+            #else:
+            #    self.remove(obj)
             
     def close(self):
         super(Manager_Fires, self).close()
@@ -164,13 +205,14 @@ class Manager_Fires(Manager):
     def fire_spread(self, fromObj):
         xo=fromObj.x
         yo=fromObj.y
-        heat=fromObj.mass
+        heat=fromObj.temp
         for x in range(max(0,xo - 1), min(ROOMW, xo + 1)):
             for y in range(max(0,yo - 1), min(ROOMH, yo + 1)):
                 thing=rog.thingat(x,y)
                 if thing:
                     self.burn(thing, heat)
 
+    # damage over time to burning things
     def burn(self, obj, heat):
         pass
 

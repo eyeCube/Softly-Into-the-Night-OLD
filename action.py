@@ -190,22 +190,30 @@ def fight(attkr,dfndr,adv=0):
     acc=attkr.stats.get('atk')
     dv=dfndr.stats.get('dfn')
     hit = False
-    if (dice.roll(die + acc + adv - dv) >= dice.roll(die)):
-#    if (dice.roll(COMBATROLL) + acc + adv >=
-#        dice.roll(COMBATROLL) + dv ):
+    if (dice.roll(die + acc + adv - dv) >= dice.roll(die)): # HIT!!!
         hit = True
         
-        dmg = max(0, attkr.stats.get('dmg') - dfndr.stats.get('arm') )
-        #hpmax_before=dfndr.stats.hpmax
-        rog.hurt(dfndr, dmg)
-        killed = rog.on(dfndr,DEAD)
+        #type of damage dealt depends on the element attacker is using
+        if attkr.stats.element == ELEM_PHYS:
+            dmg = max(0, attkr.stats.get('dmg') - dfndr.stats.get('arm') )
+            rog.hurt(dfndr, dmg)
+        if attkr.stats.element == ELEM_FIRE:
+            rog.burn(dfndr, dmg)
+        if attkr.stats.element == ELEM_BIO:
+            rog.disease(dfndr, dmg)
+        if attkr.stats.element == ELEM_ELEC:
+            rog.electrify(dfndr, dmg)
+        if attkr.stats.element == ELEM_CHEM:
+            rog.exposure(dfndr, dmg)
+        if attkr.stats.element == ELEM_RADS:
+            rog.irradiate(dfndr, dmg)
         
+        killed = rog.on(dfndr,DEAD) #...did we kill it?
+    #
     
-    # should first do a check to see if player can sense fight happening
     message = True
     a=attkr.name; n=dfndr.name; t1=attkr.title; t2=dfndr.title; x='.';
     
-    #noise(attkr.x,attkr.y,10)
     # make a message describing the fight
     if message:
         if hit==False: v="misses"

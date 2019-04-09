@@ -208,7 +208,8 @@ def genocide(typ):
     # constant managers, ran each turn
 def create_perturn_managers():
     Ref.pt_managers.update({'timers'    : managers.Manager_Timers()})
-    Ref.pt_managers.update({'fires'     : managers.Manager_Fires()})
+    Ref.pt_managers.update({'fire'      : managers.Manager_Fires()})
+    Ref.pt_managers.update({'meters'    : managers.Manager_Meters()})
     # constant managers, manually ran
 def create_const_managers():
     Ref.c_managers.update({'fov'        : managers.Manager_FOV()})
@@ -365,24 +366,35 @@ def drain (obj,stat,val=1):
     if (stat=='mnd' or stat=='mpmax'): capmp(obj)
 #damage hp
 def hurt(obj, dmg):
+    dmg = round(dmg)
     if dmg < 0: return
     obj.stats.hp -= dmg
     if obj.stats.hp <= 0:
         kill(obj)
 #damage mp
 def sap(obj, dmg):
+    dmg = round(dmg)
     obj.stats.mp -= dmg
     if obj.stats.mp <= 0:
         zombify(obj)
 #deal fire damage
-def burn(obj): #NEED TO APPLY STATUS EFFECTS TO THESE.
-    return thing.burn(obj)
+def burn(obj, dmg):
+    if on(obj,WET): return False
+    thing.burn(obj, dmg)
+    return True
 #deal bio damage
-def disease(obj, dmg):
-    modf=(100 - obj.stats.get('resbio'))/100
-    if modf <= 0: return
-    dmg *= modf
-    hurt(obj, dmg)
+def disease(obj, dmg): thing.disease(obj, dmg)
+#deal chem damage
+def exposure(obj, dmg): thing.exposure(obj, dmg)
+#deal rad damage
+def irradiate(obj, dmg): thing.irradiate(obj, dmg)
+#deal electric damage
+def electrify(obj, dmg): thing.electrify(obj, dmg)
+#paralyze
+def paralyze(obj, turns): thing.paralyze(obj, turns)
+#mutate
+def mutate(obj): thing.mutate(obj)
+#delete thing 
 def kill(obj):
     if on(obj,DEAD): return
     make(obj,DEAD)
@@ -456,9 +468,9 @@ def clear_listeners():      Ref.c_managers['events'].clear()
 # Stats Functions + vars #
 #------------------------#
 
-def effect_add(obj,mod):        # Status effect create
+def effect_add(obj,mod):        # Stat mod create
     thing.effect_add(obj,mod)
-def effect_remove(obj,modID):   # Status effect delete
+def effect_remove(obj,modID):   # Stat mod delete
     thing.effect_remove(obj,modID)
 
 
@@ -501,32 +513,6 @@ def grid_insert(obj):
 def grid_lights_insert(obj):    Ref.Map.grid_lights[obj.x][obj.y].append(obj)
 def grid_lights_remove(obj):    Ref.Map.grid_lights[obj.x][obj.y].remove(obj)
 
-def release_thing(obj):
-    if on(obj,FIRE):
-        douse(obj)
-    grid_remove(obj)
-def register_creature(obj):
-    grid_insert(obj)
-    list_add_creature(obj)
-def register_inanimate(obj):
-    grid_insert(obj)
-    list_add_inanimate(obj)
-def register_light(obj):
-    obj.shine()
-    grid_lights_insert(obj)
-    list_add_light(obj)
-def release_inanimate(obj):
-    release_thing(obj)
-    list_remove_inanimate(obj)
-def release_creature(obj):
-    release_thing(obj)
-    list_remove_creature(obj)
-    remove_listener_sights(obj)
-    remove_listener_sounds(obj)
-def release_light(obj):
-    obj.unshine()
-    grid_lights_remove(obj)
-    list_remove_light(obj)
 
 
 
@@ -601,10 +587,35 @@ def path_step(path):
     return x,y
 
 
+
+#----------------#
+#     things     #
+#----------------#
+
+def release_thing(obj):
+    if on(obj,FIRE):
+        douse(obj)
+    grid_remove(obj)
+def register_inanimate(obj):
+    grid_insert(obj)
+    list_add_inanimate(obj)
+def release_inanimate(obj):
+    release_thing(obj)
+    list_remove_inanimate(obj)
+
+
 #---------------------#
 #  creature/monsters  #
 #---------------------#
 
+def register_creature(obj):
+    grid_insert(obj)
+    list_add_creature(obj)
+def release_creature(obj):
+    release_thing(obj)
+    list_remove_creature(obj)
+    remove_listener_sights(obj)
+    remove_listener_sounds(obj)
 def create_creature(name, typ, xs,ys, col): #init basic creature stuff
     creat = thing.create_creature(name,typ,xs,ys,col)
     register_creature(creat)
@@ -648,8 +659,42 @@ def create_light(x,y, value, owner=None):
         owner.observer_add(light)
     return light
 
-def set_fire(obj):  Ref.pt_managers['fires'].set_fire(obj)
-def douse(obj):     Ref.pt_managers['fires'].douse(obj)
+def register_light(obj):
+    obj.shine()
+    grid_lights_insert(obj)
+    list_add_light(obj)
+def release_light(obj):
+    obj.unshine()
+    grid_lights_remove(obj)
+    list_remove_light(obj)
+
+
+#----------------#
+#    status      #
+#----------------#
+
+#set_status
+    # obj       = Thing object to set the status for
+    # status    = ID of the status effect
+    # t         = duration
+def set_status(obj, status, t):
+    if status == FIRE:
+        Ref.pt_managers['fire'].set_fire(obj)
+    if status == SICK:
+        Ref.pt_managers['sick'].set_fire(obj)
+    if status == BLIND:
+        Ref.pt_managers['blind'].set_fire(obj)
+    if status == PARAL:
+        Ref.pt_managers['paral'].set_fire(obj)
+    if status == COUGH:
+        Ref.pt_managers['cough'].set_fire(obj)
+    if status == VOMIT:
+        Ref.pt_managers['vomit'].set_fire(obj)
+    if status == CONFU:
+        Ref.pt_managers['confu'].set_fire(obj)
+    if status == IRRIT:
+        Ref.pt_managers['irrit'].set_fire(obj)
+def douse(obj):     Ref.pt_managers['fire'].douse(obj)
 
 
 
