@@ -9,7 +9,8 @@ import rogue    as rog
 import orangio  as IO
 import action
 import debug
-import monsters
+import jobs
+import dice
 
 
 
@@ -166,77 +167,116 @@ def chargen():
     # init
     x1 = 0; y1 = 0;
     xx = 0; yy = 4;
+    iy = 0;
     ww = rog.window_w(); hh = 5;
 
     # _printElement - local function
     # draw the string to con_game at (x1,y1) then move y vars down
     def _printElement(elemStr):
-        global x1,y1
-        rog.dbox(x1,y1,ROOMW,3,text=elemStr,
+        #global yy,y1,x1
+        rog.dbox(x1,y1+iy,ROOMW,3,text=elemStr,
             wrap=False,border=None,con=rog.con_game(),disp='mono')
         rog.blit_to_final(rog.con_game(),0,0)
         rog.refresh()
-        y1+=1; yy+=1;
     
     # get char data from player
     
     # name
-    _name=rog.prompt(x1,y1,ww,hh,maxw=20, question="What is your name?", mode="text")
+    _name=rog.prompt(x1,y1,ww,hh,maxw=20, q="What is your name?", mode="text")
     _title = ""
     print("Name chosen: ", _name)
     _printElement("Name: {}".format(_name))
+    iy+=1
     
     # gender
+    rog.dbox(x1,y1+iy,ROOMW,3,text="What is your gender?",
+        wrap=True,border=None,con=rog.con_final(),disp='mono')
+    rog.refresh()
+    #get added genders
+    _genderList = {}
+    with open("genders.txt", "r") as file:
+        for line in file:
+            if "//" in line: continue
+            data = line.split(':')
+            if len(data) < 2: continue
+            gname = data[0]
+            data = data[1].split(',')
+            gpronouns = data
+            _genderList.update({gname:gpronouns})
+    #get input from player
     _gender = ''
-    while (_gender != 'm' and _gender != 'f' and _gender != 'n'):
-        _menuList={'m':'male','f':'female','n':'nonbinary','*':'random'}
+    while (_gender == ''):
+        _menuList={'m':'male','f':'female','n':'nonbinary','*':'random',}
+        #read genders from genders.txt
         
-        _gender=rog.menu("Gender Select",xx,yy,_menuList)
-        if _gender == 'n':
+        _gender=rog.menu("Gender Select",xx,yy,_menuList,autoItemize=False)
+        if _gender == 'nonbinary':
             #select gender from list of added genders
-                #[...]
+            _menuNonbin=[]
+            for jj in _genderList.keys():
+                _menuNonbin.append(jj)
+            _menuNonbin.append('add new gender')
+            choice=rog.menu("Nonbinary Genders",xx,yy,_menuNonbin)
             #add gender
-            _genderName,_pronouns = _add_gender()
-            if _genderName!='': #failed to add new gender
-                _gender='' #prompt user again
+            if choice == 'add new gender':
+                _genderName,_pronouns = _add_gender()
+            else:
+                _genderName = choice
+                _pronouns = _genderList[_genderName]
+            if _genderName=='': #failed to select or add new gender
+                _gender='' #prompt user again for gender
         else:
-            if _gender == 'm':
+            if _gender == 'random':
+                if dice.roll(2) == 1:
+                    _gender = 'male'
+                else:
+                    _gender = 'female'
+            if _gender == 'male':
                 _genderName = "male"
                 _pronouns = ('he','him','his',)
-            else:
+            elif _gender == 'female':
                 _genderName = "female"
                 _pronouns = ('she','her','hers',)
-    #set pronouns
     print("Gender chosen: ", _genderName)
     _printElement("Gender: {}".format(_genderName))
+    iy+=1
     
     # class
-    libtcod.console_clear(rog.con_final())
-    rog.dbox(x1,y1,ROOMW,3,text="What is your profession?",
+    rog.dbox(x1,y1+iy,ROOMW,3,text="What is your profession?",
         wrap=True,border=None,con=rog.con_final(),disp='mono')
-    #rog.refresh()
+    rog.refresh()
     _classList={} #stores {className : (classChar, classID,)} #all classes
+    #create menu options
     _menuList={} #stores {classChar : className} #all playable classes
+    _randList=[] #for random selection.
     for k,v in CLASSES.items(): # k=ID v=charType
-        #if k not in rog.playableClasses(): continue #only playable classes
-        n=monsters.bestiary[v][0]   # get name of the class
-        ID=k                        # get ID of the class
-        _classList.update({n:(v,ID,)})
-        typ=monsters.bestiary[v][0]
-        _menuList.update({v:n})
+        if v not in rog.playableJobs(): continue #can't play as this class yet
+        ID=k        # get ID of the class
+        typ=v       # get chartype of the class
+        name=jobs.JOBSNAMES[ID]
+        _classList.update({name:(typ,ID,)})
+        _menuList.update({typ:name})
+        _randList.append(ID)
     _menuList.update({'*':'random'})
-    _className = rog.menu("Class Select",xx,yy,_menuList)
+    #user selects a class
+    _className = rog.menu("Class Select",xx,yy,_menuList,autoItemize=False)
+    #random
     if _className == 'random':
-        choice = dice.roll(len(_menuList.keys())-1) #random is not an option
-        _className = _menuList[choice-1] #index goes from 0 to (choice-1)
+        choice = dice.roll(len(_randList))
+        _classID = _randList[choice]
+        _className = jobs.JOBSNAMES[_classID]
+    #get the relevant data
     _type = _classList[_className][0] # get the class Char value
     _classID = _classList[_className][1]
+    
+    #grant stats / abilities of your chosen class
+    
     print("Class chosen: ", _className)
     _printElement("Class: {}".format(_className))
+    iy+=1
 
     # skill
-    libtcod.console_clear(rog.con_final())
-    rog.dbox(x1,y1,ROOMW,3,text="What skill did you learn in childhood?",
+    rog.dbox(x1,y1+iy,ROOMW,3,text="In which skill are you learned?",
         wrap=True,border=None,con=rog.con_final(),disp='mono')
     #rog.refresh()
         #get list of all skills
@@ -245,15 +285,18 @@ def chargen():
     print("Skill chosen: ", _skillName)
     #should show ALL skills you're skilled in, not just the one you pick
     #for skill in jobs.getSkills(_skillID):
-    _printElement("Skilled in: {}".format(_skillName))
+    _printElement("Skills: {}".format(_skillName))
+    iy+=1
 
     #stats
     _stats = {}
     #gift
     _gift = 0
     
-    pc = rog.create_monster(_type,0,0,COLORS['white'])
+    pc = rog.create_monster('@',0,0,COLORS['white'],mutate=0)
     pc.name = _name
+    pc.type = _type
+    pc.mask = pc.type
     pc.job = _className
     pc.gender = _genderName
     pc.pronouns = _pronouns
@@ -268,31 +311,55 @@ def chargen():
 def _add_gender():
     x1=5
     y1=5
-    ww=20
-    hh=3
+    ww=25
+    hh=6
     #get new gender name
-    _genderName=rog.prompt(x1,y1,ww,hh, "What is your gender?", mode="text")
+    _genderName=rog.prompt(x1,y1,ww,hh,maxw=20, q="What is your gender?", mode="text")
     #pronouns
     #subject pronoun
-    _pronoun1=rog.prompt(x1,y1,ww,hh,
-        "What are your pronouns?\n\tSubject pronoun:",
-        default="they",mode="text",insert=True)
+    _pronoun1=rog.prompt(
+        x1,y1,ww,hh,maxw=10,
+        q="What are your pronouns?\n\tSubject pronoun:",
+        default="they",mode="text",insert=True
+        )
     #object pronoun
-    _pronoun2=rog.prompt(x1,y1,ww,hh,
-        "What are your pronouns?\n\tObject pronoun:",
-        default="them",mode="text",insert=True)
+    _pronoun2=rog.prompt(
+        x1,y1,ww,hh,maxw=10,
+        q="What are your pronouns?\n\tObject pronoun:",
+        default="them",mode="text",insert=True
+        )
     #possessive pronoun
-    _pronoun3=rog.prompt(x1,y1,ww,hh,
-        "What are your pronouns?\n\tPossessive pronoun:",
-        default="their",mode="text",insert=True)
-    success=rog.prompt(x1,y1,ww,6,
-"Confirm gender: "+_genderName+"\nSubject pronoun: "+_pronoun1+"\nObject pronoun: "+_pronoun2+"\nPossessive pronoun: "+_pronoun3+"\n\nConfirm (y) or Cancel (n)",
-        mode='wait')
+    _pronoun3=rog.prompt(
+        x1,y1,ww,hh,maxw=10,
+        q="What are your pronouns?\n\tPossessive pronoun:",
+        default="their",mode="text",insert=True
+        )
+    #confirm
+    success=rog.prompt(x1,y1,50,15,
+q='''Confirm gender: {}\nSubject pronoun: {}\nObject pronoun: {}
+Possessive pronoun: {}
+\nConfirm (y) or Cancel (n)'''.format(
+        _genderName,_pronoun1,_pronoun2,_pronoun3),
+        mode='wait'
+        )
     if success:
         #add the gender into the genders text file for next game
+        def writeGender(n,p1,p2,p3):
+            with open("genders.txt", "a+") as file:
+                file.write("{}:{},{},{}\n".format(n,p1,p2,p3))
+        try:
+            writeGender(_genderName,_pronoun1,_pronoun2,_pronoun3)
+        except FileNotFoundError:
+            print("Failed to load 'genders.txt', creating new file...")
+            with open("genders.txt", "w+") as file:
+                pass # just create the file
+            writeGender(_genderName,_pronoun1,_pronoun2,_pronoun3) #then write
+            
+        #return gender information for chargen
         return (_genderName,(_pronoun1,_pronoun2,_pronoun3,),)
-    else:
+    else: #failure
         return ("",())
+#
 
 
 

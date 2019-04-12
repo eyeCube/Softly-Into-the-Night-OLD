@@ -282,13 +282,13 @@ SKL_SNEAK       = i; i+=1;
 SKILLS = {
 "guns" : SKL_GUNS,
 "tech" : SKL_TECH,
-"chemistry" : SKL_CHEM,
+"chemistry" : SKL_CHEMIS,
 "engineering" : SKL_ENGINR,
-"fighting" : SKL_FIGHT,
+"fighting" : SKL_FIGHTR,
 "piloting" : SKL_PILOT,
 "athletics" : SKL_ATHLET,
 "persuasion" : SKL_PERSUA,
-"chem weapons" : SKL_CHEMWP,
+"heavy weapons" : SKL_HEAVY,
     }
 
 
@@ -310,17 +310,19 @@ CLS_RIOTPOLICE  = i; i+=1;
 CLS_JANITOR     = i; i+=1;
 CLS_DEPRIVED    = i; i+=1;
 CLS_SOLDIER     = i; i+=1;
+CLS_THIEF       = i; i+=1;
 
 CLASSES = {
 CLS_ENGINEER    : "E",
 CLS_TECHNICIAN  : "T",
+CLS_THIEF       : "t",
 CLS_SECURITY    : "O",
 CLS_ATHLETE     : "A",
-CLS_PILOT       : "P",
+CLS_PILOT       : "p",
 CLS_SMUGGLER    : "u",
 CLS_CHEMIST     : "C",
 CLS_POLITICIAN  : "I",
-CLS_RIOTPOLICE  : "R",
+CLS_RIOTPOLICE  : "P",
 CLS_JANITOR     : "j",
 CLS_DEPRIVED    : "d",
 CLS_SOLDIER     : 'S',

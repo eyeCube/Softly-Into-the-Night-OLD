@@ -12,9 +12,11 @@ TILESET             = tileset_12x16.png
 // 2 - SDL
 RENDERER            = 2
 
-FPSMAX              = 60
+FPS MAX             = 60
 
-SHOWFPS             = 0
+SHOW FPS            = 0
+
+HIGHLIGHT PC        = 1
 
 // Colors. RGB Values 0-255. Feel free to change!
 #DEEP               = 20,20,0

@@ -17,6 +17,22 @@ CLS_RIOTPOLICE     :
 CLS_SOLDIER     : 
     }'''
 
+JOBSNAMES = {
+CLS_ENGINEER    : "engineer",
+CLS_TECHNICIAN  : "technician",
+CLS_THIEF       : "thief",
+CLS_SECURITY    : "security officer",
+CLS_ATHLETE     : "athlete",
+CLS_PILOT       : "pilot",
+CLS_SMUGGLER    : "smuggler",
+CLS_CHEMIST     : "chemist",
+CLS_POLITICIAN  : "politician",
+CLS_RIOTPOLICE  : "riot police",
+CLS_JANITOR     : "janitor",
+CLS_DEPRIVED    : "deprived",
+CLS_SOLDIER     : 'soldier',
+    }
+
 JOBS = {
     # KG, $$$: mass, money
     #Access keys:
@@ -39,7 +55,7 @@ CLS_JANITOR     : (60, 100, 0,'J',{},(),),
 CLS_SECURITY    : (60, 300, 4,'', {'atk':3,},(),),
 CLS_PILOT       : (60, 500, 0,'P',{'sight':10,},(SKL_PILOT,),),
 CLS_RIOTPOLICE  : (60, 300, 3,'', {'hpmax':5,'mpmax':-5,'atk':3,'asp':10,},(SKL_FIGHTR,),),
-CLS_SOLDIER     : (60, 300, 1,'', {'hpmax':10,'mpmax':-5,'atk':5,'asp':15,'msp':10,'carry':20,},(SKL_HEAVY,SKL_GUNS,),),),
+CLS_SOLDIER     : (60, 300, 1,'', {'hpmax':10,'mpmax':-5,'atk':5,'asp':15,'msp':10,'carry':20,},(SKL_HEAVY,SKL_GUNS,),),
 CLS_THIEF       : (60, 1000,0,'', {'mpmax':-5,'dfn':2,'msp':10,'carry':15,},(SKL_SNEAK,),),
 CLS_TECHNICIAN  : (60, 500, 1,'', {'mpmax':5,},(SKL_TECH,),),
 CLS_SMUGGLER    : (60, 1000,0,'', {'hpmax':5,'carry':10,},(SKL_PERSUA,SKL_GUNS,),),

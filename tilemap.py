@@ -287,6 +287,10 @@ class TileMap():
                 or self.get_char(x,y) == T_STAIRUP ):
             bgCol=bgTile
         elif self.nthings(x, y) >= 2: bgCol=COL['dkgreen']
+        elif thing==rog.pc():
+            if rog.settings().highlightPC:
+                bgCol=COL['trueblue']
+            else: bgCol=thing.bgcolor
         elif thing: bgCol=thing.bgcolor
         else: bgCol=bgTile
         libtcod.console_set_char_background(

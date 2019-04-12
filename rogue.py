@@ -53,6 +53,7 @@ class Ref():        # stores global references to objects
     pc          = None
     environ     = None
     manager     = None  # current active game state manager
+    savedGame   = None
     pt_managers = {}    # per turn managers that tick every game turn
     c_managers  = {}    # const managers, ran manually
     
@@ -148,13 +149,13 @@ def get_turn():         return Ref.clock.turn
 
 
     # player
+def pc(): return Ref.pc
 def create_player(sx,sy):
     pc = player.chargen()
     port(pc, sx,sy)
     player.init(pc)
     Ref.pc = pc
     return pc
-def pc(): return Ref.pc
 
 
     # log
@@ -189,11 +190,18 @@ def add_msgs_from_sounds():
 
 
     # settings      
+def settings():     return Ref.settings
 def init_settings():
     Ref.settings=game.GlobalSettings()
     Ref.settings.read()
     Ref.settings.apply()
     return Ref.settings
+
+
+    # saved game
+def create_savedGame():
+    Ref.savedGame=game.SavedGame()
+    Ref.savedGame.loadSavedData()
 
 
     # environment
@@ -209,6 +217,7 @@ def genocide(typ):
 def create_perturn_managers():
     Ref.pt_managers.update({'timers'    : managers.Manager_Timers()})
     Ref.pt_managers.update({'fire'      : managers.Manager_Fires()})
+    Ref.pt_managers.update({'status'    : managers.Manager_Status()})
     Ref.pt_managers.update({'meters'    : managers.Manager_Meters()})
     # constant managers, manually ran
 def create_const_managers():
@@ -485,7 +494,7 @@ class Lists():
     lights      =[]
     #timers      =[]     # things with a tick() function
     
-    @staticmethod
+    @classmethod
     def things(cls):
         lis1=set(cls.creatures)
         lis2=set(cls.inanimates)
@@ -620,8 +629,8 @@ def create_creature(name, typ, xs,ys, col): #init basic creature stuff
     creat = thing.create_creature(name,typ,xs,ys,col)
     register_creature(creat)
     return creat 
-def create_monster(typ,x,y,col): #init from monsters.py
-    monst = monsters.create_monster(typ,x,y,col)
+def create_monster(typ,x,y,col,mutate=3): #init from monsters.py
+    monst = monsters.create_monster(typ,x,y,col,mutate)
     register_creature(monst)
     return monst 
 def create_corpse(obj):
@@ -638,6 +647,7 @@ def create_ashes(obj):
 # occupations #
 #-------------#
 
+def playableJobs(): return Ref.savedGame.playableJobs
 def occupations(obj): return action.occupations.get(obj, None)
 def occupations_elapse_turn(obj):
     tLeft,helpless,fxn,args=action.occupations[obj]
@@ -676,24 +686,20 @@ def release_light(obj):
 #set_status
     # obj       = Thing object to set the status for
     # status    = ID of the status effect
-    # t         = duration
-def set_status(obj, status, t):
+    # t         = duration (-1 is the default duration for that status)
+def set_status(obj, status, t=-1):
     if status == FIRE:
         Ref.pt_managers['fire'].set_fire(obj)
-    if status == SICK:
-        Ref.pt_managers['sick'].set_fire(obj)
-    if status == BLIND:
-        Ref.pt_managers['blind'].set_fire(obj)
-    if status == PARAL:
-        Ref.pt_managers['paral'].set_fire(obj)
-    if status == COUGH:
-        Ref.pt_managers['cough'].set_fire(obj)
-    if status == VOMIT:
-        Ref.pt_managers['vomit'].set_fire(obj)
-    if status == CONFU:
-        Ref.pt_managers['confu'].set_fire(obj)
-    if status == IRRIT:
-        Ref.pt_managers['irrit'].set_fire(obj)
+    if (status == SICK
+    or status == BLIND
+    or status == PARAL
+    or status == COUGH
+    or status == VOMIT
+    or status == CONFU
+    or status == IRRIT
+    or status == WET
+    or status == DEAF):
+        Ref.pt_managers['status'].add(obj, status)
 def douse(obj):     Ref.pt_managers['fire'].douse(obj)
 
 
@@ -766,9 +772,9 @@ def Input(x,y, w=1,h=1, default='',mode='text',insert=False):
 
 #prompt
 # show a message and ask the player for input
-def prompt(x,y, w,h, maxw=1, question='', default='',mode='text',insert=False):
+def prompt(x,y, w,h, maxw=1, q='', default='',mode='text',insert=False):
     libtcod.console_clear(con_final())
-    dbox(x,y,w,h,text=question,
+    dbox(x,y,w,h,text=q,
         wrap=True,border=0,con=con_final(),disp='mono')
     result=""
     while (result==""):
@@ -777,6 +783,9 @@ def prompt(x,y, w,h, maxw=1, question='', default='',mode='text',insert=False):
     return result
 
 #menu
+#this menu freezes time until input given.
+#keysItems can be an iterable or a dict.
+    #If a dict, autoItemize must be set to False
 #autoItemize: create keys for your items automagically
 def menu(name, x,y, keysItems, autoItemize=True):
     manager=managers.Manager_Menu(name, x,y, window_w(),window_h(), keysItems=keysItems, autoItemize=autoItemize)

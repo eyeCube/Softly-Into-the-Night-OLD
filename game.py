@@ -78,7 +78,7 @@ def play(pc, pcAct):
 # Global Settings
 #
 
-class GlobalSettings():
+class GlobalSettings:
     
     settingsFile = "settings.txt"
     
@@ -93,8 +93,9 @@ class GlobalSettings():
         "WINDOW HEIGHT" : 50,
         "TILESET"       : "tileset_12x16.png",
         "RENDERER"      : libtcod.RENDERER_SDL,
-        "FPSMAX"        : 60,
-        "SHOWFPS"       : 0,
+        "FPS MAX"       : 60,
+        "SHOW FPS"      : 0,
+        "HIGHLIGHT PC"  : 0,
     }
 
     COMMENTS = {
@@ -165,10 +166,12 @@ class GlobalSettings():
             self.window_width = int(strng)
         elif "WINDOW HEIGHT" in line:
             self.window_height = int(strng)
-        elif "FPSMAX" in line:
+        elif "FPS MAX" in line:
             self.fpsmax = int(strng)
-        elif "SHOWFPS" in line:
+        elif "SHOW FPS" in line:
             self.showfps = bool(int(strng))
+        elif "HIGHLIGHT PC" in line:
+            self.highlightPC = bool(int(strng))
         elif "TILESET" in line:
             self.tileset = strng
         elif "COLORED STRINGS" in line:
@@ -225,7 +228,7 @@ class GlobalSettings():
 # 
 # global libtcod consoles
 #
-class Console():
+class Console:
     def __init__(self,w,h):
         self.final   = libtcod.console_new(w,h) # final surface blitted to 0
         self.game    = libtcod.console_new(w,h) # intermediate surface, displays HUD, messages, and the game view
@@ -238,7 +241,7 @@ class Console():
 #
 # handling state of the program
 #
-class Controller():
+class Controller:
     
     def __init__(self):
         self.isRunning      = True
@@ -263,7 +266,7 @@ class Controller():
 # rendering areas on the game window
 #
 
-class Window():
+class Window:
 
     def __init__(self, w, h):
         # HUD
@@ -306,7 +309,7 @@ class Box():
 #
 # Environment
 #
-class Environment():
+class Environment:
 
     def __init__(self):
         self._genocides     = []
@@ -326,7 +329,7 @@ class Environment():
 #
 # View
 #
-class View():
+class View:
     def __init__(self,w,h,roomw,roomh):
         self.x=0; self.y=0; self.w=w;self.h=h; self.roomw=roomw;self.roomh=roomh
         self.followSpd=10
@@ -368,7 +371,7 @@ class View():
 #
 # Time and Turns
 #
-class Clock():
+class Clock:
     def __init__(self):
         self._turn      = 0
         self._gametime  = 0
@@ -386,7 +389,7 @@ class Clock():
 #
 # keeps track of what needs updating
 #
-class Update():
+class Update:
     def __init__(self):
         self.updates = {
             'pcfov'     : True,
@@ -423,7 +426,7 @@ class Update():
 #
 # Message Log
 #
-class MessageLog():
+class MessageLog:
     def __init__(self):
         self.msgs               = []
         self.msg_newEntry       = True
@@ -455,7 +458,63 @@ class MessageLog():
         w = rog.msgs_w()
         return '\n'.join( textwrap.fill( msg, w-2) for msg in reversed(self.msgs) )
     #
+
+
+
+#
+# Saved Game
+#
+# Global save data shared across games
+# also stores individual game data
+
+class SavedGame:
+    DEFAULTS = [
+        'jobs',
+        'E',
+        'A',
+        'C',
+        'd',
+        'j',
+        'P',
+        't',
+        'T',
+        'u',
+        ]
     
+    def __init__(self):
+        self.file="globalsavedata.sav"
+        self.playableJobs=[]
+
+    #load the global saved data that's shared between games
+    def loadSavedData(self):
+        mode=''
+        try:
+            with open(self.file, 'r') as file:
+                for line in file:
+                    if 'jobs' in line:
+                        mode='jobs'
+                    elif mode=='jobs':
+                        self.playableJobs.append(line[:-1])
+        except FileNotFoundError:
+            print("ERROR: file '{}' not found.".format(self.file))
+            print("Creating file '{}'...".format(self.file))
+            self.write_defaults()
+            print("Initializing defaults from '{}'...".format(self.file))
+            self.loadSavedData()
+        except:
+            print("ERROR: saved data corrupted. Delete the file '{}' in the game's directory, and restart the game to init saved data to defaults...".format(self.file))
+            raise
+            
+    def write_defaults(self):
+        with open(self.file, 'w+') as file:
+            for item in SavedGame.DEFAULTS:
+                file.write("{}\n".format(item))
+
+    #load a game currently in progress
+    def loadGame(self):
+        pass
+
+
 
 
 #-------------------------------------------------------------------------#

@@ -117,18 +117,19 @@ class Manager_Meters(Manager):
         super(Manager_Meters, self).run()
 
         for thing in rog.list_things():
+            #print(thing.name," is getting cooled down") #TESTING
             # cool down temperature meter if not currently burning
             if (thing.stats.temp > 0 and not rog.on(thing,FIRE)):
                 thing.stats.temp -= 1
             # sickness meter
             if (thing.stats.sick > 0):
                 thing.stats.sick -= 1
-            # rads meter
-            if (thing.stats.rads > 0):
-                thing.stats.rads -= 1
             # exposure meter
             if (thing.stats.expo > 0):
                 thing.stats.expo -= 1
+            # rads meter
+            #if (thing.stats.rads > 0):
+            #    thing.stats.rads -= 1
         
 
     def close(self):
@@ -159,6 +160,9 @@ class Manager_Fires(Manager):
         super(Manager_Fires, self).run()
 
         for obj in self.thingsOnFire:
+            if rog.on(obj,WET): #water puts out fires
+                douse(obj)
+                continue
             x,y=obj.x,obj.y
             rog.hurt(obj, 1)
             if not obj.isCreature:
@@ -170,7 +174,10 @@ class Manager_Fires(Manager):
                 else: textSee=""
             else:
                 textSee="{t}{n} burns.".format(t=obj.title,n=obj.name)
+            #rog.event_bright(x,y, SEE_FIRE)
             rog.event_sight(x,y, textSee)
+            #if obj.material == MAT_WOOD:
+            #rog.event_sound(x,y, SND_FIRE)
             rog.event_sound(x,y, SND_FIRE)
             self.fire_spread(obj)
             #else:
@@ -205,16 +212,74 @@ class Manager_Fires(Manager):
     def fire_spread(self, fromObj):
         xo=fromObj.x
         yo=fromObj.y
-        heat=fromObj.temp
+        heat=round(fromObj.stats.temp/10)
         for x in range(max(0,xo - 1), min(ROOMW, xo + 1)):
             for y in range(max(0,yo - 1), min(ROOMH, yo + 1)):
                 thing=rog.thingat(x,y)
                 if thing:
-                    self.burn(thing, heat)
+                    rog.burn(thing, heat)
 
-    # damage over time to burning things
-    def burn(self, obj, heat):
+
+
+#
+# Status
+#
+    #manager for all status effects not covered by other managers
+class Manager_Status(Manager):
+
+    def __init__(self):
+        super(Manager_Status, self).__init__()
+
+        self.thingsSick=[]
+        self.thingsIrritated=[]
+        self.thingsParalyzed=[]
+        self.thingsCoughing=[]
+        self.thingsVomiting=[]
+        self.thingsBlinded=[]
+        self.thingsWet=[]
+        self.thingsDeafened=[]
+        
+
+    def add(self, obj, status):
+        if status == SICK:
+            self.thingsSick.append(obj)
+        elif status == IRRIT:
+            self.thingsIrritated.append(obj)
+        elif status == PARAL:
+            self.thingsParalyzed.append(obj)
+        elif status == COUGH:
+            self.thingsCoughing.append(obj)
+        elif status == VOMIT:
+            self.thingsVomiting.append(obj)
+        elif status == BLIND:
+            self.thingsBlinded.append(obj)
+        elif status == WET:
+            self.thingsWet.append(obj)
+        elif status == DEAF:
+            self.thingsDeafened.append(obj)
+    def remove(self, obj, status):
+        if status == SICK:
+            self.thingsSick.remove(obj)
+        elif status == IRRIT:
+            self.thingsIrritated.remove(obj)
+        elif status == PARAL:
+            self.thingsParalyzed.remove(obj)
+        elif status == COUGH:
+            self.thingsCoughing.remove(obj)
+        elif status == VOMIT:
+            self.thingsVomiting.remove(obj)
+        elif status == BLIND:
+            self.thingsBlinded.remove(obj)
+        elif status == WET:
+            self.thingsWet.remove(obj)
+        elif status == DEAF:
+            self.thingsDeafened.remove(obj)
+
+    def run(self):
+        super(Manager_Status, self).run()
         pass
+
+
 
 
 #

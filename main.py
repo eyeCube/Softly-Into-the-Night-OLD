@@ -32,10 +32,10 @@ def main():
     # INIT
 #------------------------------------------------#
     
-    
+    # init settings
     settings=rog.init_settings()
     rog.init_keyBindings()
-    
+    # init other global objects
     rog.create_window(settings.window_width, settings.window_height)
     rog.create_consoles()
     rog.create_map()
@@ -45,10 +45,11 @@ def main():
     rog.create_update()
     rog.create_environment()
     rog.create_controller()
-    
+    rog.create_savedGame()
+    # init managers
     rog.create_const_managers()
     rog.create_perturn_managers()
-    
+    # init player object
     pc=rog.create_player(15,15)
     obs=observer.Observer_playerChange()
     pc.observer_add(obs)
@@ -81,7 +82,7 @@ def main():
     rog.givehp(z)'''
     z=rog.create_monster('z',13,19,COL['ltblue'])
     a=rog.create_monster('a',12,13,COL['scarlet'])
-    o=rog.create_monster('o',19,18,COL['red'])
+    o=rog.create_monster('U',19,18,COL['red'])
     a=rog.create_monster('a',15,17,COL['scarlet'])
     W=rog.create_monster('W',20,15,COL['purple'])
     '''import dice
@@ -123,7 +124,7 @@ def main():
     yyy.stats.hp=1250
     yyy.color=COL['brown']
     rog.register_inanimate(yyy)
-    rog.set_fire(yyy)
+    rog.set_status(yyy, FIRE)
     
     yyy=Thing()
     yyy.name="wood"
@@ -135,12 +136,11 @@ def main():
     yyy.stats.hp=400
     yyy.color=COL['brown']
     rog.register_inanimate(yyy)
-    rog.set_fire(yyy)
+    rog.set_status(yyy, FIRE)
     '''
     yyy=rog.create_light(25,25, 15)
     yyy=rog.create_light(14,11, 7)'''
 
-    
     
         
 
@@ -158,20 +158,21 @@ def main():
     
     while rog.game_is_running():
 
+        # manually close game #
         if libtcod.console_is_window_closed():
             rog.end()
         
-    #   defeat conditions #
+        # defeat conditions #
         if rog.on(pc, DEAD):
             rog.game_set_state("game over")
-    #   get input #
+        # get input #
         pcInput=IO.get_raw_input()
         pcAct=IO.handle_mousekeys(pcInput).items()
         
-    #   commands that are available from anywhere #
+        # commands that are available from anywhere #
         player.commands_const(pc, pcAct)
         
-    #   Finally record game state after any/all changes #
+        # Finally record game state after any/all changes #
         gameState=rog.game_state()
         
         
