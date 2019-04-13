@@ -3,6 +3,7 @@ player.py
 
 '''
 
+import os
 from const      import *
 from colors     import COLORS
 import rogue    as rog
@@ -187,122 +188,155 @@ def chargen():
     print("Name chosen: ", _name)
     _printElement("Name: {}".format(_name))
     iy+=1
-    
-    # gender
-    rog.dbox(x1,y1+iy,ROOMW,3,text="What is your gender?",
-        wrap=True,border=None,con=rog.con_final(),disp='mono')
-    rog.refresh()
-    #get added genders
-    _genderList = {}
-    with open("genders.txt", "r") as file:
-        for line in file:
-            if "//" in line: continue
-            data = line.split(':')
-            if len(data) < 2: continue
-            gname = data[0]
-            data = data[1].split(',')
-            gpronouns = data
-            _genderList.update({gname:gpronouns})
-    #get input from player
-    _gender = ''
-    while (_gender == ''):
-        _menuList={'m':'male','f':'female','n':'nonbinary','*':'random',}
-        #read genders from genders.txt
+
+    # load saved game
+    loadedGame = False
+    savedir=os.listdir(os.path.curdir,"save")
+    for filedir in savedir:
+        if ".save" != filedir[-5:] :
+            continue #wrong filetype
+        try:
+            with open(filedir, "r") as save:
+                line = save.readline()
+                if ("name:{}\n".format(_name) == line):
+                    #found a match. Begin reading data
+                    pc=loadFromSaveFile(save)                    
+                    return pc
+        except FileNotFoundError:
+            pass
+        except:
+            print("ERROR: Corrupted save file detected.")
+            print("Continuing chargen...")
+            break
+
+    if not loadedGame:
+        #continue chargen...
         
-        _gender=rog.menu("Gender Select",xx,yy,_menuList,autoItemize=False)
-        if _gender == 'nonbinary':
-            #select gender from list of added genders
-            _menuNonbin=[]
-            for jj in _genderList.keys():
-                _menuNonbin.append(jj)
-            _menuNonbin.append('add new gender')
-            choice=rog.menu("Nonbinary Genders",xx,yy,_menuNonbin)
-            #add gender
-            if choice == 'add new gender':
-                _genderName,_pronouns = _add_gender()
-            else:
-                _genderName = choice
-                _pronouns = _genderList[_genderName]
-            if _genderName=='': #failed to select or add new gender
-                _gender='' #prompt user again for gender
-        else:
-            if _gender == 'random':
-                if dice.roll(2) == 1:
-                    _gender = 'male'
+        # gender
+        rog.dbox(x1,y1+iy,ROOMW,3,text="What is your gender?",
+            wrap=True,border=None,con=rog.con_final(),disp='mono')
+        rog.refresh()
+        #get added genders
+        _genderList = {}
+        genderFileDir=os.path.join(os.path.curdir,"settings","genders.txt")
+        try:
+            with open(genderFileDir, "r") as file:
+                for line in file:
+                    if "//" in line: continue
+                    data = line.split(':')
+                    if len(data) < 2: continue
+                    gname = data[0]
+                    data = data[1].split(',')
+                    gpronouns = data
+                    _genderList.update({gname:gpronouns})
+        except FileNotFoundError:
+            print("ALERT: file '{}' not found. Creating new file...")
+            with open(genderFileDir, "w+") as file:
+                file.write("\n")
+        
+        #gender selection
+        _gender = ''
+        while (_gender == ''):
+            _menuList={'m':'male','f':'female','n':'nonbinary','*':'random',}
+            #read genders from genders.txt
+            
+            _gender=rog.menu("Gender Select",xx,yy,_menuList,autoItemize=False)
+            if _gender == 'nonbinary':
+                #select gender from list of added genders
+                _menuNonbin=[]
+                for jj in _genderList.keys():
+                    _menuNonbin.append(jj)
+                _menuNonbin.append('add new gender')
+                choice=rog.menu("Nonbinary Genders",xx,yy,_menuNonbin)
+                #add gender
+                if choice == 'add new gender':
+                    _genderName,_pronouns = _add_gender()
                 else:
-                    _gender = 'female'
-            if _gender == 'male':
-                _genderName = "male"
-                _pronouns = ('he','him','his',)
-            elif _gender == 'female':
-                _genderName = "female"
-                _pronouns = ('she','her','hers',)
-    print("Gender chosen: ", _genderName)
-    _printElement("Gender: {}".format(_genderName))
-    iy+=1
-    
-    # class
-    rog.dbox(x1,y1+iy,ROOMW,3,text="What is your profession?",
-        wrap=True,border=None,con=rog.con_final(),disp='mono')
-    rog.refresh()
-    _classList={} #stores {className : (classChar, classID,)} #all classes
-    #create menu options
-    _menuList={} #stores {classChar : className} #all playable classes
-    _randList=[] #for random selection.
-    for k,v in CLASSES.items(): # k=ID v=charType
-        if v not in rog.playableJobs(): continue #can't play as this class yet
-        ID=k        # get ID of the class
-        typ=v       # get chartype of the class
-        name=jobs.JOBSNAMES[ID]
-        _classList.update({name:(typ,ID,)})
-        _menuList.update({typ:name})
-        _randList.append(ID)
-    _menuList.update({'*':'random'})
-    #user selects a class
-    _className = rog.menu("Class Select",xx,yy,_menuList,autoItemize=False)
-    #random
-    if _className == 'random':
-        choice = dice.roll(len(_randList))
-        _classID = _randList[choice]
-        _className = jobs.JOBSNAMES[_classID]
-    #get the relevant data
-    _type = _classList[_className][0] # get the class Char value
-    _classID = _classList[_className][1]
-    
-    #grant stats / abilities of your chosen class
-    
-    print("Class chosen: ", _className)
-    _printElement("Class: {}".format(_className))
-    iy+=1
+                    _genderName = choice
+                    _pronouns = _genderList[_genderName]
+                if _genderName=='': #failed to select or add new gender
+                    _gender='' #prompt user again for gender
+            else:
+                if _gender == 'random':
+                    if dice.roll(2) == 1:
+                        _gender = 'male'
+                    else:
+                        _gender = 'female'
+                if _gender == 'male':
+                    _genderName = "male"
+                    _pronouns = ('he','him','his',)
+                elif _gender == 'female':
+                    _genderName = "female"
+                    _pronouns = ('she','her','hers',)
+        print("Gender chosen: ", _genderName)
+        _printElement("Gender: {}".format(_genderName))
+        iy+=1
+        
+        # class
+        rog.dbox(x1,y1+iy,ROOMW,3,text="What is your profession?",
+            wrap=True,border=None,con=rog.con_final(),disp='mono')
+        rog.refresh()
+        _classList={} #stores {className : (classChar, classID,)} #all classes
+        #create menu options
+        _menuList={} #stores {classChar : className} #all playable classes
+        _randList=[] #for random selection.
+        for k,v in CLASSES.items(): # k=ID v=charType
+            if v not in rog.playableJobs(): continue #can't play as this class yet
+            ID=k        # get ID of the class
+            typ=v       # get chartype of the class
+            name=jobs.JOBSNAMES[ID]
+            _classList.update({name:(typ,ID,)})
+            _menuList.update({typ:name})
+            _randList.append(ID)
+        _menuList.update({'*':'random'})
+        #user selects a class
+        _className = rog.menu("Class Select",xx,yy,_menuList,autoItemize=False)
+        #random
+        if _className == 'random':
+            choice = dice.roll(len(_randList))
+            _classID = _randList[choice]
+            _className = jobs.JOBSNAMES[_classID]
+        #get the relevant data
+        _type = _classList[_className][0] # get the class Char value
+        _mask = _type
+        _classID = _classList[_className][1]
+        
+        #grant stats / abilities of your chosen class
+        
+        print("Class chosen: ", _className)
+        _printElement("Class: {}".format(_className))
+        iy+=1
 
-    # skill
-    rog.dbox(x1,y1+iy,ROOMW,3,text="In which skill are you learned?",
-        wrap=True,border=None,con=rog.con_final(),disp='mono')
-    #rog.refresh()
-        #get list of all skills
-    _skillName = rog.menu("Skill Select",xx,yy,SKILLS.keys())
-    _skillID = SKILLS[_skillName]
-    print("Skill chosen: ", _skillName)
-    #should show ALL skills you're skilled in, not just the one you pick
-    #for skill in jobs.getSkills(_skillID):
-    _printElement("Skills: {}".format(_skillName))
-    iy+=1
+        # skill
+        rog.dbox(x1,y1+iy,ROOMW,3,text="In which skill are you learned?",
+            wrap=True,border=None,con=rog.con_final(),disp='mono')
+        #rog.refresh()
+            #get list of all skills
+        _skillName = rog.menu("Skill Select",xx,yy,SKILLS.keys())
+        _skillID = SKILLS[_skillName]
+        print("Skill chosen: ", _skillName)
+        #should show ALL skills you're skilled in, not just the one you pick
+        #for skill in jobs.getSkills(_skillID):
+        _printElement("Skills: {}".format(_skillName))
+        iy+=1
 
-    #stats
-    _stats = {}
-    #gift
-    _gift = 0
+        #stats?
+        _stats = {}
+        #gift?
+        _gift = 0
+
+        #create pc object from the data given in chargen
+        pc = rog.create_monster('@',0,0,COLORS['white'],mutate=0)
+        pc.name = _name
+        pc.type = _type
+        pc.mask = _mask
+        pc.job = _className
+        pc.gender = _genderName
+        pc.pronouns = _pronouns
+        pc.faction = FACT_ROGUE
+        #add additional skill
+        rog.train(pc,_skillID)
     
-    pc = rog.create_monster('@',0,0,COLORS['white'],mutate=0)
-    pc.name = _name
-    pc.type = _type
-    pc.mask = pc.type
-    pc.job = _className
-    pc.gender = _genderName
-    pc.pronouns = _pronouns
-    pc.faction = FACT_ROGUE
-    #add additional skill
-    rog.train(pc,_skillID)
     return pc
 #
 
@@ -344,15 +378,17 @@ Possessive pronoun: {}
         )
     if success:
         #add the gender into the genders text file for next game
+        genderFileName="genders.txt"
+        genderFileDir=os.path.join(os.path.curdir,"settings",genderFileName)
         def writeGender(n,p1,p2,p3):
-            with open("genders.txt", "a+") as file:
+            with open(genderFileDir, "a+") as file:
                 file.write("{}:{},{},{}\n".format(n,p1,p2,p3))
         try:
             writeGender(_genderName,_pronoun1,_pronoun2,_pronoun3)
         except FileNotFoundError:
-            print("Failed to load 'genders.txt', creating new file...")
-            with open("genders.txt", "w+") as file:
-                pass # just create the file
+            print("Failed to load {}, creating new file...".format(genderFileName))
+            with open(genderFileDir, "w+") as file:
+                file.write("\n") #nothing needed in the file
             writeGender(_genderName,_pronoun1,_pronoun2,_pronoun3) #then write
             
         #return gender information for chargen
@@ -361,6 +397,61 @@ Possessive pronoun: {}
         return ("",())
 #
 
+
+#
+def loadFromSaveFile(save):
+    #MUST DO THIS FOR EVERY THING.
+    #THERE MUST BE A MUCH BETTER WAY TO DO THIS.
+    pickle.dump(stats, save)
+    '''
+    pc = rog.create_monster('@',0,0,COLORS['white'],mutate=0)
+    pc.name=save.readline().strip()
+    pc.title=save.readline().strip()
+    pc.pronouns=save.readline().strip()
+    pc.color=save.readline().strip()
+    pc.bgcolor=save.readline().strip()
+    pc.flags=set((save.readline().strip()).split(','))
+    #read in skills
+    #read in equip data
+    #read in stat mods
+    #pc.isSolid=save.readline().strip()
+    pc.x=save.readline().strip()
+    pc.y=save.readline().strip()
+    pc.z=save.readline().strip()
+    pc.type=save.readline().strip()
+    pc.mask=save.readline().strip()
+    pc.mutations=save.readline().strip()
+    pc.gender=save.readline().strip()
+    pc.job=save.readline().strip()
+    pc.faction=save.readline().strip()
+    #read in fov_map
+    #pc.senseEvents=save.readline().strip()
+    pc.purse=save.readline().strip()
+    pc.ai=save.readline().strip()
+    pc.stats.sight=save.readline().strip()
+    pc.stats.hearing=save.readline().strip()
+    pc.stats.nrg=save.readline().strip()
+    pc.stats.spd=save.readline().strip()
+    pc.stats.asp=save.readline().strip()
+    pc.stats.msp=save.readline().strip()
+    pc.stats.carry=save.readline().strip()
+    pc.stats.atk=save.readline().strip()
+    pc.stats.dmg=save.readline().strip()
+    pc.stats.dfn=save.readline().strip()
+    pc.stats.arm=save.readline().strip()
+    pc.stats.hp=save.readline().strip()
+    pc.stats.hpmax=save.readline().strip()
+    pc.stats.mp=save.readline().strip()
+    pc.stats.mpmax=save.readline().strip()
+    pc.stats.element=save.readline().strip()
+    pc.stats.resfire=save.readline().strip()
+    pc.stats.resbio=save.readline().strip()
+    pc.stats.reselec=save.readline().strip()
+    pc.stats.temp=save.readline().strip()
+    pc.stats.rads=save.readline().strip()
+    pc.stats.expo=save.readline().strip()
+    pc.stats.sick=save.readline().strip()
+    '''
 
 
 

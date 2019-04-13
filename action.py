@@ -87,7 +87,7 @@ def inventory_pc(pc,pcInv):
             "{}".format(item.name), x,y,
             keysItems, autoItemize=False
         )
-        print(opt)
+        #print(opt)
         if opt == -1: return
         opt=opt.lower()
         

@@ -5,9 +5,12 @@ Todo:
 	gear, equipping gear
 	flame/bio throwers
 	status effects - fire, bio to start
-	chargen
 	skills
 	implement delayed actions ( immediate actions vs. )
+	town w/ shops
+Done:
+	chargen
+	highlight the player's tile background (optionally)	
 	
 	
 Hazards (bio, chem, radiation) stick around for a long time.
@@ -30,7 +33,7 @@ FIRE damage:
 
 HAZARD damage:
 	Inflicts a HAZARD status.
-	All are resisted by HAZARD resist.
+	All HAZARD damage types are resisted by HAZARD resist.
 	BIO damage:
 		Causes IMMUNITY meter to raise (depending on your resistance).
 		When IMMUNITY meter full, you become ill, and meter stays maxed out for the duration of the status.
@@ -40,7 +43,9 @@ HAZARD damage:
 			no appetite - cannot eat
 	CHEM damage:
 		Causes instantaneous effect if not resisted.
-		If not resisted, causes EXPOSURE meter to raise.
+			effects short-lived compared to bio effects
+		Causes Lo damage over time.
+		causes EXPOSURE meter to raise (depending on your resistance).
 		When EXPOSURE meter full, you die.
 		causes a random one of the following statuses:
 			irritation
@@ -51,6 +56,8 @@ HAZARD damage:
 	RAD damage:
 		Exposure causes RAD meter to increase (depending on your resistance)
 		When RAD bar is full, causes mutation, then RAD bar is reset.
+			mutation causes a permanent change in the creature
+			also permanently lowers maximum Hi chi by 1
 	
 ELECTRIC damage:
 	ELEC resist

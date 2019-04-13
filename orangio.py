@@ -22,6 +22,7 @@
 '''
 
 
+import os
 import libtcodpy as libtcod
 import time
 import textwrap
@@ -42,7 +43,7 @@ NUM_ALT_CMDS = 3    # number of alternate key codes for each command.
 
 
 
-file_keyBindings='key_bindings.txt'
+file_keyBindings=os.path.join(os.path.curdir,"settings","key_bindings.txt")
 
 # backup key bindings file:
 KEYBINDINGS_TEXT_DEFAULT = '''//file name: {filename}

@@ -1,0 +1,4 @@
+Credits:
+
+project using libtcod Python
+folks over at Roguebasin and r/roguelikedev

@@ -1,8 +1,3 @@
-
-class F():
-    def __init__(self):
-        self.f=1
-
-f=F()
-if True == f:
-    print('hi')
+sav="jake.save\n"
+print(sav.strip())
+print("sav")

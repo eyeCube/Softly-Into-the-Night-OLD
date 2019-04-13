@@ -277,7 +277,9 @@ class TileMap():
             if self.get_light_value(x,y):
                 libtcod.console_put_char(self.con_map_state, tx,ty, "?")
                 return
-    
+
+    # get and apply the proper background color
+    #   for the tile containing a thing
     def apply_rendered_bgcol(self, x, y, thing):
         bgTile=self.get_bgcolor(x, y)
         if thing and rog.on(thing,FIRE):
@@ -289,7 +291,7 @@ class TileMap():
         elif self.nthings(x, y) >= 2: bgCol=COL['dkgreen']
         elif thing==rog.pc():
             if rog.settings().highlightPC:
-                bgCol=COL['trueblue']
+                bgCol=COL[rog.settings().highlightColor]
             else: bgCol=thing.bgcolor
         elif thing: bgCol=thing.bgcolor
         else: bgCol=bgTile

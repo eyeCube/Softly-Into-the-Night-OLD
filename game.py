@@ -5,6 +5,7 @@
     
 '''
 
+import os
 import libtcodpy as libtcod
 import time
 import textwrap
@@ -32,7 +33,7 @@ timer = debug.Timer()
 # primary gameplay loop
 #
 def play(pc, pcAct):
-    timer.reset()
+    #timer.reset() #DEBUG TESTING. USED WITH timer.print()
     
     rog.release_souls()
     rog.compute_fovs() # maybe we should just recalc manually...
@@ -60,7 +61,7 @@ def play(pc, pcAct):
     rog.clear_listeners()
     
     rog.game_update()
-    timer.print()
+    #timer.print() #DEBUG TESTING. SHOWS TIME ELAPSED SINCE RESET.
     
     player.commands(pc, pcAct)
     player.commands_pages(pc, pcAct)
@@ -79,23 +80,27 @@ def play(pc, pcAct):
 #
 
 class GlobalSettings:
+
+    settingsDir = os.path.join(os.path.curdir,"settings")
+    settingsFile = os.path.join(settingsDir,"settings.txt")
+    settingsFileName="settings.txt"
     
-    settingsFile = "settings.txt"
-    
-    _errorSettingsCorrupted="ERROR: Settings file '{f}' corrupted. (a) Fix the syntax error, OR (b) delete '{f}' and restart the game to reset to default settings.".format(f=settingsFile)
-    _alertSettingsNotFound="ALERT: Settings file '{}' not found. Creating file from defaults...".format(settingsFile)
-    _settingsCreated="Settings file '{}' created.".format(settingsFile)
+    _errorSettingsCorrupted="ERROR: Settings file '{f}' corrupted. (a) Fix the syntax error, OR (b) delete '{f}' and restart the game to reset to default settings.".format(f=settingsFileName)
+    _alertSettingsNotFound="ALERT: Settings file '{}' not found. Creating file from defaults...".format(settingsFileName)
+    _settingsCreated="Settings file '{}' created.".format(settingsFileName)
     
     # Used for writing a new settings file from default settings #
     
     DEFAULTS = {
-        "WINDOW WIDTH"  : 80,
-        "WINDOW HEIGHT" : 50,
-        "TILESET"       : "tileset_12x16.png",
-        "RENDERER"      : libtcod.RENDERER_SDL,
-        "FPS MAX"       : 60,
-        "SHOW FPS"      : 0,
-        "HIGHLIGHT PC"  : 0,
+        "WINDOW WIDTH"      : 80,
+        "WINDOW HEIGHT"     : 50,
+        "TILESET"           : "tileset_12x16.png",
+        "RENDERER"          : libtcod.RENDERER_SDL,
+        "FPS MAX"           : 60,
+        "SHOW FPS"          : 0,
+        "HIGHLIGHT PC"      : 0,
+        "HIGHLIGHT COLOR"   : "TRUEBLUE",
+        "COLORED STRINGS"   : "__see__,green;__hear__,blue;fire,red;",
     }
 
     COMMENTS = {
@@ -110,6 +115,18 @@ class GlobalSettings:
     
     def __init__(self):
         self.file = GlobalSettings.settingsFile
+        # settings vars
+        # will be overwritten when settings file is read
+        self.renderer = 0
+        self.window_width = 0
+        self.window_height = 0
+        self.fpsmax = 0
+        self.showfps = False
+        self.highlightPC = False
+        self.highlightColor = ""
+        self.tileset = ""
+        self.colors={}
+        self._colored_strings=[]
         
     def apply(self):
         try:
@@ -140,6 +157,9 @@ class GlobalSettings:
             raise
 
     def _apply(self):       # apply settings globally
+
+        # some settings do not get applied here
+        # but are instead accessed by other objects
         
         # window settings #
         libtcod.console_set_custom_font(self.tileset,
@@ -170,10 +190,12 @@ class GlobalSettings:
             self.fpsmax = int(strng)
         elif "SHOW FPS" in line:
             self.showfps = bool(int(strng))
+        elif "TILESET" in line:
+            self.tileset = os.path.join(os.path.curdir,"tilesets",strng)
         elif "HIGHLIGHT PC" in line:
             self.highlightPC = bool(int(strng))
-        elif "TILESET" in line:
-            self.tileset = strng
+        elif "HIGHLIGHT COLOR" in line:
+            self.highlightColor = strng.lower()
         elif "COLORED STRINGS" in line:
             self._colored_strings=[]
             elements = strng.split(";")
@@ -194,14 +216,14 @@ class GlobalSettings:
             file.write(newline)
             
         with open(self.file, 'w+') as file:
-            file.write('// {}\n\n'.format(self.file))
+            file.write('// {}\n\n'.format(GlobalSettings.settingsFileName))
             for k,v in GlobalSettings.DEFAULTS.items():
                 write_line(file, k,v)
         #   default Colors
             for k,v in colors.COLORS.items():   
                 k="#" + k.upper()
                 write_line(file, k,v)
-            write_line(file, "COLORED STRINGS", colors.colored_strings)
+            #write_line(file, "COLORED STRINGS", GlobalSettings.)
     
     def parse_setting(self,line):
         pos= 1 + line.find("=")
@@ -482,7 +504,7 @@ class SavedGame:
         ]
     
     def __init__(self):
-        self.file="globalsavedata.sav"
+        self.file=os.path.join(os.path.curdir,"save","globalsavedata.sav")
         self.playableJobs=[]
 
     #load the global saved data that's shared between games
@@ -496,7 +518,7 @@ class SavedGame:
                     elif mode=='jobs':
                         self.playableJobs.append(line[:-1])
         except FileNotFoundError:
-            print("ERROR: file '{}' not found.".format(self.file))
+            print("ALERT: file '{}' not found.".format(self.file))
             print("Creating file '{}'...".format(self.file))
             self.write_defaults()
             print("Initializing defaults from '{}'...".format(self.file))

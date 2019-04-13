@@ -40,4 +40,4 @@ COLORS={
     'vdkgray'       : '50,50,50',
 }
 
-colored_strings="__see__,green;__hear__,blue;fire,red;"
+colored_strings=[]

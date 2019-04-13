@@ -127,7 +127,8 @@ def get_light_value(x,y):   return Ref.Map.get_light_value(x,y)
 
     
     # view
-def create_view():          Ref.view=game.View( view_port_w(),view_port_h(), ROOMW,ROOMH)
+def create_view():
+    Ref.view=game.View( view_port_w(),view_port_h(), ROOMW,ROOMH)
 def view_nudge(dx,dy):      Ref.view.nudge(dx,dy)
 def view_nudge_towards(obj):Ref.view.follow(obj)
 def view_center(obj):       Ref.view.center(obj.x, obj.y)
@@ -363,6 +364,9 @@ def capmp (obj):    obj.stats.mp=min(obj.stats.mp,obj.stats.get('mpmax'))
 #train (improve) skill
 def train (obj,skill):
     obj.skills.update({skill : max(SKILLMAX, obj.skills.get(skill,0)+1) })
+#set stat
+def setStat (obj,stat,val):
+    setattr(obj.stats, stat, val)
 #gain (improve) stat
 def gain (obj,stat,val=1,Max=999):
     stats=obj.stats
