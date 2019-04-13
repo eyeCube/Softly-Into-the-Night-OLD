@@ -1,2 +1,0 @@
-//this file contains data for any genders added into the game.
-

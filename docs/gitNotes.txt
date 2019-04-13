@@ -1,0 +1,9 @@
+git clone URL
+git pull
+git commit -m "notes"
+git push
+git rm -f --force file
+	remove
+
+open python file in IDLE:
+	python -m idlelib file
