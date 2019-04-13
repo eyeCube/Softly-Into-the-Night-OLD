@@ -191,7 +191,7 @@ def chargen():
 
     # load saved game
     loadedGame = False
-    savedir=os.listdir(os.path.curdir,"save")
+    savedir=os.listdir(os.path.join(os.path.curdir,"save"))
     for filedir in savedir:
         if ".save" != filedir[-5:] :
             continue #wrong filetype
