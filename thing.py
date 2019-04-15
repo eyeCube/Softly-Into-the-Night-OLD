@@ -30,7 +30,7 @@ SPD_PERAGI  =
 
 
 
-# Thing class:
+# obj class:
 # In-game object; items, monsters, the player, etc.
 
 class Thing(Observable):
@@ -41,7 +41,7 @@ class Thing(Observable):
         
         self.id=Thing.get_new_id()
         
-    #   vars that need to be set for all things are set to None
+    #   vars that need to be set for all objs are set to None
     #   but not all vars set to None must be set
         self.name           = None  # unique or generic
         self.title          = "the "
@@ -64,7 +64,7 @@ class Thing(Observable):
         self.material   = None  # what's it made of?
         
     #   values for creatures
-        self.mutations  = None  # number of mutations this thing has undergone
+        self.mutations  = None  # number of mutations this obj has undergone
         self.gender     = None
         self.job        = None  # what class/profession?
         self.faction    = None  # for diplomacy
@@ -73,8 +73,12 @@ class Thing(Observable):
         self.purse      = None  # value of currency held
         self.ai         = None  # can remain None
         
-    #   values for multiple types of things
+    #   values for multiple types of objs
         self.inv        = None  # inventory
+
+    #   inanimate things
+        self.ammoType   = None  # which type of ammo does it use?
+        self.equipType  = None  # which slot can it be equipped in?
         
     def __hash__(self):
         return self.id
@@ -104,7 +108,7 @@ class Thing(Observable):
 #
 #   Stats and Attributes
 #
-class Stats():  # Stats and attributes of a Thing
+class Stats:  # Stats and attributes of a obj
     
     def __init__(self,owner):
         self.owner      = owner
@@ -116,16 +120,17 @@ class Stats():  # Stats and attributes of a Thing
         
             # Base stats
         self.sight      = 0
-        self.hearing    = None
+        self.hearing    = 0
+        self.range      = 0     # maximum range
         self.nrg        = 0     # energy, capacity to do actions
-        self.spd        = None  # energy restored per turn
-        self.asp        = None  # attack speed; mods energy cost of attacking
-        self.msp        = None  # move speed; mods energy cost of moving
-        self.carry      = None  # carrying capacity
-        self.atk        = None  # attack
-        self.dmg        = None  # damage
-        self.dfn        = None  # defense
-        self.arm        = None  # armor
+        self.spd        = 0     # energy restored per turn
+        self.asp        = 0     # attack speed; mods energy cost of attacking
+        self.msp        = 0     # move speed; mods energy cost of moving
+        self.carry      = 0     # carrying capacity
+        self.atk        = 0     # attack
+        self.dmg        = 0     # damage
+        self.dfn        = 0     # defense
+        self.arm        = 0     # armor
         self.hp         = 0     # current life
         self.hpmax      = 0     # maximum life
         self.mp         = 0     # current mana
@@ -166,28 +171,57 @@ class Stats():  # Stats and attributes of a Thing
 
 
 # Equip class:
-# For nonliving things this represents where the item
-# can be equipped. For living things this object
-# holds a reference to (an item or None) for each slot.
-
-class Equip():
+# holds a reference to a Slot object for each equip slot.
+# Slot default data is an empty slot.
+# Use Slot functions to interact with each individual Slot.
+# NOTE: This is only a data storage object, and does not contain
+#   functionality for equipping / dequipping items to creatures.
+class Equip:
     
     def __init__(self):
-        self.head           = None
-        self.back           = None
-        self.body           = None
-        self.mainHand       = None
-        self.offHand        = None
-        self.ammo           = None
-        self.feet           = None
-        self.jewelry        = []
+        self.mainHand       = Slot()
+        self.offHand        = Slot()
+        self.head           = Slot()
+        self.body           = Slot()
+        self.back           = Slot()
+        self.ammo           = Slot()
+        #self.feet           = None
+        #self.jewelry        = []
 
     def __iter__(self):
         for var in vars(self):
             yield var
+
+# Slot class:
+# equip slot for creatures' Equip object
+#   -tracks item equipped in the slot as well as
+#       the stat effect mod ID relating to that item
+# NOTE: adding an item into this slot does not properly equip the item,
+#   in and of itself. Functionality for equipping / dequipping
+#       is handled elsewhere.
+#   Before setting the slot data, a stat effect mod must be
+#       generated and applied to the obj. The stat mod must be
+#       cleared when the Slot is cleared.
+class Slot:
+    def __init__(self):
+        self.item = None    #pointer to item that's equipped in this slot
+        self.modID = None   #ID to the stat modifier this object uses
+    #return whether the slot is empty
+    def isEmpty(self):      return (self.item==None)
+    def getItem(self):      return self.item
+    def getModID(self):     return self.modID
+    def setSlot(self,item,modID):
+        self.item = item
+        self.modID = modID
+    # clear the slot of its item/mod, and return the item that was in the slot
+    def clear(self):
+        item=self.item
+        self.item = None
+        self.modID = None
+        return item
     
 
-class _Event():
+class _Event:
     def __init__(self, x,y, textSee, textHear, volume):
         self.x=x
         self.y=y
@@ -197,87 +231,107 @@ class _Event():
 
 
 
+#-----------#
 # functions #
+#-----------#
 
-    # status effects #
+    # Slot #
+#relate equipType const to the name of the Slot objects in the Equip __dict__
+def getSlotName(equipType):
+    if equipType==EQ_MAINHAND:
+        return "mainHand"
+    elif equipType==EQ_OFFHAND:
+        return "offHand"
+    elif equipType==EQ_BODY:
+        return "body"
+    elif equipType==EQ_HEAD:
+        return "head"
+    elif equipType==EQ_BACK:
+        return "back"
+
+    # stat modifiers effects #
 
 newStatModID = 0
 
-def effect_add(thing,mod):
+def effect_add(obj,mod):
     global newStatModID
     newStatModID +=1
-    thing.stats.mods.update( {newStatModID : mod} )
+    obj.stats.mods.update( {newStatModID : mod} )
     return newStatModID
 
-def effect_remove(thing,modID):
-    del thing.stats.mods[modID]
+def effect_remove(obj,modID):
+    del obj.stats.mods[modID]
+
+
+    # elemental damage #
+    # cause status effects
 
 #fire damage
-def burn(thing, dmg):
-    res = thing.stats.resfire
+def burn(obj, dmg):
+    res = obj.stats.resfire
     #increase temperature
     dmg = int( dmg*(1-(res/100)) )
-    thing.stats.temp += max(0, dmg )
-    if thing.stats.temp >= 100:
-        thing.stats.temp = 100
-        rog.set_fire(thing) 
+    obj.stats.temp += max(0, dmg )
+    if obj.stats.temp >= 100:
+        obj.stats.temp = 100
+        rog.set_fire(obj) 
 #bio damage
-def disease(thing, dmg):
-    res = thing.stats.resbio
+def disease(obj, dmg):
+    res = obj.stats.resbio
     #increase sickness meter
     dmg = int( dmg*(1-(res/100)) )
-    thing.stats.sick += max(0, dmg )
-    if thing.stats.sick >= 100:
-        thing.stats.sick = 100
-        rog.make(thing, SICK) 
+    obj.stats.sick += max(0, dmg )
+    if obj.stats.sick >= 100:
+        obj.stats.sick = 100
+        rog.make(obj, SICK) 
 #rad damage
-def irradiate(thing, dmg):
-    res = thing.stats.resbio
+def irradiate(obj, dmg):
+    res = obj.stats.resbio
     #increase rads meter
     dmg = int( dmg*(1-(res/100)) )
-    thing.stats.rads += max(0, dmg )
-    if thing.stats.rads >= 100:
-        thing.stats.rads = 100
-        thing.stats.rads = 0 # reset rads meter after mutation
-        mutate(thing) 
+    obj.stats.rads += max(0, dmg )
+    if obj.stats.rads >= 100:
+        obj.stats.rads = 100
+        obj.stats.rads = 0 # reset rads meter after mutation
+        mutate(obj) 
 #chem damage
-def exposure(thing, dmg):
-    res = thing.stats.resbio
+def exposure(obj, dmg):
+    res = obj.stats.resbio
     #increase exposure meter
     dmg = int( dmg*(1-(res/100)) )
-    thing.stats.expo += max(0, dmg )
-    if thing.stats.expo >= 100:
-        rog.hurt(thing, CHEM_DAMAGE) #instant damage when expo meter fills
-        _random_chemical_effect(thing) #inflict chem status effect
+    obj.stats.expo += max(0, dmg )
+    if obj.stats.expo >= 100:
+        rog.hurt(obj, CHEM_DAMAGE) #instant damage when expo meter fills
+        _random_chemical_effect(obj) #inflict chem status effect
 #elec damage  
-def electrify(thing, dmg):
-    res = thing.stats.reselec
+def electrify(obj, dmg):
+    res = obj.stats.reselec
     dmg *= (1-(res/100))
     dmg /= 25
     dmg = 1+int(dmg)
-    rog.sap(thing, dmg) # MP damage from lightning
+    rog.sap(obj, dmg) # MP damage from lightning
     if dmg >= 2:
-        rog.paralyze(thing, 1) # paralysis from high damage
+        rog.paralyze(obj, 1) # paralysis from high damage
     if dmg >= 4:
-        rog.kill(thing) # insta-death from massive electric shock
+        rog.kill(obj) # insta-death from massive electric shock
 
 # SHOULD THESE BE IN rogue.py???
-def mutate(thing):
-    if not thing.isCreature: return False
-    thing.mutations += 1
+def mutate(obj):
+    if not obj.isCreature: return False
+    obj.mutations += 1
     return True
-def paralyze(thing, turns):
-    if not thing.isCreature: return False
-    rog.set_paral(thing, turns)
+def paralyze(obj, turns):
+    if not obj.isCreature: return False
+    rog.set_paral(obj, turns)
     return True
 
 
 
-#functions for building things
+#functions for building objs
 
 #create_creature
 #this function does not set the individual monster stats
-#it just creates a thing and gives it some default values / init stuff
+#it just creates a obj and gives it some default values / init stuff
 def create_creature(name, typ, xs,ys, col):
     creat=Thing()
     creat.name          = name
@@ -332,38 +386,38 @@ def create_ashes(obj):
 
 #cause some random horrible chemical warfare effect
 #   only for creatures
-def _random_chemical_effect(thing):
+def _random_chemical_effect(obj):
     roll = dice.roll(6)
     if roll == 1:
         power = CHEM_BLIND_POWER
         if power >= res:
             duration = dice.roll(CHEM_BLIND_TIME)
-            rog.set_status(thing, BLIND, duration)
+            rog.set_status(obj, BLIND, duration)
     elif roll == 2:
         power = CHEM_PARAL_POWER
         if power >= res:
             duration = dice.roll(CHEM_PARAL_TIME)
-            rog.set_status(thing, PARAL, duration)
+            rog.set_status(obj, PARAL, duration)
     elif roll == 3:
         power = CHEM_COUGH_POWER
         if power >= res:
             duration = dice.roll(CHEM_COUGH_TIME)
-            rog.set_status(thing, COUGH, duration)
+            rog.set_status(obj, COUGH, duration)
     elif roll == 4:
         power = CHEM_VOMIT_POWER
         if power >= res:
             duration = dice.roll(CHEM_VOMIT_TIME)
-            rog.set_status(thing, VOMIT, duration)
+            rog.set_status(obj, VOMIT, duration)
     elif roll == 5:
         power = CHEM_CONFU_POWER
         if power >= res:
             duration = dice.roll(CHEM_CONFU_TIME)
-            rog.set_status(thing, CONFU, duration)
+            rog.set_status(obj, CONFU, duration)
     elif roll == 6:
         power = CHEM_IRRIT_POWER
         if power >= res:
             duration = dice.roll(CHEM_IRRIT_TIME)
-            rog.set_status(thing, IRRIT, duration)
+            rog.set_status(obj, IRRIT, duration)
        
 
 
@@ -417,7 +471,7 @@ def setAttributes(obj,stats):
 
 
 '''
-class Creature(Thing):
+class Creature(obj):
 
     def __init__(self,typ,xs,ys,col,name):
         super(Creature,self).__init__()
@@ -466,7 +520,7 @@ class StatModManager():             CURRENTLY UNIMPLEMENTED
                 cls.register(modID,obj,timer) # overwrite entry w/ new data
 '''
 '''
-def create_thing(ch,xs,ys):            CURRENTLY UNIMPLEMENTED
+def create_obj(ch,xs,ys):            CURRENTLY UNIMPLEMENTED
     new = Thing()
     new.mask    = ch
     new.type    = ch

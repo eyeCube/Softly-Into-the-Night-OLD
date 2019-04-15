@@ -21,8 +21,8 @@ class Smoke(Fluid):
         self.name="smoke"
         self.type=' '
         self.mask=self.type
-        self.mass=0.01
-        self.viscosity=.1
+        self.mass=0.001
+        self.viscosity=0.001
 
 
 def fluids_flow():

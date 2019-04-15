@@ -1,6 +1,11 @@
 #
 # action
 #
+# wrapper for things that creatures can do in the game
+#   - actions cost energy
+# PC actions are for the player object to give feedback
+#   - (if you try to eat something inedible, it should say so, etc.)
+#
 
 from const import *
 import rogue as rog
@@ -34,6 +39,9 @@ def bomb_pc(pc): # drop a lit bomb
         rog.alert("You cannot put that in an occupied space.")
 
 
+# pickup
+# grab an item from the game world, removing it from the grid
+#   and then wield it
 def pickup_pc(pc):
     rog.alert("Pick up what? <hjklyubn.>")
     args=IO.get_direction()
@@ -41,7 +49,7 @@ def pickup_pc(pc):
     dx,dy,dz=args
     xx,yy=pc.x + dx, pc.y + dy
     
-    thing=rog.inamat(xx,yy) if (xx == pc.x and yy == pc.y) else rog.thingat(xx,yy)
+    thing=rog.inanat(xx,yy) if (xx == pc.x and yy == pc.y) else rog.thingat(xx,yy)
     if thing:
         if not thing.isCreature:
             # pocketing the thing
@@ -94,9 +102,9 @@ def inventory_pc(pc,pcInv):
         rmg=False
         if   opt == "drop":     rmg=True; drop_pc(pc,item)
         elif opt == "equip":    rmg=True; equip_pc(pc,item)
-        elif opt == "eat":      rmg=True; eat(pc, item)
-        elif opt == "quaff":    rmg=True; quaff(pc, item)
-        elif opt == "use":      rmg=True; use(pc, item)
+        elif opt == "eat":      rmg=True; eat_pc(pc, item)
+        elif opt == "quaff":    rmg=True; quaff_pc(pc, item)
+        elif opt == "use":      rmg=True; use_pc(pc, item)
         elif opt == "examine":  rmg=True; examine_pc(item)
         
         if rmg: rog.drain(pc, 'nrg', NRG_RUMMAGE)

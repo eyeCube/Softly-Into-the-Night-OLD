@@ -124,6 +124,7 @@ def commands(pc, pcAct):
             rog.alert('press any key to continue...')
             rog.Input(rog.getx(pc.x), rog.gety(pc.y), mode='wait')
             rog.update_base()
+            rog.alert('')
             return
         if act == "look":
             rog.routine_look(pc.x,pc.y)
@@ -328,6 +329,7 @@ def chargen():
         #create pc object from the data given in chargen
         pc = rog.create_monster('@',0,0,COLORS['white'],mutate=0)
         pc.name = _name
+        pc.title = _title
         pc.type = _type
         pc.mask = _mask
         pc.job = _className

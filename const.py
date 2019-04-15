@@ -70,25 +70,28 @@ T_MONEY         = ord('$')
 T_POTION        =   173     # upside down '!'
 T_PHONE         =   168     # upside down '?' - basically a "magic scroll"
 T_CORPSE        = ord('%')
-T_FOOD          = ord('%')
+T_FOOD          = ord(',')
 T_BULLET        = ord(':')
-T_ROCK          = ord('`')
-T_AMULET        = ord('"')
+T_ROCK          = ord('.')
+T_BOULDER       = ord('0')
 T_CONTAINER     = ord('|')
 T_MULTIITEMS    = ord('&')
 T_MELEEWEAPON   = ord('/')
 T_THROWWEAPON   = ord('\\')
 T_CHEMWEAPON    = ord('=')
-T_BOW           = ord('}')
-T_GUN           = ord('{')
+T_GUN           =   169     # pistol-looking char
 T_SHIELD        = ord(')')
-T_BUCKLER       = ord('(')
 T_ARMOR         = ord(']')
-T_HELMET        =   252     # fancy high up n
+T_HELMET        = ord('[')
+T_CLOAK         = ord('"')
+T_FLUID         = ord('~')
 T_SCRAPELEC     =   171     # 1/2
 T_SCRAPMETAL    =   172     # 1/4
 T_CREDIT        =   172     # 1/4
-
+'''
+unused chars:
+({}';|_?!*
+'''
 
 #
 # special chars #
@@ -105,6 +108,16 @@ CH_TRC      = [191, 184, 187] # top-right corner
 
 
 
+#
+# equip types
+#
+i=0;
+EQ_MAINHAND =i; i+=1;
+EQ_OFFHAND  =i; i+=1;
+EQ_BODY     =i; i+=1;
+EQ_BACK     =i; i+=1;
+EQ_HEAD     =i; i+=1;
+EQ_AMMO     =i; i+=1;
 
 
 

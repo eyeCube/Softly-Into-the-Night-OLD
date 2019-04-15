@@ -157,7 +157,7 @@ class TileMap():
     def thingat(self,x,y):
         lis = self.grid_things[x][y]
         return lis[-1] if lis else None
-    def inamat(self,x,y):    # inanimate thing at tile
+    def inanat(self,x,y):    # inanimate thing at tile
         thing=self.thingat(x,y)
         if not thing: return None
         gridTile=self.grid_things[x][y]
@@ -195,7 +195,7 @@ class TileMap():
             for y in range( max(0, pc.y-rang), min(self.h, pc.y+rang+1) ):
                 
                 if rog.can_see(pc,x,y):
-                    self.discover_place(x,y,self.inamat(x,y))
+                    self.discover_place(x,y,self.inanat(x,y))
     
 
     def render_gameArea(self, pc, view_x,view_y,view_w,view_h):

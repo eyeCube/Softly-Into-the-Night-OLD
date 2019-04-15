@@ -7,7 +7,7 @@
 import random
 
 from const import *
-from colors import COLORS
+from colors import COLORS as COL
 import rogue as rog
 import thing
 import action
@@ -140,36 +140,39 @@ WEAPONS = {
 
 
 def create_weapon(name, x,y):
-    weap = Thing()
+    weap = thing.Thing()
     weap.name = name
     weap.x = x
     weap.y = y
-    #weap.element = []
 
+    data = WEAPONS[name]
+    weap.name       = name
+    weap.type       = data[0]
+    weap.mask       = weap.type
+    weap.value      = data[1]   # $$$
+    weap.stats.mass = data[2]   # kg
+    weap.stats.hpmax= data[3]   # durability
+    weap.stats.hp   = data[3]   # durability
+    weap.material   = data[4]
+    weap.statMods   = {}        # stat modifiers for equipping
+    if data[5][0]:  weap.statMods.update({'range':data[5][0]})
+    if data[5][1]:  weap.statMods.update({'atk':data[5][1]})
+    if data[5][2]:  weap.statMods.update({'dmg':data[5][2]})
+    if data[5][3]:  weap.statMods.update({'dfn':data[5][3]})
+    if data[5][4]:  weap.statMods.update({'arm':data[5][4]})
+    if data[5][5]:  weap.statMods.update({'asp':data[5][5]})
+    if data[5][6]:  weap.statMods.update({'msp':data[5][6]})
+    if data[5][7]:  weap.statMods.update({'element':data[5][7]})
+    weap.ammoType   = data[6]
+    #for mod in data[7]:
+    #    weap.mods.append(mod)
+    
+    weap.color      = COL['white']
+    weap.equipType  = EQ_MAINHAND
+    rog.make(weap,CANEQUIP)
 
-class Weapon(thing.Thing):
-
-    def __init__(self, name):
-        super(Weapon,self).__init__()
-        
-        data = WEAPONS[name]
-        self.name       = name
-        
-        self.type       = data[0]
-        self.mask       = self.type
-        self.value      = data[2]   # $$$
-        self.stats.mass = data[3]   # kg
-        self.stats.hpmax= data[4]   # durability
-        self.stats.hp   = data[4]   # durability
-        self.statMods   = {}        # stat modifiers for equipping
-        if data[5][0]:  self.statMods.update({'atk':data[5][0]})
-        if data[5][1]:  self.statMods.update({'dmg':data[5][1]})
-        if data[5][2]:  self.statMods.update({'asp':data[5][2]})
-        if data[5][3]:  self.statMods.update({'msp':data[5][3]})
-        
-        self.color      = WHITE
-        self.equip.mainHand     = True
-        self.equip.offHand      = True
+    return weap
+#
 
 
 class Bomb(thing.Thing):
@@ -186,8 +189,8 @@ class Bomb(thing.Thing):
         self.name   ="bomb"
         self.type   ='*'
         self.mask   =self.type
-        self.color  =COLORS['yellow']
-        self.bgcolor=COLORS['black']
+        self.color  =COL['yellow']
+        self.bgcolor=COL['black']
         self.r      =Bomb.RADIUS
         self.dmg    =Bomb.DMG
         self.mass   =Bomb.MASS

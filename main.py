@@ -17,6 +17,7 @@ from thing import Thing
 from colors import COLORS as COL
 import debug
 import time
+import weapons
 
 #
 
@@ -67,9 +68,16 @@ def main():
         #HEAL
     rog.givehp(pc)
     rog.givemp(pc)
+        #EQUIP
+    print(pc.stats.get('atk'))
+    item=weapons.create_weapon("sword",pc.x,pc.y)
+    rog.equip(pc, item, EQ_MAINHAND)
+    print(pc.stats.get('atk'))
+    #rog.unwield(pc)
+    #print(pc.stats.get('atk'))
         #BUFF
-    rog.effect_add(pc,{'atk':5})
-    rog.effect_add(pc,{'dmg':5})
+    #rog.effect_add(pc,{'atk':5})
+    #rog.effect_add(pc,{'dmg':5})
     #rog.effect_add(pc,{'arm':0})
     #rog.effect_add(pc,{'msp':15})
     #rog.effect_add(pc,{'msp':-50})'''
@@ -200,7 +208,6 @@ def main():
         
         elif gameState == "game over":
             rog.msg("You died...")
-            gameState = "end"
 
         
     # end while

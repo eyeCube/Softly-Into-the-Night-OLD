@@ -12,6 +12,7 @@ import thing
 
 ARMR = T_ARMOR
 HELM = T_HELMET
+BACK = T_CLOAK
 
 FLSH = MAT_FLESH
 LETH = MAT_LEATHER
@@ -38,7 +39,7 @@ METL = MAT_METAL
 GEAR = {
 #--Name-----------------------Type,$$$$$, KG,   Dur, Mat, (DV, AV, MSp, Vis,FIR,BIO,)
     #Armor
-"cloak"                     :(ARMR,420,   6.0,  150, CLTH,( 4,  1, -3,   0,  10, 10,), ),
+"cloak"                     :(BACK,420,   6.0,  150, CLTH,( 4,  1, -3,   0,  10, 10,), ),
 "skin suit"                 :(ARMR,450,   14.7, 90,  FLSH,( 2,  2, -6,   0,  0,  10,), ),
 "boiled leather plate"      :(ARMR,975,   12.5, 180, LETH,( 0,  4, -6,   0,  5,  5,), ),
 "bone armor"                :(ARMR,890,   27.8, 475, BONE,(-4,  7, -15,  0,  15, 10,), ),
@@ -50,7 +51,7 @@ GEAR = {
 "hazard suit"               :(ARMR,2445,  14.5, 75,  PLAS,(-12, 2, -20,  0,  5,  50,), ),
 "disposable PPE"            :(ARMR,110,   9.25, 25,  PLAS,(-9,  1, -20,  0, -10, 30,), ),
 "wetsuit"                   :(ARMR,1600,  8.2,  50,  PLAS,( 0,  0, -6,   0,  30, 5,), ),
-"fire blanket"              :(ARMR,600,   12.4, 175, CLTH,(-3,  1, -9,   0,  35, 15,), ),
+"fire blanket"              :(BACK,600,   12.4, 175, CLTH,(-3,  1, -9,   0,  35, 15,), ),
 "burn jacket"               :(ARMR,1965,  19.5, 150, CLTH,(-5,  2, -12,  0,  50, 15,), ),
     #Helmets
 "bandana"                   :(HELM,40,    0.1,  30,  CLTH,( 2,  0,  0,   0,  5,  10,), ),
@@ -96,8 +97,14 @@ def create_gear(name,x,y,quality):
     g.hp = int(quality*g.hpmax)
     
     rog.make(g,CANEQUIP)
+    if g.type == ARMR:
+        g.equipType = EQ_BODY
+    elif g.type == HELM:
+        g.equipType = EQ_HEAD
+    elif g.type == BACK:
+        g.equipType = EQ_BACK
     
-    #item resistances
+    #item resistances based on material
 
     return g
 #

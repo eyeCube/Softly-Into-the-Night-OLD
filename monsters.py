@@ -31,18 +31,15 @@ diplomacy={
 
 
 bestiary={
+    # Column names in more detail:
     # Lo qi, Hi qi, Attack, Power, Dodge, Armor, Speed, Move Speed, Attack Speed, Carrying Capacity, Mass, Gold.
-    
-    # - item drops are the kinds of things that would usually always be on the corpse,
-    # such as body part items. Equips and other carried items are added when the
-    # monster is created.
     
 #Type,  Name,                   (Lo\ Hi\ At\Pw\DV\AV\Spd\Msp\Asp\FIR\BIO\SIGT\HEAR\CARRY\KG\$$\),   FLAGS,
 
 '@' : ('human',                 (10, 10, 5, 2, 2, 0, 100,100,100, 10, 10, 20, 100, 30,  65, 500, ),(CANEAT,),),
 'a' : ('abomination',           (12, 4,  0, 4, -8,2, 100,90, 110, 40, 50, 6,  0,   15,  100,0,  ),(),),
 'b' : ('bug-eyed businessman',  (10, 25, 5, 2, 2, 0, 150,120,100, 10, 10, 10, 100, 30,  60, 500, ),(CANEAT,),),
-'B' : ('butcher',               (30, 3,  5, 6, -4,0, 100,100,100,  0, 25, 10, 100, 20,  90, 300, ),(NVISION,),),
+'B' : ('butcher',               (30, 3,  5, 6, -4,0, 100,100,100,  0, 25, 10, 100, 20,  90, 300, ),(),),
 'r' : ('ravaged',               (3,  1,  1, 2, -8,-1,100,80, 70,   0,  0, 10, 0,   5,   35, 0,  ),(RAVAGED,),),
 'R' : ('orctepus',              (15, 5,  6, 2,-12,0, 100,80, 145,  0, 60, 8,  0,   20,  125,0,  ),(CANEAT,),),
 's' : ('slithera',              (6,  10, 10,4, -4,0, 100,33, 150,  0, 20, 5,  0,   5,   30, 0, ),(CANEAT,),),
@@ -78,6 +75,11 @@ corpse_recurrence_percent={
     'z' : 20,
 }
 
+    # - item drops are the kinds of things that would usually always be on the corpse,
+    # such as body part items. Equips and other carried items are added when the
+    # monster is created.
+
+    
 
 # Flag for being ravaged, i.e. needing food or begging severely
 

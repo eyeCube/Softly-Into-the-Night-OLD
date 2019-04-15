@@ -314,9 +314,9 @@ def alert(text):    # message that doesn't go into history
 # "Fun"ctions #
 #-------------#
 
-
+# tilemap
 def thingat(x,y):       return Ref.Map.thingat(x,y)
-def inamat(x,y):        return Ref.Map.inamat(x,y)
+def inanat(x,y):        return Ref.Map.inanat(x,y)
 def monat (x,y):        return Ref.Map.monat(x,y)
 def solidat(x,y):       return Ref.Map.solidat(x,y)
 def cost_enter(x,y):    return Ref.Map.get_nrg_cost_enter(x,y)
@@ -325,38 +325,43 @@ def wallat(x,y):        return (not Ref.Map.get_nrg_cost_enter(x,y) )
 def cost_move(xf,yf,xt,yt,data):
     return Ref.Map.path_get_cost_movement(xf,yf,xt,yt,data)
 def lightsat(x,y):      return Ref.Map.lightsat(x,y)
-    
+
+def is_in_grid_x(x):    return (x>=0 and x<ROOMW)
+def is_in_grid_y(y):    return (y>=0 and y<ROOMH)
+def is_in_grid(x,y):    return (x>=0 and x<ROOMW and y>=0 and y<ROOMH)
+def in_range(x1,y1,x2,y2,Range):    return (maths.dist(x1,y1, x2,y2) <= Range + .34)
+
+# view
 def getx(x):        return x + view_port_x() - view_x()
 def gety(y):        return y + view_port_y() - view_y()
 def mapx(x):        return x - view_port_x() + view_x()
 def mapy(y):        return y - view_port_y() + view_y()
 
-def is_creature(thing): return thing.isCreature
-def is_solid(thing):    return thing.isSolid
-def is_in_grid_x(x):    return (x>=0 and x<ROOMW)
-def is_in_grid_y(y):    return (y>=0 and y<ROOMH)
-def is_in_grid(x,y):    return (x>=0 and x<ROOMW and y>=0 and y<ROOMH)
+# terraforming
+def dig(x,y):       Ref.Map.tile_change(x,y,FLOOR)
 
-def in_range(x1,y1,x2,y2,Range):    return (maths.dist(x1,y1, x2,y2) <= Range + .34)
-def dig(x,y):           Ref.Map.tile_change(x,y,FLOOR)
-def give(thing,item):   thing.inv.append(item)
-def take(thing,item):   thing.inv.remove(item)
-def on  (obj,flag):     return (flag in obj.flags)
+# Thing object functions
+def is_creature(obj):   return obj.isCreature
+def is_solid(obj):      return obj.isSolid
+def give(obj,item):     obj.inv.append(item)
+def take(obj,item):     obj.inv.remove(item)
 def make(obj,flag,val=True):    obj.flags.add(flag)
 def makenot(obj,flag,val=True): obj.flags.remove(flag)
+def hasequip(obj,item): return item in obj.equip
+def on  (obj,flag):     return (flag in obj.flags)
+def has_sight(obj):
+    if (obj.stats.get('sight') and not on(obj,BLIND)): return True
+    return False
 def port(obj,x,y): # move to absolute location, update grid and FOV
     grid_remove(obj)
     obj.x=x; obj.y=y;
     grid_insert(obj)
     update_fov(obj)
-def drop(thing,item,dx=0,dy=0):
-    take(thing,item)
-    item.x=thing.x + dx
-    item.y=thing.y + dy
+def drop(obj,item,dx=0,dy=0):
+    take(obj,item)
+    item.x=obj.x + dx
+    item.y=obj.y + dy
     register_inanimate(item)
-
-def hasequip(obj,item): return item in obj.equip
-
 def givehp(obj,val=9999):   obj.stats.hp+=val; caphp(obj)
 def givemp(obj,val=9999):   obj.stats.mp+=val; capmp(obj)
 def caphp (obj):    obj.stats.hp=min(obj.stats.hp,obj.stats.get('hpmax'))
@@ -411,11 +416,13 @@ def mutate(obj): thing.mutate(obj)
 def kill(obj):
     if on(obj,DEAD): return
     make(obj,DEAD)
+    #corpse
     if on(obj,FIRE):
         create_ashes(obj)
     elif obj.isCreature:
         if dice.roll(100) < monsters.corpse_recurrence_percent[obj.type]:
             create_corpse(obj)
+    #release
     if obj.isCreature:
         Ref.environ.kill(obj)
     else:
@@ -427,16 +434,35 @@ def kill(obj):
 #   Equipment   #
 #---------------#
 
-def unwield(obj):
-    if obj.equip.mainHand != obj: return False
-    effect_remove(obj, obj.equip.mainHand.statMods ) 
-    obj.equip.mainHand = None
-    return True
-def wield(obj,weap):
-    if obj.equip.mainHand != None: return False
-    effid = effect_add(obj,weap.statMods)
-    obj.equip.mainHand = weap
-    return True
+def equip(obj,item,equipType): # equip an item in 'equipType' slot
+    slotName = thing.getSlotName(equipType)
+    slot = obj.equip.__dict__[slotName]
+    if not on(item,CANEQUIP): #can't be equipped
+        return None
+    if not item.equipType == equipType: #can't be wielded in mainhand
+        return None
+    if not slot.isEmpty(): #already wielding something
+        return None 
+    effID = effect_add(obj,item.statMods)
+    slot.setSlot(item, effID)
+    return effID
+def deequip(obj,equipType): # remove equipment from slot 'equipType'
+    slotName = thing.getSlotName(equipType)
+    slot = obj.equip.__dict__[slotName]
+    if slot.isEmpty(): #nothing equipped here
+        return None
+    effect_remove(obj, slot.getModID() )
+    item = slot.clear()
+    return item
+# build equipment and place in the world
+def create_weapon(name,x,y):
+    weap=weapons.create_weapon(name,x,y)
+    register_inanimate(weap)
+    return weap
+def create_gear(name,x,y):
+    obj=gear.create_gear(name,x,y)
+    register_inanimate(obj)
+    return obj
 
 
 
@@ -482,7 +508,8 @@ def clear_listeners():      Ref.c_managers['events'].clear()
 #------------------------#
 
 def effect_add(obj,mod):        # Stat mod create
-    thing.effect_add(obj,mod)
+    effID=thing.effect_add(obj,mod)
+    return effID
 def effect_remove(obj,modID):   # Stat mod delete
     thing.effect_remove(obj,modID)
 
@@ -545,17 +572,19 @@ def fov_compute(obj):
 def update_fovmap_property(fovmap, x,y, value): libtcod.map_set_properties( fovmap, x,y,value,True)
 def update_fov(obj):    Ref.c_managers['fov'].add(obj)
 def compute_fovs():     Ref.c_managers['fov'].run()
-def update_all_fovmaps():
-    # !!!! NOTE first update Map 's fovmap !!!!
-    for creat in list_creatures():
-        fovMap=creat.fov_map
-        libtcod.map_copy(Ref.Map.fov_map,fovMap)
 # circular FOV function
 def can_see(obj,x,y):
     if (get_light_value(x,y) == 0 and not on(obj,NVISION)):
         return False
     return ( in_range(obj.x,obj.y, x,y, obj.stats.get('sight')) #<- circle-ize
              and libtcod.map_is_in_fov(obj.fov_map,x,y) )
+#copies Map 's fov data to all creatures - only do this when needed
+# !!!! NOTE:: first update Map 's fovmap !!!!
+def update_all_fovmaps():
+    for creat in list_creatures():
+        if has_sight(creat):
+            fovMap=creat.fov_map
+            libtcod.map_copy(Ref.Map.fov_map,fovMap)
 
 
 
@@ -963,5 +992,27 @@ STATMODS_CUDGELS    ={'atk':2,'dmg':2,'nrg':-2}
     libtcod.console_delete(con_box1)
     libtcod.console_delete(con_box2)
 '''
+
+'''
+def shield(obj,item): # equip an item in the offhand
+    if not on(item,CANEQUIP): #can't be equipped
+        return None
+    if not item.equipType == EQ_OFFHAND: #can't be wielded in mainhand
+        return None
+    if not obj.equip.offHand.isEmpty(): #already wielding something
+        return None 
+    effID = effect_add(obj,item.statMods)
+    obj.equip.offHand.setSlot(item, effID)
+    return effID
+def wearBody(obj,item): # put on body armor
+    if not on(item,CANEQUIP): #can't be equipped
+        return None
+    if not item.equipType == EQ_BODY: #can't be worn on body
+        return None
+    if not obj.equip.body.isEmpty(): #already wearing something on body
+        return None 
+    effID = effect_add(obj,item.statMods)
+    obj.equip.body.setSlot(item, effID)
+    return effID'''
 
 
