@@ -163,7 +163,7 @@ def create_player(sx,sy):
 def create_log():       Ref.log=game.MessageLog()
 def msg(new):           Ref.log.add(new, str(get_turn()) )
 def msg_clear():
-    clr=(msgs_w(), msgs_h())
+    clr=libtcod.console_new(msgs_w(), msgs_h())
     libtcod.console_blit(clr, 0,0, msgs_w(),msgs_h(),  con_game(), 0,0)
     libtcod.console_delete(clr)
 

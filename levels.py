@@ -71,7 +71,7 @@ def drunkardWalk(Map, walks, length, bounciness, weights):
 
 #UNFINISHED...
 # file == .lvl file to load from when creating the cells
-def make_celledRoom(cols,rows,Map,file):
+'''def make_celledRoom(cols,rows,Map,file):
     # read from the file
     if file[:-4] != ".lvl":
         print("ERROR: File '{}' wrong file type (must be '.lvl'). Aborting...".format(file))
@@ -99,7 +99,9 @@ def make_celledRoom(cols,rows,Map,file):
     except FileNotFoundError:
         print("ERROR: File '{}' not found. Aborting...".format(file))
         raise
-    '''# for each cell in the room
+'''
+
+'''# for each cell in the room
     for cc in range(cols):
         for rr in range(rows):
             # for each tile in each cell

@@ -285,11 +285,11 @@ def chargen():
         #create menu options
         _menuList={} #stores {classChar : className} #all playable classes
         _randList=[] #for random selection.
-        for k,v in CLASSES.items(): # k=ID v=charType
+        for k,v in jobs.getJobs().items(): # k=ID v=charType
             if v not in rog.playableJobs(): continue #can't play as this class yet
             ID=k        # get ID of the class
             typ=v       # get chartype of the class
-            name=jobs.JOBSNAMES[ID]
+            name=jobs.getName(ID)
             _classList.update({name:(typ,ID,)})
             _menuList.update({typ:name})
             _randList.append(ID)
@@ -299,7 +299,7 @@ def chargen():
         #random
         if _className == 'random':
             _classID = random.choice(_randList)
-            _className = jobs.JOBSNAMES[_classID]
+            _className = jobs.getName(_classID)
         #get the relevant data
         _type = _classList[_className][0] # get the class Char value
         _mask = _type

@@ -325,22 +325,6 @@ CLS_DEPRIVED    = i; i+=1;
 CLS_SOLDIER     = i; i+=1;
 CLS_THIEF       = i; i+=1;
 
-CLASSES = {
-CLS_ENGINEER    : "E",
-CLS_TECHNICIAN  : "T",
-CLS_THIEF       : "t",
-CLS_SECURITY    : "O",
-CLS_ATHLETE     : "A",
-CLS_PILOT       : "p",
-CLS_SMUGGLER    : "u",
-CLS_CHEMIST     : "C",
-CLS_POLITICIAN  : "I",
-CLS_RIOTPOLICE  : "P",
-CLS_JANITOR     : "j",
-CLS_DEPRIVED    : "d",
-CLS_SOLDIER     : 'S',
-    }
-
 
 
 #

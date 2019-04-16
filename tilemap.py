@@ -105,10 +105,13 @@ class TileMap():
         self.grid_things =      [ [ [] for y in range(h)] for x in range(w) ]
         self.grid_terrain =     [ [ None for y in range(h)] for x in range(w) ]
         self.grid_lights=       [ [ [] for y in range(h)] for x in range(w) ]
+
         self.lightmap_init()
+        
+        #init all terrain
         for x in range(w):
             for y in range(h):
-                self.tile_change(x,y,T_WALL)
+                self.tile_change(x,y,T_FLOOR)
 
         self.question_marks = []
     #

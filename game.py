@@ -17,6 +17,7 @@ import colors
 import misc
 import player
 import debug
+import jobs
 
     
 timer = debug.Timer()
@@ -490,25 +491,22 @@ class MessageLog:
 # also stores individual game data
 
 class SavedGame:
-    DEFAULTS = [
-        'jobs',
-        'E',
-        'A',
-        'C',
-        'd',
-        'j',
-        'O',
-        'p',
-        'P',
-        'S',
-        't',
-        'T',
-        'u',
-        ]
     
     def __init__(self):
+        self.create_defaultData()
+        #global save data is progress shared across savegames
         self.file=os.path.join(os.path.curdir,"save","globalsavedata.sav")
+        #init empty lists to fill later during loading
         self.playableJobs=[]
+
+    #make the list containing the data that will be saved into globalsavedata
+        #by default (this is the lowest progress state)
+    def create_defaultData(self):
+        self.DEFAULTS = []
+        #add jobs
+        self.DEFAULTS.append('jobs')
+        for job in jobs.getJobs().values(): #job chars
+            self.DEFAULTS.append(job)
 
     #load the global saved data that's shared between games
     def loadSavedData(self):
