@@ -111,31 +111,12 @@ class TileMap():
                 self.tile_change(x,y,T_WALL)
 
         self.question_marks = []
-        
-        # Procedural generation #
-        
-            # drunken walk
-        xp = 15
-        yp = 15
-        for i in range(10): # clearing where you start
-            for j in range(10):
-                self.tile_change(xp-5+i,yp-5+j,T_FLOOR)
-        self.tile_change(xp,yp,T_FLOOR)
-        for i in range(6000):
-            xp+=int(random.random()*3)-1
-            yp+=int(random.random()*3)-1
-            xp=maths.restrict(xp, 0,w-1)
-            yp=maths.restrict(yp, 0,h-1)
-            self.tile_change(xp,yp,T_FLOOR)
-            
-            for x in range(1,4):
-                for y in range(1,2):
-                    xx=maths.restrict(x+xp-1, 0,w-1)
-                    yy=maths.restrict(y+yp-1, 0,h-1)
-                    self.tile_change(xx,yy,T_FLOOR)
-                        
-        self.tile_change(xp,yp,T_STAIRDOWN)
     #
+
+    #
+    def COPY(self, tilemap): #copy a TileMap object into another
+        for k,v in tilemap.__dict__.items():
+            self.__dict__.update({k:v})
 
     
     def tile_change(self, x,y, typ):

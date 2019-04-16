@@ -19,8 +19,8 @@ import libtcodpy as libtcod
 GAME_TITLE = "Softly Into the Night"
 
 # Room size
-ROOMW       = 150
-ROOMH       = 150
+ROOMW       = 100
+ROOMH       = 75
 
 TILES_PER_ROW = 16          # Num tiles per row
 TILES_PER_COL = 16          # " per column

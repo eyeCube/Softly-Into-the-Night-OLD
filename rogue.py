@@ -163,7 +163,7 @@ def create_player(sx,sy):
 def create_log():       Ref.log=game.MessageLog()
 def msg(new):           Ref.log.add(new, str(get_turn()) )
 def msg_clear():
-    clr=libtcod.console_new(msgs_w(), msgs_h())
+    clr=(msgs_w(), msgs_h())
     libtcod.console_blit(clr, 0,0, msgs_w(),msgs_h(),  con_game(), 0,0)
     libtcod.console_delete(clr)
 
@@ -286,6 +286,10 @@ def game_update():
 # printing functions #
 
 #@debug.printr
+def refresh():  # final to root and flush
+    libtcod.console_blit(con_final(), 0,0,window_w(),window_h(),  0, 0,0)
+    libtcod.console_flush()
+#@debug.printr
 def render_gameArea(pc) :
     con = Ref.Map.render_gameArea(pc, view_x(),view_y(),view_w(),view_h() )
     #libtcod.console_clear(con_game())
@@ -296,10 +300,6 @@ def render_gameArea(pc) :
 def render_hud(pc) :
     con = misc.render_hud(hud_w(),hud_h(), pc, get_turn(), d_level() )
     libtcod.console_blit(con,0,0,0,0, con_game(),hud_x(),hud_y())
-#@debug.printr
-def refresh():  # final to root and flush
-    libtcod.console_blit(con_final(), 0,0,window_w(),window_h(),  0, 0,0)
-    libtcod.console_flush()
 #@debug.printr
 def blit_to_final(con,xs,ys, xdest=0,ydest=0): # window-sized blit to final
     libtcod.console_blit(con, xs,ys,window_w(),window_h(),

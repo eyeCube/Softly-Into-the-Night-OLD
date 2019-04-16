@@ -69,11 +69,11 @@ def main():
     rog.givehp(pc)
     rog.givemp(pc)
         #EQUIP
-    print(pc.stats.get('atk'))
+    #print(pc.stats.get('atk'))
     item=weapons.create_weapon("sword",pc.x,pc.y)
     rog.equip(pc, item, EQ_MAINHAND)
-    print(pc.stats.get('atk'))
-    #rog.unwield(pc)
+    #print(pc.stats.get('atk'))
+    #rog.deequip(pc,EQ_MAINHAND)
     #print(pc.stats.get('atk'))
         #BUFF
     #rog.effect_add(pc,{'atk':5})

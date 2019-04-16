@@ -18,6 +18,21 @@ import dice
 
 
 #
+#   init player object. Pass a Thing into the function...
+#
+
+def init(pc):
+    
+    # register for sense events for the message log
+    rog.add_listener_sights(pc)
+    rog.add_listener_sounds(pc)
+    rog.view_center(pc)
+    rog.givehp(pc)
+    rog.givemp(pc)
+#
+
+
+#
 #   constant commands
 #   can be performed from anywhere in the main game loop
 #
@@ -48,7 +63,7 @@ def commands(pc, pcAct):
     
     for act,arg in pcAct:
         
-        rog.update_base()   # refresh screen
+        rog.update_base()
 
         # actions that take multiple turns
         busyTask=rog.occupations(pc)
@@ -120,7 +135,12 @@ def commands(pc, pcAct):
         # special actions #
         #
         
-        if act == 'find player':
+        if act == 'find player': #useful to immediately show where the player is
+            rog.view_center_player()
+            rog.update_game()
+            rog.update_final()
+            rog.update_base()
+            rog.game_update() #call all the updates
             rog.alert('press any key to continue...')
             rog.Input(rog.getx(pc.x), rog.gety(pc.y), mode='wait')
             rog.update_base()
@@ -146,19 +166,6 @@ def commands(pc, pcAct):
 
 
 
-#
-#   init player object. Pass a Thing into the function...
-#
-
-def init(pc):
-    
-    # register for sense events for the message log
-    rog.add_listener_sights(pc)
-    rog.add_listener_sounds(pc)
-    rog.view_center(pc)
-    rog.givehp(pc)
-    rog.givemp(pc)
-#
 
 #
 # Chargen
@@ -257,12 +264,9 @@ def chargen():
                     _pronouns = _genderList[_genderName]
                 if _genderName=='': #failed to select or add new gender
                     _gender='' #prompt user again for gender
-            else:
+            else: #random, male and female
                 if _gender == 'random':
-                    if dice.roll(2) == 1:
-                        _gender = 'male'
-                    else:
-                        _gender = 'female'
+                    _gender = random.choice(("male","female",))
                 if _gender == 'male':
                     _genderName = "male"
                     _pronouns = ('he','him','his',)
@@ -294,8 +298,7 @@ def chargen():
         _className = rog.menu("Class Select",xx,yy,_menuList,autoItemize=False)
         #random
         if _className == 'random':
-            choice = dice.roll(len(_randList))
-            _classID = _randList[choice]
+            _classID = random.choice(_randList)
             _className = jobs.JOBSNAMES[_classID]
         #get the relevant data
         _type = _classList[_className][0] # get the class Char value
@@ -330,8 +333,7 @@ def chargen():
         pc = rog.create_monster('@',0,0,COLORS['white'],mutate=0)
         pc.name = _name
         pc.title = _title
-        pc.type = _type
-        pc.mask = _mask
+        pc.mask = pc.type
         pc.job = _className
         pc.gender = _genderName
         pc.pronouns = _pronouns

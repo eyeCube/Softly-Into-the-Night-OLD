@@ -832,14 +832,21 @@ class Manager_Menu(Manager):
         rog.refresh()
         
     def draw(self):
+        def sorter(val):
+            k,v = val
+            #if (ord(k) < (65+26) and ord(k) >= 65): #this code makes capital and lowercase appear in inconsistent orders in the list...
+            #    k=chr(ord(k)+32) #offset CAPS chars to make capital and lowercase equal (with capital coming second)
+            return k
         y=0
     #   draw title and box
         misc.rectangle(self.con, 0,0, self.w,self.h, 0)
-        title="< {} >".format(self.name)
+        title="<{}>".format(self.name)
         tx=math.floor( (self.w - len(title)) /2)
         libtcod.console_print(self.con, tx, 0, title)
     #   draw options
-        for key,item in self.keysItems.items():
+        lis=list(self.keysItems.items())
+        lis.sort(key=sorter)
+        for key,item in lis:
             name=self.get_name(item)
             libtcod.console_print(
                 self.con, 1, y + 1, '({i}) {nm}'.format(i=key, nm=name) )
