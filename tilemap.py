@@ -25,22 +25,6 @@ from colors import COLORS as COL
 
 
 
-IDENTIFIER = {
-    ord(' ')        : "nothing.",
-    T_FLOOR         : "a floor.",
-    T_WALL          : "a wall.",
-    T_STAIRDOWN     : "a staircase leading down.",
-    T_STAIRUP       : "a staircase leading up.",
-    T_FOOD          : "some foodstuffs.",
-    T_ROCK          : "a rock or stone.",
-    T_CORPSE        : "a corpse or skeleton.",
-    ord("?")        : "a silhouette or light.",
-    }
-for k,v in monsters.bestiary.items():
-    if isinstance(k, str):
-        IDENTIFIER.update({ord(k) : v[0]})
-    else:
-        IDENTIFIER.update({k : v[0]})
 
 
 
@@ -75,11 +59,13 @@ class Tile():
         self.dampen=volume_dampen
 
 
-TILES={         #                   fgcolor ,bg, costEnterLeave,opaque,damp
-    T_FLOOR     : Tile(T_FLOOR,       'neutral', 'deep',    100,0,  False,1,),
-    T_WALL      : Tile(T_WALL,        'orange', 'dkred',   0,  0,  True, 201,),
-    T_STAIRDOWN : Tile(T_STAIRDOWN,   'accent', 'purple',  100,0,  False,2,),
-    T_STAIRUP   : Tile(T_STAIRUP,     'accent', 'purple',  100,0,  False,2,),
+TILES={         #               fgcolor ,bg, costEnter,Leave, opaque,damp
+    FLOOR     : Tile(FLOOR,     'neutral', 'deep',    100,0,  False,1,),
+    WALL      : Tile(WALL,      'dkred', 'orange',     0,0,  True, 201,),
+    STAIRDOWN : Tile(STAIRDOWN, 'accent', 'purple',  100,0,  False,1,),
+    STAIRUP   : Tile(STAIRUP,   'accent', 'purple',  100,0,  False,1,),
+    FUNGUS    : Tile(FUNGUS,    'green', 'dkgreen',  100,20, False,1,),
+    SHROOM    : Tile(SHROOM,    'yellow', 'dkgreen',  200,0,  True,2,),
     }
         
 '''class Floor(Tile):
@@ -111,7 +97,13 @@ class TileMap():
         #init all terrain
         for x in range(w):
             for y in range(h):
-                self.tile_change(x,y,T_FLOOR)
+                self.tile_change(x,y,FLOOR)
+        for x in range(w):
+            for y in range(h):
+                if random.random()*100 > 50:
+                    self.tile_change(x,y,FUNGUS)
+        #run cellular automata
+        self.cellular_automata(FUNGUS,FLOOR,8, -1, -1,-1,-1,0, 1,1,1,1)
 
         self.question_marks = []
     #
@@ -158,8 +150,6 @@ class TileMap():
     def lightsat(self,x,y):
         return self.grid_lights[x][y]
     
-    def identify_symbol(self,symbol):
-        return IDENTIFIER.get(symbol,"unknown")
     #
 
 
@@ -269,8 +259,8 @@ class TileMap():
         if thing and rog.on(thing,FIRE):
             choices=['gold','orange','trueyellow']
             bgCol=COL[choices[dice.roll(len(choices)) - 1]]
-        elif (self.get_char(x,y) == T_STAIRDOWN
-                or self.get_char(x,y) == T_STAIRUP ):
+        elif (self.get_char(x,y) == STAIRDOWN
+                or self.get_char(x,y) == STAIRUP ):
             bgCol=bgTile
         elif self.nthings(x, y) >= 2: bgCol=COL['dkgreen']
         elif thing==rog.pc():
@@ -322,6 +312,64 @@ class TileMap():
         self.grid_lighting[x][y]=value
     def get_light_value(self, x, y):
         return self.grid_lighting[x][y]
+
+#-----------------------#
+# procedural generation #
+#-----------------------#
+
+    # apply cellular automata to the terrain map
+    # Parameters:
+    #   onChar : the "1" state character
+    #   offChar: the "0" state char
+    #   iterations: number of iterations to perform
+    #   n0-n8: what to do when number of neighbors of a given cell is
+    #       the value to the right of n:
+    #       -1      : switch to "0" or "off"
+    #       0       : remain unchanged
+    #       1       : switch to "1" or "on"
+    def cellular_automata(self,onChar,offChar,iterations,n0=-1,n1=-1,n2=-1,n3=-1,n4=-1,n5=-1,n6=-1,n7=-1,n8=-1):
+        def doYourThing(x,y,n):
+            if n==-1:
+                self.tile_change(x,y,offChar)
+            elif n==1:
+                self.tile_change(x,y,onChar)
+        for ii in range(iterations):
+            for x in range(self.w):
+                for y in range(self.h):
+                    num=0
+                    for xx in range(3):
+                        for yy in range(3):
+                            x1=x-1+xx
+                            y1=y-1+yy
+                            if x1<0 or x1>=self.w or y1<0 or y1>=self.h:
+                                continue
+                            if (self.get_char(x1,y1) == onChar
+                                and not (xx==1 and yy==1) ):
+                                num+=1 #count adjacent tiles of interest
+                    if num==0:
+                        doYourThing(x,y,n0)
+                    elif num==1:
+                        doYourThing(x,y,n1)
+                    elif num==2:
+                        doYourThing(x,y,n2)
+                    elif num==3:
+                        doYourThing(x,y,n3)
+                    elif num==4:
+                        doYourThing(x,y,n4)
+                    elif num==5:
+                        doYourThing(x,y,n5)
+                    elif num==6:
+                        doYourThing(x,y,n6)
+                    elif num==7:
+                        doYourThing(x,y,n7)
+                    elif num==8:
+                        doYourThing(x,y,n8)
+    #end def
+
+
+
+    def p():
+        pass
 
 
 

@@ -54,18 +54,29 @@ K_INSERT    = 254
 
 
 
+#
+# Tiles
+#
+
+FLOOR           =   249     # centered dot
+WALL            = ord('#')
+STAIRUP         = ord('<')
+STAIRDOWN       = ord('>')
+FUNGUS          = ord('\"')
+TREE            =   5       # club
+SHROOM          =   6       # spade
 
 #
 # Thing types
 #
 
-T_FLOOR         =   249     # centered dot
+T_TRAP          = ord('!')
+T_TREE          =   5       # club
+T_SHROOM        =   6       # spade
+T_FUNGUS        = ord('\"')
+T_FOUNTAIN      =   144     # faucet-looking thing
 T_DOORCLOSED    = ord('+')
 T_DOOROPEN      = ord('-')
-T_WALL          = ord('#')
-T_TRAP          = ord('^')
-T_STAIRUP       = ord('<')
-T_STAIRDOWN     = ord('>')
 T_MONEY         = ord('$')
 T_POTION        =   173     # upside down '!'
 T_PHONE         =   168     # upside down '?' - basically a "magic scroll"
@@ -75,15 +86,18 @@ T_BULLET        = ord(':')
 T_ROCK          = ord('.')
 T_BOULDER       = ord('0')
 T_CONTAINER     = ord('|')
+T_TERMINAL      =   167     # o underlined
 T_MULTIITEMS    = ord('&')
 T_MELEEWEAPON   = ord('/')
 T_THROWWEAPON   = ord('\\')
 T_CHEMWEAPON    = ord('=')
+T_LAUNCHER      =   151     # sqrt
 T_GUN           =   169     # pistol-looking char
+T_LASERGUN      =   170     # backward pistol-looking char
 T_SHIELD        = ord(')')
+T_CLOAK         = ord('(')
 T_ARMOR         = ord(']')
 T_HELMET        = ord('[')
-T_CLOAK         = ord('"')
 T_FLUID         = ord('~')
 T_SCRAPELEC     =   171     # 1/2
 T_SCRAPMETAL    =   172     # 1/4
@@ -168,6 +182,13 @@ DIRECTIONS_TERSE={
     (1,1)   : 'SE',
 }
 
+
+#
+# genders
+#
+GENDER_MALE     = 11
+GENDER_FEMALE   = 12
+GENDER_OTHER    = 255
 
 
 

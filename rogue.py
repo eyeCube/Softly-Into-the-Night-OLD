@@ -29,6 +29,25 @@ from colors import COLORS as COL
 
 
 
+IDENTIFIER = {
+    ord(' ')        : "nothing",
+    FLOOR           : "a cold stone floor",
+    WALL            : "a rough stone wall",
+    STAIRDOWN       : "a staircase leading down",
+    STAIRUP         : "a staircase leading up",
+    T_FOOD          : "some foodstuffs",
+    T_ROCK          : "a rock or stone",
+    T_CORPSE        : "a corpse or skeleton",
+    ord("?")        : "a silhouette or light",
+    }
+for k,v in monsters.bestiary.items():
+    if isinstance(k, str):
+        IDENTIFIER.update({ord(k) : v[0]})
+    else:
+        IDENTIFIER.update({k : v[0]})
+def identify(t):
+    return IDENTIFIER.get(t,"???")
+        
 
 
 def d_level(): return 1

@@ -7,36 +7,26 @@ from const import *
 import rogue as rog
 import thing
 
-def create(name):
-    if name=="wood":
-        return wood()
-    elif name=="blood":
-        return blood()
 
-def blood(x,y):
-    tt = tt()
-    tt.x = x
-    tt.y = y
-    tt.mask = chr(T_FLUID)
-    tt.name = 'blood'
-    tt.color=COL['dkmagenta']
-    tt.stats.reselec=75
-    tt.stats.resfire=50
-    tt.stats.resbio=25
+
+def gore(x,y):
+    tt = thing.Thing(x,y,_type=chr(T_FLUID),name='hunk of meat',color=COL['dkmagenta'])
+    tt.mass=1
     rog.register_inanimate(tt)
     return tt
 
 def wood(x,y):
-    tt=tt()
-    tt.name="wood"
-    tt.mask=chr(15)
-    tt.material=MAT_WOOD
-    tt.x=x
-    tt.y=y
+    tt=thing.Thing(x,y,_type=chr(15),name="wood",color=COL['brown'],material=MAT_WOOD)
     tt.mass=20
-    tt.stats.hp=1250
-    tt.color=COL['brown']
-    
+    tt.stats.hpmax=20
+    rog.givehp(tt)
     rog.register_inanimate(tt)
     return tt
 
+def corpseShroom(x,y):
+    tt=thing.Thing(x,y,_type=chr(T_FUNGUS),name="corpiscle",color=COL['red'],material=MAT_FUNGUS)
+    tt.mass=2
+    tt.stats.hpmax=1
+    rog.givehp(tt)
+    rog.register_inanimate(tt)
+    return tt

@@ -36,17 +36,15 @@ SPD_PERAGI  =
 class Thing(Observable):
     new_id = -1
     
-    def __init__(self):
+    def __init__(self, x=None,y=None,z=0,_type=None,name=None,color=None,material=None):
         super(Thing,self).__init__()
         
         self.id=Thing.get_new_id()
         
-    #   vars that need to be set for all objs are set to None
-    #   but not all vars set to None must be set
-        self.name           = None  # unique or generic
+        self.name           = name  # unique or generic
         self.title          = "the "
         self.pronouns   = ("it","it","its",)
-        self.color      = None  # drawing color
+        self.color      = color  # drawing color
         self.bgcolor    = COL['black']
         self.flags      = set()
         self.skills     = {}
@@ -55,13 +53,13 @@ class Thing(Observable):
         self.statMods   = {}    # when equipped by someone else
         self.isSolid    = False # cannot be moved through if solid
         self.isCreature = False
-        self.x          = None  # position in the game world
-        self.y          = None
-        self.z          = None
-        self.type       = None  # char (int) represents type/species
-        self.mask       = None  # char (int) displayed to screen
-        self.mass       = None  # KG
-        self.material   = None  # what's it made of?
+        self.x          = x     # position in the game world
+        self.y          = y
+        self.z          = z
+        self.type       = _type  # char (int) represents type/species
+        self.mask       = _type  # char (int) displayed to screen
+        self.mass       = 0  # KG
+        self.material   = material  # what's it made of?
         
     #   values for creatures
         self.mutations  = None  # number of mutations this obj has undergone
