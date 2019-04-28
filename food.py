@@ -19,7 +19,7 @@ SAVOR= TASTE_SAVORY
 #   KG          mass
 #   Mat         material
 #   Taste       flag describing the flavor
-#   Food        How many units of food recovery / hunger satiation
+#   Food        Nutrition; How many units of food recovery / hunger satiation
 #   P           poison value
 #   C           flag: Can be Cooked
 #   S           flag: Can be Salted

@@ -14,7 +14,10 @@ import orangio  as IO
 import action
 import debug
 import dice
+import fluids
 import game
+import items
+import levels
 import lights
 import misc
 import monsters
@@ -63,6 +66,7 @@ def d_level(): return 1
 class Ref():        # stores global references to objects
     ctrl        = None  # global controller
     con         = None  # consoles
+    data        = None
     Map         = None
     clock       = None
     update      = None
@@ -132,17 +136,30 @@ def update_final():     Ref.update.final()
 
 
     # map
-def create_map():   Ref.Map=tilemap.TileMap(ROOMW,ROOMH)
-def identify_symbol_at(x,y):
-    asci = libtcod.console_get_char(0, getx(x),gety(y))
-    char = "{} ".format(chr(asci)) if (asci < 128 and not asci==32) else ""
-    desc=Ref.Map.identify_symbol(asci)
-    return "{}{}".format(char, desc)
+def create_map():
+    Ref.Map=tilemap.TileMap(ROOMW,ROOMH)
+    Ref.Map.init_specialGrids()
+    Ref.Map.init_terrain()
+def map():          return Ref.Map
 def map_reset_lighting():   Ref.Map.grid_lighting_init()
 def tile_lighten(x,y,value):Ref.Map.tile_lighten(x,y,value)
 def tile_darken(x,y,value): Ref.Map.tile_darken(x,y,value)
 def tile_set_light_value(x,y,value):Ref.Map.tile_set_light_value(x,y,value)
 def get_light_value(x,y):   return Ref.Map.get_light_value(x,y)
+def map_generate(Map,level): levels.generate(Map,level)
+def identify_symbol_at(x,y):
+    asci = libtcod.console_get_char(0, getx(x),gety(y))
+    char = "{} ".format(chr(asci)) if (asci < 128 and not asci==32) else ""
+    desc=IDENTIFIER.get(asci,"???")
+    return "{}{}".format(char, desc)
+def grid_remove(obj): #kill thing
+    Ref.Map.remove_thing(obj)
+def grid_insert(obj): #add thing
+    Ref.Map.add_thing(obj)
+def grid_lights_insert(obj):    Ref.Map.grid_lights[obj.x][obj.y].append(obj)
+def grid_lights_remove(obj):    Ref.Map.grid_lights[obj.x][obj.y].remove(obj)
+def grid_fluids_insert(obj):    Ref.Map.grid_fluids[obj.x][obj.y].append(obj)
+def grid_fluids_remove(obj):    Ref.Map.grid_fluids[obj.x][obj.y].remove(obj)
 
     
     # view
@@ -176,6 +193,14 @@ def create_player(sx,sy):
     player.init(pc)
     Ref.pc = pc
     return pc
+
+
+    # gamedata
+def create_data():      Ref.data=game.GameData()
+def dlvl():             return Ref.data.dlvl() #current dungeon level of player
+# level up / down : functions change the player's dungeon level.
+def level_up():         Ref.data.dlvl_update(Ref.data.dlvl() + 1)
+def level_down():       Ref.data.dlvl_update(Ref.data.dlvl() - 1)
 
 
     # log
@@ -334,16 +359,20 @@ def alert(text):    # message that doesn't go into history
 #-------------#
 
 # tilemap
+def thingsat(x,y):      return Ref.Map.thingsat(x,y)
 def thingat(x,y):       return Ref.Map.thingat(x,y)
 def inanat(x,y):        return Ref.Map.inanat(x,y)
 def monat (x,y):        return Ref.Map.monat(x,y)
 def solidat(x,y):       return Ref.Map.solidat(x,y)
+def wallat(x,y):        return (not Ref.Map.get_nrg_cost_enter(x,y) )
+def fluidsat(x,y):      return Ref.Map.fluidsat(x,y)
+def lightsat(x,y):      return Ref.Map.lightsat(x,y)
+def fireat(x,y):        return Ref.pt_managers['fire'].fireat(x,y)
+
 def cost_enter(x,y):    return Ref.Map.get_nrg_cost_enter(x,y)
 def cost_leave(x,y):    return Ref.Map.get_nrg_cost_leave(x,y)
-def wallat(x,y):        return (not Ref.Map.get_nrg_cost_enter(x,y) )
 def cost_move(xf,yf,xt,yt,data):
     return Ref.Map.path_get_cost_movement(xf,yf,xt,yt,data)
-def lightsat(x,y):      return Ref.Map.lightsat(x,y)
 
 def is_in_grid_x(x):    return (x>=0 and x<ROOMW)
 def is_in_grid_y(y):    return (y>=0 and y<ROOMH)
@@ -359,19 +388,27 @@ def mapy(y):        return y - view_port_y() + view_y()
 # terraforming
 def dig(x,y):       Ref.Map.tile_change(x,y,FLOOR)
 
-# Thing object functions
+# Thing functions
 def is_creature(obj):   return obj.isCreature
 def is_solid(obj):      return obj.isSolid
-def give(obj,item):     obj.inv.append(item)
-def take(obj,item):     obj.inv.remove(item)
 def make(obj,flag,val=True):    obj.flags.add(flag)
 def makenot(obj,flag,val=True): obj.flags.remove(flag)
 def hasequip(obj,item): return item in obj.equip
 def on  (obj,flag):     return (flag in obj.flags)
+def give(obj,item):
+    if on(item,FIRE):
+        burn(obj, FIREBURN)
+        cooldown(item)
+        obj.inv.add(item)
+def take(obj,item):
+    obj.inv.remove(item)
+def mutate(obj):
+    thing.mutate(obj)
+    event_sight(obj.x,obj.y,"{t}{n} mutated!".format(t=obj.title,n=obj.name))
 def has_sight(obj):
     if (obj.stats.get('sight') and not on(obj,BLIND)): return True
     return False
-def port(obj,x,y): # move to absolute location, update grid and FOV
+def port(obj,x,y): # move thing to absolute location, update grid and FOV
     grid_remove(obj)
     obj.x=x; obj.y=y;
     grid_insert(obj)
@@ -399,8 +436,8 @@ def gain (obj,stat,val=1,Max=999):
 def drain (obj,stat,val=1):
     old = getattr(obj.stats,stat)
     setattr(obj.stats,stat, old-val )
-    if (stat=='end' or stat=='hpmax'): caphp(obj)
-    if (stat=='mnd' or stat=='mpmax'): capmp(obj)
+    if (stat=='hpmax'): caphp(obj)
+    if (stat=='mpmax'): capmp(obj)
 #damage hp
 def hurt(obj, dmg):
     dmg = round(dmg)
@@ -416,9 +453,14 @@ def sap(obj, dmg):
         zombify(obj)
 #deal fire damage
 def burn(obj, dmg):
-    if on(obj,WET): return False
+    if on(obj,WET):
+        makenot(obj, WET)
+        #steam=create_fluid(obj.x, obj.y, "steam")
+        return False
     thing.burn(obj, dmg)
     return True
+def cooldown(obj, temp=999):
+    thing.cooldown(obj, temp)
 #deal bio damage
 def disease(obj, dmg): thing.disease(obj, dmg)
 #deal chem damage
@@ -437,51 +479,22 @@ def kill(obj):
     make(obj,DEAD)
     #corpse
     if on(obj,FIRE):
-        create_ashes(obj)
+        if (obj.material==MAT_FLESH
+            or obj.material==MAT_WOOD
+            or obj.material==MAT_FUNGUS
+            or obj.material==MAT_VEGGIE
+            or obj.material==MAT_LEATHER
+            ):
+            create_ashes(obj)
     elif obj.isCreature:
         if dice.roll(100) < monsters.corpse_recurrence_percent[obj.type]:
             create_corpse(obj)
     #release
-    if obj.isCreature:
-        Ref.environ.kill(obj)
-    else:
-        release_inanimate(obj)
-
-
-
-#---------------#
-#   Equipment   #
-#---------------#
-
-def equip(obj,item,equipType): # equip an item in 'equipType' slot
-    slotName = thing.getSlotName(equipType)
-    slot = obj.equip.__dict__[slotName]
-    if not on(item,CANEQUIP): #can't be equipped
-        return None
-    if not item.equipType == equipType: #can't be wielded in mainhand
-        return None
-    if not slot.isEmpty(): #already wielding something
-        return None 
-    effID = effect_add(obj,item.statMods)
-    slot.setSlot(item, effID)
-    return effID
-def deequip(obj,equipType): # remove equipment from slot 'equipType'
-    slotName = thing.getSlotName(equipType)
-    slot = obj.equip.__dict__[slotName]
-    if slot.isEmpty(): #nothing equipped here
-        return None
-    effect_remove(obj, slot.getModID() )
-    item = slot.clear()
-    return item
-# build equipment and place in the world
-def create_weapon(name,x,y):
-    weap=weapons.create_weapon(name,x,y)
-    register_inanimate(weap)
-    return weap
-def create_gear(name,x,y):
-    obj=gear.create_gear(name,x,y)
-    register_inanimate(obj)
-    return obj
+    if on(obj,ONGRID):
+        if obj.isCreature:
+            Ref.environ.kill(obj)
+        else:
+            release_inanimate(obj)
 
 
 
@@ -542,6 +555,7 @@ class Lists():
     creatures   =[]     # living things
     inanimates  =[]     # nonliving
     lights      =[]
+    fluids      =[]
     #timers      =[]     # things with a tick() function
     
     @classmethod
@@ -556,21 +570,15 @@ def list_creatures():           return Lists.creatures
 def list_inanimates():          return Lists.inanimates
 def list_things():              return Lists.things()
 def list_lights():              return Lists.lights
+def list_fluids():              return Lists.fluids
 def list_add_creature(obj):     Lists.creatures.append(obj)
 def list_remove_creature(obj):  Lists.creatures.remove(obj)
 def list_add_inanimate(obj):    Lists.inanimates.append(obj)
 def list_remove_inanimate(obj): Lists.inanimates.remove(obj)
 def list_add_light(obj):        Lists.lights.append(obj)
 def list_remove_light(obj):     Lists.lights.remove(obj)
-
-def grid_remove(obj):           Ref.Map.grid_things[obj.x][obj.y].remove(obj)
-def grid_insert(obj):
-    x = obj.x; y = obj.y
-    if (not obj.isCreature and monat(x,y)):
-        Ref.Map.grid_things[x][y][-1:0] = [obj]
-    else: Ref.Map.grid_things[x][y].append(obj)
-def grid_lights_insert(obj):    Ref.Map.grid_lights[obj.x][obj.y].append(obj)
-def grid_lights_remove(obj):    Ref.Map.grid_lights[obj.x][obj.y].remove(obj)
+def list_add_fluid(obj):        Lists.fluids.append(obj)
+def list_remove_fluid(obj):     Lists.fluids.remove(obj)
 
 
 
@@ -650,41 +658,138 @@ def path_step(path):
 
 
 #----------------#
-#     things     #
+#     Things     #
 #----------------#
 
 def release_thing(obj):
-    if on(obj,FIRE):
-        douse(obj)
     grid_remove(obj)
 def register_inanimate(obj):
+    make(obj,ONGRID)
     grid_insert(obj)
     list_add_inanimate(obj)
 def release_inanimate(obj):
-    release_thing(obj)
+    makenot(obj,ONGRID)
+    grid_remove(obj)
     list_remove_inanimate(obj)
+
+
+
+#---------------#
+#   Inventory   #
+#---------------#
+
+def init_inventory(obj, capacity):
+    obj.inv=items.Inventory(capacity)
+
+
+
+#------------#
+#   Fluids   #
+#------------#
+
+def create_fluid(x,y,name):
+    fluid = fluids.create_fluid(x,y,name)
+    register_fluid(fluid)
+'''def port_fluid(fluid, xto, yto):
+    grid_fluids_remove(fluid)
+    fluid.x=xto
+    fluid.y=yto
+    grid_fluids_insert(fluid)
+def flow_fluid(fluid, xto, yto, amt): #fluids should be object instances?
+    grid_fluids_remove(fluid)
+    fluid.x=xto
+    fluid.y=yto
+    grid_fluids_insert(fluid)'''
+def register_fluid(obj):
+    grid_fluids_insert(obj)
+    list_add_fluid(obj)
+def release_fluid(obj):
+    grid_fluids_remove(obj)
+    list_remove_fluid(obj)
+    
+#fluid containers
+def init_fluidContainer(obj, size):
+    make(obj,CARRIESFLUID)
+    obj.fluidContainer = fluids.FluidContainer(size)
+
+
+
+#---------------#
+#   Equipment   #
+#---------------#
+
+def equip(obj,item,equipType): # equip an item in 'equipType' slot
+    slotName = thing.getSlotName(equipType)
+    slot = obj.equip.__dict__[slotName]
+    if not on(item,CANEQUIP): #can't be equipped
+        return None
+    if not item.equipType == equipType: #can't be wielded in mainhand
+        return None
+    if not slot.isEmpty(): #already wielding something
+        return None 
+    effID = effect_add(obj,item.statMods)
+    slot.setSlot(item, effID)
+    return effID
+def deequip(obj,equipType): # remove equipment from slot 'equipType'
+    slotName = thing.getSlotName(equipType)
+    slot = obj.equip.__dict__[slotName]
+    if slot.isEmpty(): #nothing equipped here
+        return None
+    effect_remove(obj, slot.getModID() )
+    item = slot.clear()
+    return item
+# build equipment and place in the world
+def create_weapon(name,x,y):
+    weap=weapons.create_weapon(name,x,y)
+    register_inanimate(weap)
+    return weap
+def create_gear(name,x,y):
+    obj=gear.create_gear(name,x,y)
+    register_inanimate(obj)
+    return obj
+
 
 
 #---------------------#
 #  creature/monsters  #
 #---------------------#
 
+#register and release functions do not perform checks to ensure proper calling
+#must ensure manually that you insert an object of type Thing
+#if a creature already exists in the tile of obj's position,
+#   then this function will produce errors.
+#likewise make sure you do not try to release an entity
+#   that was not first registered.
+#Always call proper release that corresponds with the register function
+#   in order to remove an object from the game.
 def register_creature(obj):
+    make(obj,ONGRID)
     grid_insert(obj)
     list_add_creature(obj)
 def release_creature(obj):
+    makenot(obj,ONGRID)
     release_thing(obj)
     list_remove_creature(obj)
     remove_listener_sights(obj)
     remove_listener_sounds(obj)
-def create_creature(name, typ, xs,ys, col): #init basic creature stuff
-    creat = thing.create_creature(name,typ,xs,ys,col)
-    register_creature(creat)
-    return creat 
+#call this to create a monster from the bestiary
 def create_monster(typ,x,y,col,mutate=3): #init from monsters.py
+    if monat(x,y):
+        return None #tile is occupied by a creature already.
     monst = monsters.create_monster(typ,x,y,col,mutate)
+    init_inventory(monst, monst.stats.carry)
+    givehp(monst)
     register_creature(monst)
     return monst 
+#call this to build a creature from scratch, not using monsters.py
+#call create_monster instead if you want to use a template from the bestiary
+#this function does not initialize all creature parameters
+def create_creature(name, typ, x,y, col): #init basic creature stuff
+    if monat(x,y):
+        return None #tile is occupied by a creature already.
+    creat = thing.create_creature(name,typ,x,y,col)
+    register_creature(creat)
+    return creat
 def create_corpse(obj):
     corpse = thing.create_corpse(obj)
     register_inanimate(corpse)
@@ -717,42 +822,52 @@ def create_light(x,y, value, owner=None):
     light=lights.Light(x,y, value, owner)
     light.fov_map=fov_init()
     register_light(light)
-    if (owner != None):     #make the light follow its source if applicable
+    if owner:   #light follows owner if applicable
         owner.observer_add(light)
     return light
 
-def register_light(obj):
-    obj.shine()
-    grid_lights_insert(obj)
-    list_add_light(obj)
-def release_light(obj):
-    obj.unshine()
-    grid_lights_remove(obj)
-    list_remove_light(obj)
+def register_light(light):
+    light.shine()
+    grid_lights_insert(light)
+    list_add_light(light)
+def release_light(light):
+    light.unshine()
+    if light.owner:
+        light.owner.observer_remove(light)
+    grid_lights_remove(light)
+    list_remove_light(light)
+
+
+
+#-------------#
+#   fires     #
+#-------------#
+
+#fire tile flag is independent of the status effect of burning
+def set_fire(x,y):
+    Ref.pt_managers['fire'].add(x,y)
+def douse(x,y): #put out a fire at a tile and cool down all things there
+    if not Ref.pt_managers['fire'].fireat(x,y): return
+    Ref.pt_managers['fire'].remove(x,y)
+    for tt in thingsat(x,y):
+        Ref.pt_managers['status'].remove(tt, FIRE)
+        cooldown(tt)
 
 
 #----------------#
 #    status      #
 #----------------#
 
-#set_status
+#Status for being on fire separate from the fire entity and light entity.
+
+#set status effect
     # obj       = Thing object to set the status for
     # status    = ID of the status effect
     # t         = duration (-1 is the default duration for that status)
 def set_status(obj, status, t=-1):
-    if status == FIRE:
-        Ref.pt_managers['fire'].set_fire(obj)
-    if (status == SICK
-    or status == BLIND
-    or status == PARAL
-    or status == COUGH
-    or status == VOMIT
-    or status == CONFU
-    or status == IRRIT
-    or status == WET
-    or status == DEAF):
-        Ref.pt_managers['status'].add(obj, status)
-def douse(obj):     Ref.pt_managers['fire'].douse(obj)
+    Ref.pt_managers['status'].add(obj, status, t)
+def clear_status(obj, status):
+    Ref.pt_managers['status'].remove(obj, status)
 
 
 
@@ -814,24 +929,25 @@ def routine_print_msgHistory():
     Ref.manager = managers.Manager_PrintScroll( scroll,width,height, top,bottom, h1=hud1h,h2=hud2h,maxy=nlines)
 
 def Input(x,y, w=1,h=1, default='',mode='text',insert=False):
-    manager=IO.TextInputManager(x,y, w,h, default,mode,insert)
-    result=None
-    while not result:
-        manager.run()
-        result=manager.result
-    manager.close()
-    return result
+    return IO.Input(x,y,w=w,h=h,default=default,mode=mode,insert=insert)
 
 #prompt
 # show a message and ask the player for input
-def prompt(x,y, w,h, maxw=1, q='', default='',mode='text',insert=False):
-    libtcod.console_clear(con_final())
+# mode: 'text' or 'wait'
+def prompt(x,y, w,h, maxw=1, q='', default='',mode='text',insert=False,border=0):
+    #libtcod.console_clear(con_final())
     dbox(x,y,w,h,text=q,
-        wrap=True,border=0,con=con_final(),disp='mono')
+        wrap=True,border=border,con=con_final(),disp='mono')
     result=""
     while (result==""):
         refresh()
-        result = Input(x,y+h,maxw,1,default=default,mode=mode,insert=insert)
+        if mode=="wait":
+            xf=x+w-1
+            yf=y+h-1
+        elif mode=="text":
+            xf=x
+            yf=y+h
+        result = Input(xf,yf,maxw,1,default=default,mode=mode,insert=insert)
     return result
 
 #menu

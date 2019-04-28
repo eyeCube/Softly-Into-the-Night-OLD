@@ -59,13 +59,17 @@ class Tile():
         self.dampen=volume_dampen
 
 
-TILES={         #               fgcolor ,bg, costEnter,Leave, opaque,damp
-    FLOOR     : Tile(FLOOR,     'neutral', 'deep',    100,0,  False,1,),
-    WALL      : Tile(WALL,      'dkred', 'orange',     0,0,  True, 201,),
-    STAIRDOWN : Tile(STAIRDOWN, 'accent', 'purple',  100,0,  False,1,),
-    STAIRUP   : Tile(STAIRUP,   'accent', 'purple',  100,0,  False,1,),
-    FUNGUS    : Tile(FUNGUS,    'green', 'dkgreen',  100,20, False,1,),
-    SHROOM    : Tile(SHROOM,    'yellow', 'dkgreen',  200,0,  True,2,),
+TILES={         #                 fgcolor ,bg, costEnter,Leave, opaque,damp
+    FLOOR       : Tile(FLOOR,     'neutral', 'deep',    100,0,  False,1,),
+    WALL        : Tile(WALL,      'dkred', 'orange',     0,0,  True, 201,),
+    STAIRDOWN   : Tile(STAIRDOWN, 'accent', 'purple',  100,0,  False,1,),
+    STAIRUP     : Tile(STAIRUP,   'accent', 'purple',  100,0,  False,1,),
+    FUNGUS      : Tile(FUNGUS,    'green', 'dkgreen',  100,20, False,1,),
+    SHROOM      : Tile(SHROOM,    'yellow', 'dkgreen',  150,20,  True,2,),
+    #PUDDLE      : Tile(PUDDLE,    'blue',   'deep',     100,10,  True,2,),
+    #SHALLOW     : Tile(SHALLOW,   'blue',  'dkblue',     100,25,  True,2,),
+    #WATER       : Tile(WATER,     'trueblue','dkblue',  100,50,  True,2,),
+    #DEEPWATER   : Tile(DEEPWATER, 'dkblue', 'deep',     100,100,  True,2,),
     }
         
 '''class Floor(Tile):
@@ -73,7 +77,13 @@ TILES={         #               fgcolor ,bg, costEnter,Leave, opaque,damp
         super(Floor, self).__init__(*args,**kwargs)'''
 
 
-    
+
+#TileMap
+#   The grid class that stores data about:
+#   terrain, things, lights, fluids, fires...
+#this class depends on grid_things being in a particular order:
+#   creature goes on top (only one creature allowed per tile)
+#   inanimate things below that.
 class TileMap():
 
     def __init__(self,w,h):
@@ -81,20 +91,44 @@ class TileMap():
         self.w = w
         self.h = h
         
+        #baseTemp=32 # room temperature #should not be stored in tilemap object
+        self.grid_terrain =     [ [ None for y in range(h)] for x in range(w) ]
+        
+    #
+
+    #
+    def COPY(self, tilemap): #copy another TileMap object into this object
+        for k,v in tilemap.__dict__.items():
+            self.__dict__.update({k:v})
+            
+    #
+    # call this function to initialize the global tilemap object
+    #   that will contain the level data.
+    # temporary tilemap objects that do not need these data, and
+    #   which only need access to a few functions within TileMap,
+    #   can leave these uninitialized.
+    def init_specialGrids(self):
+        w=self.w
+        h=self.h
+            # init special grids
+        self.grid_things =      [ [ [] for y in range(h)] for x in range(w) ]
+        self.grid_lights =      [ [ [] for y in range(h)] for x in range(w) ]
+        self.grid_fluids =      [ [ [] for y in range(h)] for x in range(w) ]
+        self.grid_fires =       [ [ None for y in range(h)] for x in range(w) ]
             # Init root FOVmap
         self.fov_map = libtcod.map_new(w,h)
-
+            # init lightmap which stores luminosity values for each tile
+        self.lightmap_init()
+            # lists of tiles of interest
+        self.question_marks = []
+            # init consoles for UI 
         self.con_memories = libtcod.console_new(w,h)
         self.con_map_state = libtcod.console_new(w,h)
-
-        baseTemp=32 # room temperature
-        self.grid_things =      [ [ [] for y in range(h)] for x in range(w) ]
-        self.grid_terrain =     [ [ None for y in range(h)] for x in range(w) ]
-        self.grid_lights=       [ [ [] for y in range(h)] for x in range(w) ]
-
-        self.lightmap_init()
-        
-        #init all terrain
+    #
+    # call this to initialize the terrain tile grid with default data
+    def init_terrain(self):
+        w=self.w
+        h=self.h
         for x in range(w):
             for y in range(h):
                 self.tile_change(x,y,FLOOR)
@@ -102,16 +136,6 @@ class TileMap():
             for y in range(h):
                 if random.random()*100 > 50:
                     self.tile_change(x,y,FUNGUS)
-        #run cellular automata
-        self.cellular_automata(FUNGUS,FLOOR,8, -1, -1,-1,-1,0, 1,1,1,1)
-
-        self.question_marks = []
-    #
-
-    #
-    def COPY(self, tilemap): #copy a TileMap object into another
-        for k,v in tilemap.__dict__.items():
-            self.__dict__.update({k:v})
 
     
     def tile_change(self, x,y, typ):
@@ -121,19 +145,44 @@ class TileMap():
         # UPDATE ALL FOVMAPS OF ALL CREATURES !!!!!!!!
     #
     
-    def get_char(self,x,y):             return self.grid_terrain[x][y].char
-    def get_color(self,x,y):            return COL[ self.grid_terrain[x][y].fg ]
-    def get_bgcolor(self,x,y):          return COL[ self.grid_terrain[x][y].bg ]
     def get_blocks_sight(self,x,y):     return self.grid_terrain[x][y].opaque
     def get_nrg_cost_enter(self,x,y):   return self.grid_terrain[x][y].nrg_enter
     def get_nrg_cost_leave(self,x,y):   return self.grid_terrain[x][y].nrg_leave
-
     def get_audio_dampen(self,x,y):     return self.grid_terrain[x][y].dampen
+    
+    def get_char(self,x,y):             return self.grid_terrain[x][y].char
+    def get_color(self,x,y):            return COL[ self.grid_terrain[x][y].fg ]
+    def get_bgcolor(self,x,y):
+        if rog.fireat(x,y):
+            choices=['gold','orange','trueyellow']
+            bgCol=COL[choices[dice.roll(len(choices)) - 1]]
+        else: bgCol=COL[ self.grid_terrain[x][y].bg ]
+        return bgCol
+    
+    def add_thing(self, obj): #try to add a thing to the grid, return success
+        x = obj.x; y = obj.y
+        if self.monat(x,y): 
+            if obj.isCreature:
+                return False #only one creature per tile is allowed
+            else: #insert thing right below the creature
+                self.grid_things[x][y][-1:0] = [obj]
+                return True
+        else: #insert thing at top of the list
+            self.grid_things[x][y].append(obj)
+            return True
+    def remove_thing(self, obj):
+        grid = self.grid_things[obj.x][obj.y]
+        if obj in grid:
+            grid.remove(obj)
+            return True
+        return False #thing was not in the grid.
+    
     def nthings(self,x,y):              return len(self.grid_things[x][y])
-    def thingat(self,x,y):
+    def thingsat(self,x,y):             return self.grid_things[x][y]
+    def thingat(self,x,y): #return the thing at the top of the pile at tile
         lis = self.grid_things[x][y]
         return lis[-1] if lis else None
-    def inanat(self,x,y):    # inanimate thing at tile
+    def inanat(self,x,y): #return inanimate thing at top of the pile at tile
         thing=self.thingat(x,y)
         if not thing: return None
         gridTile=self.grid_things[x][y]
@@ -149,6 +198,19 @@ class TileMap():
         return thing if (thing and thing.isSolid ) else None
     def lightsat(self,x,y):
         return self.grid_lights[x][y]
+    def fluidsat(self,x,y):
+        return self.grid_fluids[x][y]
+    def countNeighbors(self, x,y, char): #count number tiles of char char adjacent to (x,y) on the terrain grid
+        num=0
+        for xx in range(3):
+            for yy in range(3):
+                x1=x-1+xx #position in the tilemap
+                y1=y-1+yy
+                if ((xx==1 and yy==1) or x1<0 or x1>=self.w or y1<0 or y1>=self.h):
+                    continue #ignore self and out of bounds
+                if (self.get_char(x1,y1) == char):
+                    num+=1
+        return num
     
     #
 
@@ -255,22 +317,22 @@ class TileMap():
     # get and apply the proper background color
     #   for the tile containing a thing
     def apply_rendered_bgcol(self, x, y, thing):
-        bgTile=self.get_bgcolor(x, y)
-        if thing and rog.on(thing,FIRE):
-            choices=['gold','orange','trueyellow']
-            bgCol=COL[choices[dice.roll(len(choices)) - 1]]
-        elif (self.get_char(x,y) == STAIRDOWN
-                or self.get_char(x,y) == STAIRUP ):
-            bgCol=bgTile
-        elif self.nthings(x, y) >= 2: bgCol=COL['dkgreen']
-        elif thing==rog.pc():
-            if rog.settings().highlightPC:
-                bgCol=COL[rog.settings().highlightColor]
-            else: bgCol=thing.bgcolor
-        elif thing: bgCol=thing.bgcolor
-        else: bgCol=bgTile
+        bgTile=self.get_bgcolor(x, y) #terrain, fires
+        bgCol=bgTile
+        if not rog.fireat(x,y):
+            if (self.get_char(x,y) == STAIRDOWN
+                    or self.get_char(x,y) == STAIRUP ):
+                bgCol=bgTile
+            elif self.nthings(x, y) >= 2: bgCol=COL['dkgreen']
+            elif thing==rog.pc():
+                if rog.settings().highlightPC:
+                    bgCol=COL[rog.settings().highlightColor]
+                else: bgCol=thing.bgcolor
+            elif thing: bgCol=thing.bgcolor
+        #
         libtcod.console_set_char_background(
             self.con_map_state, x,y, bgCol)
+    #end def
         
     def get_map_state(self):
         self.recall_memories( 0,0,ROOMW,ROOMH)
@@ -313,6 +375,7 @@ class TileMap():
     def get_light_value(self, x, y):
         return self.grid_lighting[x][y]
 
+
 #-----------------------#
 # procedural generation #
 #-----------------------#
@@ -322,54 +385,46 @@ class TileMap():
     #   onChar : the "1" state character
     #   offChar: the "0" state char
     #   iterations: number of iterations to perform
-    #   n0-n8: what to do when number of neighbors of a given cell is
-    #       the value to the right of n:
-    #       -1      : switch to "0" or "off"
+    #   nValues: tuple containing 9 values. Represents 0-8 neighbors;
+    #       - contains birth and death parameters.
+    #       - what to do when number of neighbors of a given cell is
+    #       the index value of nValues:
+    #       -1      : switch to "0" or "off" if value at nValues[numNeighbors] == -1
     #       0       : remain unchanged
     #       1       : switch to "1" or "on"
-    def cellular_automata(self,onChar,offChar,iterations,n0=-1,n1=-1,n2=-1,n3=-1,n4=-1,n5=-1,n6=-1,n7=-1,n8=-1):
-        def doYourThing(x,y,n):
-            if n==-1:
-                self.tile_change(x,y,offChar)
-            elif n==1:
-                self.tile_change(x,y,onChar)
+    #   simultaneous: whether to update all cells at the same time or one by one
+    #       True value results in smoother output
+    def cellular_automata(self,onChar,offChar,iterations,nValues,simultaneous=True):
+        newMap = None
+        if simultaneous:
+            newMap = TileMap(self.w,self.h)
+            newMap.COPY(self)
+        #define some functions to reduce duplicate code
+        def _changeTile(x,y,char,simultaneous,newMap):
+            if simultaneous:
+                newMap.tile_change(x,y,char)
+            else:
+                self.tile_change(x,y,char)
+        def _doYourThing(x,y,num,nValues): # alter a tile or keep it the same based on input
+            if nValues[num]==-1:
+                _changeTile(x,y,offChar,simultaneous,newMap)
+            elif nValues[num]==1:
+                _changeTile(x,y,onChar,simultaneous,newMap)
         for ii in range(iterations):
             for x in range(self.w):
                 for y in range(self.h):
-                    num=0
-                    for xx in range(3):
-                        for yy in range(3):
-                            x1=x-1+xx
-                            y1=y-1+yy
-                            if x1<0 or x1>=self.w or y1<0 or y1>=self.h:
-                                continue
-                            if (self.get_char(x1,y1) == onChar
-                                and not (xx==1 and yy==1) ):
-                                num+=1 #count adjacent tiles of interest
-                    if num==0:
-                        doYourThing(x,y,n0)
-                    elif num==1:
-                        doYourThing(x,y,n1)
-                    elif num==2:
-                        doYourThing(x,y,n2)
-                    elif num==3:
-                        doYourThing(x,y,n3)
-                    elif num==4:
-                        doYourThing(x,y,n4)
-                    elif num==5:
-                        doYourThing(x,y,n5)
-                    elif num==6:
-                        doYourThing(x,y,n6)
-                    elif num==7:
-                        doYourThing(x,y,n7)
-                    elif num==8:
-                        doYourThing(x,y,n8)
+                    if simultaneous:
+                        num = newMap.countNeighbors(x,y, onChar)
+                    else:
+                        num = self.countNeighbors(x,y, onChar)
+                    _doYourThing(x,y,num,nValues)
+        if simultaneous:
+            self.COPY(newMap)
     #end def
 
 
 
-    def p():
-        pass
+
 
 
 

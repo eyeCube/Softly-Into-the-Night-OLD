@@ -34,22 +34,10 @@ def remove_blankspace(text):
         if i != " ": newStr.append(i)
     return "".join(newStr)
 
-#sort dict lexicographically and return
-#def sortLex(dic):
-#    dic.sort(key=dic.keys())
 
 
 
 
-
-
-
-
-
-
-#test remove_blankspace
-#print(remove_blankspace("blah higgity blahhhas \n"))
-#print("then")
 
 
 

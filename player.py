@@ -7,7 +7,6 @@ import os
 from const      import *
 from colors     import COLORS
 import rogue    as rog
-import orangio  as IO
 import action
 import debug
 import jobs
@@ -316,8 +315,12 @@ def chargen():
             wrap=True,border=None,con=rog.con_final(),disp='mono')
         #rog.refresh()
             #get list of all skills
-        _skillName = rog.menu("Skill Select",xx,yy,SKILLS.keys())
-        _skillID = SKILLS[_skillName]
+        _skillName = rog.menu("Skill Select",xx,yy,SKILLS.values())
+        #get the skill ID
+        for skid,name in SKILLS.items():
+            if name == _skillName:
+                _skillID = name
+                break
         print("Skill chosen: ", _skillName)
         #should show ALL skills you're skilled in, not just the one you pick
         #for skill in jobs.getSkills(_skillID):

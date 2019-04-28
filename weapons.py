@@ -175,7 +175,7 @@ def create_weapon(name, x,y):
 #
 
 
-class Bomb(thing.Thing):
+'''class Bomb(thing.Thing):
     RADIUS=4
     DMG=16
     MASS=.5
@@ -212,7 +212,7 @@ class Bomb(thing.Thing):
     def close(self):
         rog.release_inanimate(self)
         rog.release_timer(self)
-
+'''
 
 
 

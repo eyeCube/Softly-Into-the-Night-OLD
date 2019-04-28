@@ -483,6 +483,23 @@ class MessageLog:
     #
 
 
+#
+# Game Data
+#
+# stores global info about the current play session
+#
+class GameData:
+    def __init__(self):
+        self._dlvl = 0
+    def dlvl(self):     return self._dlvl
+    def dlvl_update(self, value): #returns whether change was successful
+        if value < 0: return False
+        if value >= MAXLEVEL: return False
+        self._dlvl = value
+        return True
+
+
+
 
 #
 # Saved Game
@@ -495,7 +512,26 @@ class SavedGame:
     def __init__(self):
         self.create_defaultData()
         #global save data is progress shared across savegames
-        self.file=os.path.join(os.path.curdir,"save","globalsavedata.sav")
+        def getGlobalSaveFile():
+            fname="globalsavedata.sav"
+            try:
+                self.file=os.path.join(os.path.curdir,"save",fname)
+            except:
+                with open(os.path.join(os.path.curdir,"save",fname), 'w+') as file:
+                    pass
+                self.file=os.path.join(os.path.curdir,"save",fname)
+                self.write_defaults()
+        if os.path.exists(os.path.join(os.path.curdir,"save")):
+            getGlobalSaveFile()
+        else:
+            try:
+                os.mkdir(os.path.join(os.path.curdir,"save"), )
+            except OSError:
+                print("Failed to create directory './save'. Aborting...")
+                rog.end()
+                return
+            print("Successfully created directory './save'.")
+            getGlobalSaveFile()
         #init empty lists to fill later during loading
         self.playableJobs=[]
 
@@ -530,7 +566,7 @@ class SavedGame:
             
     def write_defaults(self):
         with open(self.file, 'w+') as file:
-            for item in SavedGame.DEFAULTS:
+            for item in self.DEFAULTS:
                 file.write("{}\n".format(item))
 
     #load a game currently in progress

@@ -8,48 +8,18 @@ import time
 import math
 
 from const      import *
+from manager    import Manager
 import rogue    as rog
 import orangio  as IO
 import maths
 import misc
+import dice
 
 
 
 
 
 
-'''
-#
-# abstract Manager class
-#
-# 
-# A manager is an object that has functions for handling a complex task,
-# which is carried out using its 'run()' function.
-# give it some starting data, then call 'run()' inside a while loop.
-# check the output of the manager with the property 'result'.
-# finish the execution by calling 'close()'.
-#
-#     * Only the 'run', 'close', and 'result' functions should be called
-    outside of the manager.
-      * The manager only accesses its own functions through its 'run' method.
-      * You can intercept the 'run' function at the end of each iteration
-    in your while loop, simply by writing code following the 'run()' call.
-    This is one of the useful things about managers.
-#
-'''
-
-class Manager(object):
-    
-    def __init__(self):
-        self._result=None
-    def set_result(self,new):       self._result=new
-    @property
-    def result(self):           return self._result
-    def run(self, *args,**kwargs):
-        self.set_result(None)
-    def close(self):
-        pass
-#
 
 class GameStateManager(Manager):
     
@@ -142,142 +112,257 @@ class Manager_Meters(Manager):
 #
 # Fires
 #
-    #manager for all FIRE status effects
+    #manager for fires
     # also controls light from fire, fire spreading,
     #   messages from fires, putting out fires
+    # does not control burning status effect
+
+    #OVERHAUL FIRE SYSTEM:
+    #Fire should exist on tiles and feed from the
+    #fuel that's burning on that tile.
+    # If an object burns to ashes, the fire in that tile is put out
+    #   by this manager when it tries to spread/consume but
+    #   realizes that there is no more fuel in the tile it's on.
 class Manager_Fires(Manager):
 
     def __init__(self):
         super(Manager_Fires, self).__init__()
 
-        self.thingsOnFire=[]
+        self.fires={}
         self.lights={}
-
-    def add(self, obj):     self.thingsOnFire.append(obj)
-    def remove(self, obj):  self.thingsOnFire.remove(obj)
 
     def run(self):
         super(Manager_Fires, self).run()
 
-        for obj in self.thingsOnFire:
-            if rog.on(obj,WET): #water puts out fires
-                douse(obj)
-                continue
-            x,y=obj.x,obj.y
-            rog.hurt(obj, 1)
-            if not obj.isCreature:
-                if rog.on(obj,DEAD):
-                    textSee="{t}{n} burns to ashes.".format(
-                        t=obj.title,n=obj.name)
-                    rog.event_sight(x,y, textSee)
+        removeList=[]
+        for x,y in self.fires:
+            _fluids = rog.fluidsat(x,y)
+            _things = rog.thingsat(x,y)
+            _exit=False
+
+            #tiles that put out fires or feed fires
+            '''
+            wet floor flag
+
+
+            '''
+
+            #fluids that put out fires or feed fires
+            '''for flud in _fluids:
+                if flud.extinguish:
+                    self.remove(x,y)
+                    _exit=True
                     continue
-                else: textSee=""
+                if flud.flammable:
+                    self.fire_spread(x,y)
+                    continue
+                    '''
+
+            if _exit: continue
+
+            #check for no fuel condition
+            if not _things: 
+                removeList.append((x,y,))
+                continue
+
+            #BURN THINGS ALIVE (or dead)
+            food=0  #amount of fuel gained by the fire
+            for obj in _things: #things that might fuel the fire
+                textSee=""
+                canBurn=False
+                if rog.burn(obj, FIREBURN):
+                    canBurn=True
+                if canBurn: #burn it
+                    if obj.material == MAT_WOOD:
+                        rog.event_sound(x,y, SND_FIRE)
+                        food += 10
+                    elif obj.material == MAT_FLESH:
+                        food += 2
+                    elif obj.material == MAT_VEGGIE:
+                        food += 3
+                    elif obj.material == MAT_SAWDUST:
+                        food += 50
+                    elif obj.material == MAT_PAPER:
+                        food += 50
+                    elif obj.material == MAT_CLOTH:
+                        food += 20
+                    elif obj.material == MAT_LEATHER:
+                        food += 1
+                    elif obj.material == MAT_FUNGUS:
+                        food += 1
+                    elif obj.material == MAT_PLASTIC:
+                        food += 1
+                if not obj.isCreature:
+                    if rog.on(obj,DEAD):
+                        textSee="{t}{n} is destroyed by fire.".format(
+                            t=obj.title,n=obj.name)
+                        rog.event_sight(x,y, textSee)
+                        continue
+                    #else: textSee=""
+                #else:
+                    #textSee="{t}{n} burns.".format(t=obj.title,n=obj.name)
+                rog.event_sight(x,y, textSee)
+            #end for (things)
+
+            if food < 5:
+                if dice.roll(food) == 1:
+                    removeList.append((x,y,))
             else:
-                textSee="{t}{n} burns.".format(t=obj.title,n=obj.name)
-            #rog.event_bright(x,y, SEE_FIRE)
-            rog.event_sight(x,y, textSee)
-            #if obj.material == MAT_WOOD:
-            #rog.event_sound(x,y, SND_FIRE)
-            rog.event_sound(x,y, SND_FIRE)
-            self.fire_spread(obj)
-            #else:
-            #    self.remove(obj)
+                if food >= 10:
+                    iterations = 1+int((food - 10)/3)
+                    self.fire_spread(x,y,iterations)
+                    
+        #end for (fires)
+                    
+        for xx,yy in removeList:
+            self.remove(xx,yy)
+                    
+    #end def
             
     def close(self):
         super(Manager_Fires, self).close()
         
         pass
 
-    # make an object be on fire
-    def set_fire(self, obj):
-        if rog.on(obj,FIRE): return
-        rog.make(obj,FIRE)
-        self.add(obj)
-        light=rog.create_light(obj.x,obj.y, 10, owner=obj)
-        obj.observer_add(light)
-        self.lights.update({obj : light})
+    def fireat(self, x,y):  return self.fires.get((x,y,), False)
+    def fires(self):        return self.fires.keys()
 
-    # put an object's fire out
-    def douse(self, obj):
-        rog.makenot(obj,FIRE)
-        light=self.lights[obj]
+    # set a tile on fire
+    def add(self, x,y):
+        if self.fireat(x,y): return
+        self.fires.update({ (x,y,) : True })
+        light=rog.create_light(x,y, 10, owner=None)
+        self.lights.update({(x,y,) : light})
+        
+        #obj.observer_add(light)
+        #self.lights.update({obj : light})
+        
+    # remove a fire from a tile
+    def remove(self, x,y):
+        if not self.fireat(x,y): return
+        del self.fires[(x,y,)]
+        light=self.lights[(x,y,)]
         rog.release_light(light)
-        obj.observer_remove(light)
-        self.remove(obj)
-        textSee="The fire on {n} is extinguished.".format(n=obj.name)
-        rog.event_sight(obj.x,obj.y, textSee)
-        rog.event_sound(obj.x,obj.y, SND_DOUSE)
+        obj=rog.thingat(x,y)
+        '''if obj:
+            textSee="The fire on {n} is extinguished.".format(n=obj.name)
+            rog.event_sight(obj.x,obj.y, textSee)
+            #rog.event_sound(obj.x,obj.y, SND_DOUSE)'''
 
-    # look nearby a burning object to try and set other stuff on fire
-    def fire_spread(self, fromObj):
-        xo=fromObj.x
-        yo=fromObj.y
-        heat=round(fromObj.stats.temp/10)
-        for x in range(max(0,xo - 1), min(ROOMW, xo + 1)):
-            for y in range(max(0,yo - 1), min(ROOMH, yo + 1)):
-                thing=rog.thingat(x,y)
-                if thing:
-                    rog.burn(thing, heat)
+    # look nearby a burning tile to try and set other stuff on fire
+    def fire_spread(self, xo, yo, iterations):
+        #heat=FIREBURN #could vary based on what's burning here, etc...
+        for ii in range(iterations):
+            index = dice.roll(8) - 1
+            x,y = DIRECTION_FROM_INT[index]
+            fuel=rog.thingat(xo + x, yo + y)
+            if fuel:
+                self.add(xo + x, yo + y)
 
 
 
 #
 # Status
 #
-    #manager for all status effects not covered by other managers
+    #manager for all status effects
 class Manager_Status(Manager):
+    #default durations for statuses
+    DURATIONS = {
+        FIRE    : 99999,
+        SICK    : 500,
+        ACID    : 25,
+        IRRIT   : 200,
+        PARAL   : 5,
+        COUGH   : 20,
+        VOMIT   : 50,
+        BLIND   : 100,
+        DEAF    : 100,
+        }
 
     def __init__(self):
         super(Manager_Status, self).__init__()
 
-        self.thingsSick=[]
-        self.thingsIrritated=[]
-        self.thingsParalyzed=[]
-        self.thingsCoughing=[]
-        self.thingsVomiting=[]
-        self.thingsBlinded=[]
-        self.thingsWet=[]
-        self.thingsDeafened=[]
+        self.statuses={
+            #example:
+            #SICK   : {obj1:DURATION,},
+            FIRE    : {},
+            SICK    : {},
+            IRRIT   : {},
+            PARAL   : {},
+            COUGH   : {},
+            VOMIT   : {},
+            BLIND   : {},
+            DEAF    : {},
+            }
         
 
-    def add(self, obj, status):
-        if status == SICK:
-            self.thingsSick.append(obj)
-        elif status == IRRIT:
-            self.thingsIrritated.append(obj)
-        elif status == PARAL:
-            self.thingsParalyzed.append(obj)
-        elif status == COUGH:
-            self.thingsCoughing.append(obj)
-        elif status == VOMIT:
-            self.thingsVomiting.append(obj)
-        elif status == BLIND:
-            self.thingsBlinded.append(obj)
-        elif status == WET:
-            self.thingsWet.append(obj)
-        elif status == DEAF:
-            self.thingsDeafened.append(obj)
+    def add(self, obj, status, dur=-1):
+        #don't let it overwrite a status effect with a lesser duration...!
+        if dur == -1: #default duration
+            dur = Manager_Status.DURATIONS[status]
+        self.statuses[status].update({obj:dur})
+        rog.make(obj, status) #add flag
     def remove(self, obj, status):
-        if status == SICK:
-            self.thingsSick.remove(obj)
-        elif status == IRRIT:
-            self.thingsIrritated.remove(obj)
-        elif status == PARAL:
-            self.thingsParalyzed.remove(obj)
-        elif status == COUGH:
-            self.thingsCoughing.remove(obj)
-        elif status == VOMIT:
-            self.thingsVomiting.remove(obj)
-        elif status == BLIND:
-            self.thingsBlinded.remove(obj)
-        elif status == WET:
-            self.thingsWet.remove(obj)
-        elif status == DEAF:
-            self.thingsDeafened.remove(obj)
+        if obj in self.statuses[status]:
+            del self.statuses[status][obj]
+            rog.makenot(obj, status) #remove flag
 
     def run(self):
         super(Manager_Status, self).run()
-        pass
+
+        #iterate through only the things that have status effects,
+        #   and do those effects
+        for status,dic in self.statuses.items():
+            for obj, dur in dic.items():
+                self._tick(obj, status)
+                #tick down the timer
+                self._updateTimer(obj, status, dur - 1)
+
+    #status effects may have timers
+    def _updateTimer(self, obj, status, dur):
+        if dur <= 0:
+            self.remove(obj, status)
+        else:
+            self.add(obj, status, dur)
+#do an effect to an object. This works this way so that you don't have to
+#check every single thing in the game world;
+#  - "hey, 4 of destiny. Are you sick? Are you on fire? Are you irritated? Are you paralyzed? etc....
+#  - Hey inert rock. Are you sick? Are you on fire?
+# Blah... blah... too many checks!! Just check ones who need checking.
+    def _tick(self, obj, status):
+        if status == SICK:
+            pass
+        
+        elif status == FIRE:
+            if obj.stats.temp < BURNTEMP: #cooled down too much to keep burning
+                self.remove(obj, status)
+                return
+            rog.hurt(obj, FIREHURT)
+            #create a fire at the location of burning things
+            if rog.on(obj,ONGRID):
+                rog.set_fire(obj.x,obj.y)
+            
+        elif status == IRRIT:
+            pass
+        
+        elif status == PARAL:
+            if dice.roll(20) <= ROLL_SAVE_PARAL:
+                self.remove(obj, status)
+                
+        elif status == COUGH:
+            pass
+        
+        elif status == VOMIT:
+            pass
+        
+        elif status == BLIND:
+            pass
+        
+        elif status == DEAF:
+            pass
+        
+
+
 
 
 

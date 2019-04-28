@@ -152,11 +152,11 @@ def create_monster(typ,x,y,col,mutate=3):
     
     #
     
-    rog.givehp(monst)
     
     #
 
     # ai
+    #TEMPORARY
     monst.ai = ai.stateless
     
     return monst

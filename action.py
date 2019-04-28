@@ -41,7 +41,6 @@ def bomb_pc(pc): # drop a lit bomb
 
 # pickup
 # grab an item from the game world, removing it from the grid
-#   and then wield it
 def pickup_pc(pc):
     rog.alert("Pick up what? <hjklyubn.>")
     args=IO.get_direction()
@@ -51,15 +50,27 @@ def pickup_pc(pc):
     
     thing=rog.inanat(xx,yy) if (xx == pc.x and yy == pc.y) else rog.thingat(xx,yy)
     if thing:
-        if not thing.isCreature:
-            # pocketing the thing
-            rog.drain(pc, 'nrg', NRG_POCKET)
-            rog.give(pc,thing)
-            rog.release_inanimate(thing)
-            rog.msg("{t}{n} pockets {i}.".format(
-                t=pc.title,n=pc.name,i=thing.name))
-        else:
+        #thing is creature! You can't pick up creatures :(
+        if thing.isCreature:
             rog.alert("You can't pick that up!")
+            return
+        #thing is on fire! What are you doing trying to pick it up??
+        if rog.on(thing,FIRE):
+            answer=""
+            while True:
+                answer=rog.prompt(0,0,rog.window_w(),1,maxw=1,
+                    q="That thing is on fire! Are you sure? y/n",
+                    mode='wait',border=None)
+                answer=answer.lower()
+                if answer == "y" or answer == " ":
+                    rog.alert("You burn your hands!")
+                    rog.burn(pc, FIREBURN)
+                    rog.hurt(pc, FIREHURT)
+                    break
+                elif answer == "n" or answer == K_ESCAPE:
+                    return
+        # put in inventory
+        pocketThing(pc, thing)
     else:
         rog.alert("There is nothing there to pick up.")
 
@@ -68,10 +79,10 @@ def inventory_pc(pc,pcInv):
     if not pc.inv:
         rog.alert(ALERT_EMPTYCONTAINER)
         return
-    x=2
-    y=rog.view_port_y() + 2
+    x=0
+    y=rog.view_port_y()
 #   items menu
-    item=rog.menu("{}'s Inventory".format(pc.name), x,y, pcInv)
+    item=rog.menu("{}'s Inventory".format(pc.name), x,y, pcInv.items)
     
 #   viewing an item
     if not item == -1:
@@ -152,6 +163,16 @@ def wait(obj):
 #"use" an item, whatever that means for the specific item
 def use(obj, item):
     pass
+
+
+#pocket thing
+#a thing puts a thing in its inventory
+def pocketThing(obj, item):
+    rog.drain(obj, 'nrg', NRG_POCKET)
+    rog.give(obj,item)
+    rog.release_inanimate(item)
+    rog.msg("{t}{n} pockets {i}.".format(
+        t=obj.title,n=obj.name,i=item.name))
 
 
 #quaff

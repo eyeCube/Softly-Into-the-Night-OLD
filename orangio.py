@@ -1,23 +1,46 @@
 '''
     orangIO
     (Orange I/O)
+        An input/output extension for libtcod Python
     
     By: Jacob Timothy Wharton
+    Copyright 2019. All rights reserved.
 
-    This is what I had to write to get input working the way
-        I wanted it to work in libtcodpy... but it works now!!
+    This extension to libtcod allows you to easily do:
+        - key commands with any combination of Shift, Ctrl, and Alt
+        - text input with blinking cursor
+        - "waiting" for a certain input
+
+    How to use this module:
+
+    Call init_keyBindings during the initialization of your game.
+    Use the key_get* wrapper functions to interface with the keyboard input.
+    The handle_mousekeys function is the function that allows commands
+        with any combination of Ctrl, Shift and Alt.
+        - To use this function in your game,
+            modify COMMANDS and key_bindings.txt defaults.
+    Call the get_raw_input wrapper function to
+        wrap the libtcod key and mouse objects in a tuple.
+    key_bindings.txt
+        To edit key bindings, refer to the comments on key_bindings.txt
+        To change the directory of key_bindings.txt, change the variable
+            "file_keyBindings"
+
+    Example use for key combo inputs:
     
-
-    To add a new command into the game, add it into the key_bindings.txt
-    defaults below. Add Shift+ or Ctrl+ or Alt+ or any combo thereof.
-    Delete the key_bindings.txt file from the game's directory to
-    have the game recreate it using the defaults.
-    - Do not use spaces.
-    - To do special keys, including SPACE, refer to the TEXT_TO_KEY dict.
-    - Take note of the placement you put the command into the text file.
-    Put that command into the dict COMMANDS in the SAME ORDER that you put
-    it into key_bindings.
-    - Put the command into player.commands or player.const_commands.
+        # get input #
+        pcInput=IO.get_raw_input()
+        pcAct=IO.handle_mousekeys(pcInput).items()
+        
+        # process commands #
+        for act,arg in pcAct:
+            if act == "lclick":
+                mousex,mousey,z = arg #unpack command arguments
+                #...
+            if act == "move":
+                dx,dy,dz = arg #unpack command arguments
+                #...
+        
     
 '''
 
@@ -27,25 +50,63 @@ import libtcodpy as libtcod
 import time
 import textwrap
 
-from const      import *
-from colors     import COLORS as COL
-import managers
+from const import *
+from manager import Manager
 import maths
-import misc
 import word
 
 
 
+    #colors
+WHITE=libtcod.Color(255,255,255)
+BLACK=libtcod.Color(0,0,0)
+
+    #global key and mouse handlers for all objects in OrangIO
 key = libtcod.Key()
 mouse = libtcod.Mouse()
 
-NUM_ALT_CMDS = 3    # number of alternate key codes for each command.
+#this value is the number of alternate key codes for each command.
+    #the number of key codes for each command in key_bindings.txt
+    #MUST MATCH THIS VALUE.
+NUM_ALT_CMDS = 3
 
 
-
+#directory of "key_bindings.txt"
 file_keyBindings=os.path.join(os.path.curdir,"settings","key_bindings.txt")
 
-# backup key bindings file:
+#key_bindings.txt
+    #This is the backup key bindings file
+
+    #To add a new command into the game, add it into the key_bindings.txt
+    #defaults below. Add Shift+ or Ctrl+ or Alt+ or any combo thereof.
+    #Delete the key_bindings.txt file from the game's directory to
+    #have the game recreate it using the defaults.
+    #   - Do not use spaces.
+    #   - To do special keys, including SPACE, refer to the TEXT_TO_KEY dict.
+    #   - Take note of the placement you put the command into the text file.
+    #Put that command into the dict COMMANDS in the SAME ORDER that you put
+    #it into key_bindings.
+    #   - Put the command into player.commands or player.const_commands.
+    #       (If using this as a third party module, simply run
+    #       handle_mousekeys and check that the command == the value you want)
+    
+#if you add new commands you must add new key bindings for those commands.
+#key bindings begin on a new line,
+    #and consist of any combination of the following:
+        #Ctrl+
+        #Shift+
+        #Alt+
+    #followed by a key constant as defined in TEXT_TO_KEY
+        #or a letter/number/symbol on the keyboard.
+    #ALERT: To get the ? key:
+        #do the key combination Shift+/ instead of ?
+        #IN GENERAL, only use the lowercase keys and indicate Shift+
+        #in order to indicate that the uppercase character should be used.
+        #Example: to make a command respond to the command ">",
+            #the command must be written as Shift+.
+            #(shift+ period key)
+    #Note: NumPad is not currently supported. NumPad must be OFF during play.
+    #Note: commands are not case-sensitive.
 KEYBINDINGS_TEXT_DEFAULT = '''//file name: {filename}
 
 //  A "comment on comments"...
@@ -249,80 +310,6 @@ NONE
 //
 '''.format(filename=file_keyBindings)
 
-
-
-
-
-TEXT_TO_KEY = {     # translate text into key constants
-    'none'      : -1
-    ,'kp0'      : libtcod.KEY_KP0
-    ,'kp1'      : libtcod.KEY_KP1
-    ,'kp2'      : libtcod.KEY_KP2
-    ,'kp3'      : libtcod.KEY_KP3
-    ,'kp4'      : libtcod.KEY_KP4
-    ,'k5p'      : libtcod.KEY_KP5
-    ,'kp6'      : libtcod.KEY_KP6
-    ,'kp7'      : libtcod.KEY_KP7
-    ,'kp8'      : libtcod.KEY_KP8
-    ,'kp9'      : libtcod.KEY_KP9
-    ,'up'       : libtcod.KEY_UP
-    ,'down'     : libtcod.KEY_DOWN
-    ,'right'    : libtcod.KEY_RIGHT
-    ,'left'     : libtcod.KEY_LEFT
-    ,'space'    : libtcod.KEY_SPACE
-    ,'tab'      : libtcod.KEY_TAB
-    ,'enter'    : libtcod.KEY_ENTER
-    ,'escape'   : libtcod.KEY_ESCAPE
-    ,'backspace': libtcod.KEY_BACKSPACE
-    ,'insert'   : libtcod.KEY_INSERT
-    ,'delete'   : libtcod.KEY_DELETE
-    ,'home'     : libtcod.KEY_HOME
-    ,'end'      : libtcod.KEY_END
-    ,'pagedown' : libtcod.KEY_PAGEDOWN
-    ,'pageup'   : libtcod.KEY_PAGEUP
-    ,'f1'       : libtcod.KEY_F1
-    ,'f2'       : libtcod.KEY_F2
-    ,'f3'       : libtcod.KEY_F3
-    ,'f4'       : libtcod.KEY_F4
-    ,'f5'       : libtcod.KEY_F5
-    ,'f6'       : libtcod.KEY_F6
-    ,'f7'       : libtcod.KEY_F7
-    ,'f8'       : libtcod.KEY_F8
-    ,'f9'       : libtcod.KEY_F9
-    ,'f10'      : libtcod.KEY_F10
-    ,'f11'      : libtcod.KEY_F11
-    ,'f12'      : libtcod.KEY_F12
-}
-
-VK_TO_CHAR = {      # translate key consants into a char
-    libtcod.KEY_KP0     : '0',
-    libtcod.KEY_KP1     : '1',
-    libtcod.KEY_KP2     : '2',
-    libtcod.KEY_KP3     : '3',
-    libtcod.KEY_KP4     : '4',
-    libtcod.KEY_KP5     : '5',
-    libtcod.KEY_KP6     : '6',
-    libtcod.KEY_KP7     : '7',
-    libtcod.KEY_KP8     : '8',
-    libtcod.KEY_KP9     : '9',
-    libtcod.KEY_KPDEC   : '.',
-    
-    libtcod.KEY_UP          : chr(K_UP),
-    libtcod.KEY_DOWN        : chr(K_DOWN),
-    libtcod.KEY_RIGHT       : chr(K_RIGHT),
-    libtcod.KEY_LEFT        : chr(K_LEFT),
-    libtcod.KEY_BACKSPACE   : chr(K_BACKSPACE),
-    libtcod.KEY_DELETE      : chr(K_DELETE),
-    libtcod.KEY_INSERT      : chr(K_INSERT),
-    libtcod.KEY_PAGEUP      : chr(K_PAGEUP),
-    libtcod.KEY_PAGEDOWN    : chr(K_PAGEDOWN),
-    libtcod.KEY_HOME        : chr(K_HOME),
-    libtcod.KEY_END         : chr(K_END),
-    libtcod.KEY_ENTER       : chr(K_ENTER),
-    libtcod.KEY_KPENTER     : chr(K_ENTER),
-    libtcod.KEY_ESCAPE      : chr(K_ESCAPE),
-}
-
 '''
 # IMPORTANT!!
 # Order of commands must match order in the key_bindings.txt file. #
@@ -363,6 +350,75 @@ COMMANDS = {        # translate commands into actions
     'last cmd'      : {'last cmd': True},
 }
 
+#-----------------------------------------------------------#
+TEXT_TO_KEY = {     # translate text into key constants
+    'none'      : -1
+    ,'kp0'      : libtcod.KEY_KP0
+    ,'kp1'      : libtcod.KEY_KP1
+    ,'kp2'      : libtcod.KEY_KP2
+    ,'kp3'      : libtcod.KEY_KP3
+    ,'kp4'      : libtcod.KEY_KP4
+    ,'k5p'      : libtcod.KEY_KP5
+    ,'kp6'      : libtcod.KEY_KP6
+    ,'kp7'      : libtcod.KEY_KP7
+    ,'kp8'      : libtcod.KEY_KP8
+    ,'kp9'      : libtcod.KEY_KP9
+    ,'up'       : libtcod.KEY_UP
+    ,'down'     : libtcod.KEY_DOWN
+    ,'right'    : libtcod.KEY_RIGHT
+    ,'left'     : libtcod.KEY_LEFT
+    ,'space'    : libtcod.KEY_SPACE
+    ,'tab'      : libtcod.KEY_TAB
+    ,'enter'    : libtcod.KEY_ENTER
+    ,'escape'   : libtcod.KEY_ESCAPE
+    ,'backspace': libtcod.KEY_BACKSPACE
+    ,'insert'   : libtcod.KEY_INSERT
+    ,'delete'   : libtcod.KEY_DELETE
+    ,'home'     : libtcod.KEY_HOME
+    ,'end'      : libtcod.KEY_END
+    ,'pagedown' : libtcod.KEY_PAGEDOWN
+    ,'pageup'   : libtcod.KEY_PAGEUP
+    ,'f1'       : libtcod.KEY_F1
+    ,'f2'       : libtcod.KEY_F2
+    ,'f3'       : libtcod.KEY_F3
+    ,'f4'       : libtcod.KEY_F4
+    ,'f5'       : libtcod.KEY_F5
+    ,'f6'       : libtcod.KEY_F6
+    ,'f7'       : libtcod.KEY_F7
+    ,'f8'       : libtcod.KEY_F8
+    ,'f9'       : libtcod.KEY_F9
+    ,'f10'      : libtcod.KEY_F10
+    ,'f11'      : libtcod.KEY_F11
+    ,'f12'      : libtcod.KEY_F12
+}
+VK_TO_CHAR = {      # translate key consants into a char
+    libtcod.KEY_KP0     : '0',
+    libtcod.KEY_KP1     : '1',
+    libtcod.KEY_KP2     : '2',
+    libtcod.KEY_KP3     : '3',
+    libtcod.KEY_KP4     : '4',
+    libtcod.KEY_KP5     : '5',
+    libtcod.KEY_KP6     : '6',
+    libtcod.KEY_KP7     : '7',
+    libtcod.KEY_KP8     : '8',
+    libtcod.KEY_KP9     : '9',
+    libtcod.KEY_KPDEC   : '.',
+    
+    libtcod.KEY_UP          : chr(K_UP),
+    libtcod.KEY_DOWN        : chr(K_DOWN),
+    libtcod.KEY_RIGHT       : chr(K_RIGHT),
+    libtcod.KEY_LEFT        : chr(K_LEFT),
+    libtcod.KEY_BACKSPACE   : chr(K_BACKSPACE),
+    libtcod.KEY_DELETE      : chr(K_DELETE),
+    libtcod.KEY_INSERT      : chr(K_INSERT),
+    libtcod.KEY_PAGEUP      : chr(K_PAGEUP),
+    libtcod.KEY_PAGEDOWN    : chr(K_PAGEDOWN),
+    libtcod.KEY_HOME        : chr(K_HOME),
+    libtcod.KEY_END         : chr(K_END),
+    libtcod.KEY_ENTER       : chr(K_ENTER),
+    libtcod.KEY_KPENTER     : chr(K_ENTER),
+    libtcod.KEY_ESCAPE      : chr(K_ESCAPE),
+}
 
 
 
@@ -404,208 +460,6 @@ class Cursor():
     def y(self): return self._y
 
 
-
-
-
-
-#-----------#
-# functions #
-#-----------#
-
-
-
-# we add 256 here to differentiate character (text) codes from
-# special key codes, like NumLock, which happens to have the same
-# integer code (62) as > (greater than symbol), for example.
-def key_getchar(k):     return k + 256
-def key_get_pressed():      # get both vk and text in one variable
-    k = libtcod.KEY_NONE
-    if libtcod.console_is_key_pressed(key.vk) : k = key.vk 
-    if k == libtcod.KEY_CHAR : k = key_getchar(key.c)
-    return k
-def key_get_special_combo(k):   # combine shift,ctrl,alt, and key press
-    shift    =  key.shift
-    ctrl     = (key.lctrl or key.rctrl)
-    alt      = (key.lalt  or key.ralt )
-    return (k, (shift, ctrl, alt,),)
-
-def console_invert_color(con,x,y):
-    col1 = libtcod.console_get_char_foreground(con,x,y)
-    col2 = libtcod.console_get_char_background(con,x,y)
-    libtcod.console_set_char_foreground(con, x,y, misc.color_invert(col1))
-    libtcod.console_set_char_background(con, x,y, misc.color_invert(col2))
-
-'''
-def wait_for_input():
-    _key,_mouse=get_raw_input()
-    if libtcod.lbutton_pressed:
-        if libtcod.console_has_mouse_focus():
-            rog.game_set_state(rog.game_resume_state())
-            '''
-
-#
-# key bindings
-#
-
-bind={}
-NO_KEY=(-1,(False,False,False,),) # NULL key constant
-
-# init_keyBindings
-# call during setup to initialize the keyboard controls
-def init_keyBindings():
-    try:
-        _init_keyBindings()
-    except FileNotFoundError:
-        print("'key_bindings.txt' File Not Found. Creating new file from defaults...")
-        _keyBindings_writeFromDefault()
-        _init_key_bindings()
-
-#
-# *DO NOT CALL THIS FUNCTION*
-# call init_keyBindings instead
-# _init_keyBindings
-# read from a file and put key binding info into dict bind.
-#
-def _init_keyBindings():
-        
-    global bind
-
-    codes = []  # list of key codes 0-511 (0-255 and an additional 256
-                # for special key inputs like NumPad digits)
-    combin = [] # list of tuples (shift,ctrl,alt) for key combinations
-                
-    with open(file_keyBindings, 'r') as bindings:
-        for line in bindings:
-            if misc.file_is_line_comment(line): continue #ignore comments
-            
-            #init
-            line=word.remove_blankspace(line) #ignore white space
-            line=line.lower() #not case-sensitive
-            
-            #NONE
-            if "none" in line: #no key set, still need to put something in the list
-                combin.append( (False,False,False,) )
-                codes.append(   -1  ) # NULL key
-                continue
-            
-            # Key combinations #
-            
-            delete=0
-            if 'shift+' in line:
-                delete+=6
-                _shf = True
-            else: _shf = False
-            if 'ctrl+' in line:
-                delete+=5
-                _ctl = True
-            else: _ctl = False
-            if 'alt+' in line:
-                delete+=4
-                _alt = True
-            else: _alt = False
-            combinData=(_shf,_ctl,_alt,)
-            if delete: line=line[delete:]
-            
-            if line[1] == '\n':     # character keys
-                codeData=key_getchar(ord(line[0]))
-            else:                   # special keys
-                new = TEXT_TO_KEY.get(line[:-1],-1)
-                codeData=new
-            
-            combin.append( combinData )
-            codes.append(   codeData  )
-        #
-        
-    print("Key bindings loaded from '{}'".format(file_keyBindings))
-    
-    # bind special combined key input to commands #
-    
-    n = NUM_ALT_CMDS
-    for i,v in enumerate(COMMANDS.keys()):
-        for j in range(n):
-            bind.update({ (codes[i*n+j], combin[i*n+j],) : v })
-#
-
-def _keyBindings_writeFromDefault():
-    try:
-        with open(file_keyBindings,"w+") as file:
-            file.write(KEYBINDINGS_TEXT_DEFAULT)
-            print("'key_bindings.txt' Created.")
-    except:
-        print("FATAL ERROR! Failed to create key_bindings.txt")
-
-
-
-
-#
-#
-# get raw input
-#
-# checks for input
-# returns key and mouse objects in a tuple
-#
-def get_raw_input():
-    libtcod.sys_sleep_milli(1)  # prevent from checking a billion times/second
-
-    # we use the check_for_event instead of the wait_for_event function
-    # because wait_for_event is stupid and causes lots of problems
-    libtcod.sys_check_for_event(
-        libtcod.EVENT_KEY
-        | libtcod.EVENT_MOUSE_PRESS     # we only want to know mouse press
-        | libtcod.EVENT_MOUSE_RELEASE,  # or release, NOT mouse move event.
-        key, mouse)
-    return (key,mouse,)
-#
-#
-# handle_mousekeys
-#
-# convert keyboard and mouse input into player commands
-# and return the command as a dict
-#
-def handle_mousekeys(keymouse):
-    key,mouse=keymouse
-    
-    # Mouse #
-
-    if mouse.lbutton_pressed:   return {'lclick': (mouse.cx,mouse.cy,0,) }
-    if mouse.rbutton_pressed:   return {'rclick': (mouse.cx,mouse.cy,0,) }
-    
-    # Keys #
-    
-    k = key_get_pressed()
-    combined = key_get_special_combo(k)
-    
-    return COMMANDS.get(bind.get(combined, None), {})
-#
-#
-# get direction
-# player chooses a direction using key bindings or the mouse,
-# returns a tuple
-#
-def get_direction():
-    while True:
-        pcAct=handle_mousekeys(get_raw_input()).items()
-        for act,arg in pcAct:
-            if act=="target":
-                return arg
-            elif act=="exit":
-                rog.alert("")
-                return None
-            elif act=="select":
-                return (0,0,0,)
-            elif act=="lclick":
-                mousex,mousey,z=arg
-                pc=rog.Ref.pc
-                dx=mousex - rog.getx(pc.x)
-                dy=mousey - rog.gety(pc.y)
-                if (dx >= -1 and dx <= 1 and dy >= -1 and dy <= 1):
-                    return dx,dy,0
-
-#--------------------------------------------------#
-
-
-
-
 #
 # Text Input Manager
 #
@@ -627,7 +481,7 @@ def get_direction():
 # bool insert       begin in "insert" mode?
 #
 
-class TextInputManager(managers.Manager):
+class TextInputManager(Manager):
     
     def __init__(self, x,y, w,h, default,mode,insert):
         
@@ -703,7 +557,8 @@ class TextInputManager(managers.Manager):
             
         if self.flush:
             libtcod.console_flush()
-        
+
+        #now we've updated, turn all update variables to False
         self.redraw_cursor  =False
         self.render_text    =False
         self.flush          =False
@@ -786,9 +641,9 @@ class TextInputManager(managers.Manager):
 
     def move(self, new):
         libtcod.console_set_char_foreground(
-            0, self.x + self.cursor_pos, self.y, COL['white'])
+            0, self.x + self.cursor_pos, self.y, WHITE)
         libtcod.console_set_char_background(
-            0, self.x + self.cursor_pos, self.y, COL['black'])
+            0, self.x + self.cursor_pos, self.y, BLACK)
         self.flush=True
         self.putCursor(new)
 
@@ -818,7 +673,7 @@ class TextInputManager(managers.Manager):
     def put_next_char(self,new):
         libtcod.console_put_char_ex(
             self.console, self.cursor_pos,0, new,
-            COL['white'],COL['black']
+            WHITE,BLACK
         )
     def blit_console(self):
         libtcod.console_blit(
@@ -836,47 +691,218 @@ class TextInputManager(managers.Manager):
     def cursor_pos(self):   return self.cursor.x
 
 
+#--------------------------------------------------#
 
 
 
 
+#-----------#
+# functions #
+#-----------#
 
 
+#key functions
+# we add 256 here to differentiate character (text) codes from
+# special key codes, like NumLock, which happens to have the same
+# integer code (62) as > (greater than symbol), for example.
+def key_getchar(k):     return k + 256
+def key_get_pressed():      # get both vk and text in one variable
+    k = libtcod.KEY_NONE
+    if libtcod.console_is_key_pressed(key.vk) : k = key.vk 
+    if k == libtcod.KEY_CHAR : k = key_getchar(key.c)
+    return k
+def key_get_special_combo(k):   # combine shift,ctrl,alt, and key press
+    shift    =  key.shift
+    ctrl     = (key.lctrl or key.rctrl)
+    alt      = (key.lalt  or key.ralt )
+    return (k, (shift, ctrl, alt,),)
 
+# files #
 
+def file_is_line_comment(line):
+    return ((line[0]=='/' and line[1]=='/') or line[0]=='\n')
 
+# libtcod #
 
+def color_invert(rgb):
+    return libtcod.Color(255-rgb[0],255-rgb[1],255-rgb[2])
+def console_invert_color(con,x,y):
+    col1 = libtcod.console_get_char_foreground(con,x,y)
+    col2 = libtcod.console_get_char_background(con,x,y)
+    libtcod.console_set_char_foreground(con, x,y, color_invert(col1))
+    libtcod.console_set_char_background(con, x,y, color_invert(col2))
 
+#
+#
+# get raw input
+#
+# checks for input
+# returns key and mouse objects in a tuple
+#
+def get_raw_input():
+    libtcod.sys_sleep_milli(1)  # prevent from checking a billion times/second
 
+    # we use the check_for_event instead of the wait_for_event function
+    # because wait_for_event is stupid and causes lots of problems
+    libtcod.sys_check_for_event(
+        libtcod.EVENT_KEY
+        | libtcod.EVENT_MOUSE_PRESS     # we only want to know mouse press
+        | libtcod.EVENT_MOUSE_RELEASE,  # or release, NOT mouse move event.
+        key, mouse)
+    return (key,mouse,)
+#
+#
+# handle_mousekeys
+#
+# convert keyboard and mouse input into player commands
+# and return the command as a dict
+#
+def handle_mousekeys(keymouse):
+    key,mouse=keymouse
+    
+    # Mouse #
 
+    if mouse.lbutton_pressed:   return {'lclick': (mouse.cx,mouse.cy,0,) }
+    if mouse.rbutton_pressed:   return {'rclick': (mouse.cx,mouse.cy,0,) }
+    
+    # Keys #
+    
+    k = key_get_pressed()
+    combined = key_get_special_combo(k)
+    
+    return COMMANDS.get(bind.get(combined, None), {})
 
+#Input
+#wrapper function to get a simple input from the user
+def Input(x,y, w=1,h=1, default='',mode='text',insert=False):
+    manager=TextInputManager(x,y, w,h, default,mode,insert)
+    result=None
+    while not result:
+        manager.run()
+        result=manager.result
+    manager.close()
+    return result
 
+#
+# key bindings
+#
 
-            #if (cursor_visible or insert_mode or len(field)==w ):
+bind={}
+NO_KEY=(-1,(False,False,False,),) # NULL key constant
+
+# init_keyBindings
+# call during setup to initialize the keyboard controls
+def init_keyBindings():
+    try:
+        _init_keyBindings()
+    except FileNotFoundError:
+        print("'key_bindings.txt' File Not Found. Creating new file from defaults...")
+        _keyBindings_writeFromDefault()
+        _init_key_bindings()
+
+#
+# *DO NOT CALL THIS FUNCTION*
+# call init_keyBindings instead
+# _init_keyBindings
+# read from a file and put key binding info into dict bind.
+#
+def _init_keyBindings():
+        
+    global bind
+
+    codes = []  # list of key codes 0-511 (0-255 and an additional 256
+                # for special key inputs like NumPad digits)
+    combin = [] # list of tuples (shift,ctrl,alt) for key combinations
                 
-                #cursor.draw(0,cursor_type)
+    with open(file_keyBindings, 'r') as bindings:
+        for line in bindings:
+            if file_is_line_comment(line): continue #ignore comments
+            
+            #init
+            line=word.remove_blankspace(line) #ignore white space
+            line=line.lower() #not case-sensitive
+            
+            #NONE
+            if "none" in line: #no key set, still need to put something in the list
+                combin.append( (False,False,False,) )
+                codes.append(   -1  ) # NULL key
+                continue
+            
+            # Key combinations #
+            
+            delete=0
+            if 'shift+' in line:
+                delete+=6
+                _shf = True
+            else: _shf = False
+            if 'ctrl+' in line:
+                delete+=5
+                _ctl = True
+            else: _ctl = False
+            if 'alt+' in line:
+                delete+=4
+                _alt = True
+            else: _alt = False
+            combinData=(_shf,_ctl,_alt,)
+            if delete: line=line[delete:]
+            
+            if line[1] == '\n':     # character keys
+                codeData=key_getchar(ord(line[0]))
+            else:                   # special keys
+                new = TEXT_TO_KEY.get(line[:-1],-1)
+                codeData=new
+            
+            combin.append( combinData )
+            codes.append(   codeData  )
+        #
+        
+    print("Key bindings loaded from '{}'".format(file_keyBindings))
+    
+    # bind special combined key input to commands #
+    
+    n = NUM_ALT_CMDS
+    for i,v in enumerate(COMMANDS.keys()):
+        for j in range(n):
+            bind.update({ (codes[i*n+j], combin[i*n+j],) : v })
+#
+
+def _keyBindings_writeFromDefault():
+    try:
+        with open(file_keyBindings,"w+") as file:
+            file.write(KEYBINDINGS_TEXT_DEFAULT)
+            print("'key_bindings.txt' Created.")
+    except:
+        print("FATAL ERROR! Failed to create key_bindings.txt")
+
+#
+#
+# get direction
+# player chooses a direction using key bindings or the mouse,
+# returns a tuple
+#
+def get_direction():
+    while True:
+        pcAct=handle_mousekeys(get_raw_input()).items()
+        for act,arg in pcAct:
+            if act=="target":
+                return arg
+            elif act=="exit":
+                rog.alert("")
+                return None
+            elif act=="select":
+                return (0,0,0,)
+            elif act=="lclick":
+                mousex,mousey,z=arg
+                pc=rog.Ref.pc
+                dx=mousex - rog.getx(pc.x)
+                dy=mousey - rog.gety(pc.y)
+                if (dx >= -1 and dx <= 1 and dy >= -1 and dy <= 1):
+                    return dx,dy,0
 
 
-'''
-        xc = self.x; yc = self.y;
-        if cursor_type == 0:
-            char = libtcod.console_get_char(con,xc,yc)
-            libtcod.console_put_char_ex(Cursor.con_char, 0,0, char,BLACK,WHITE)
-        libtcod.console_blit(Cursor.con_char, 0,0,1,1,     # source
-                             con, xc,yc)  # dest
-'''
 
 
 
-
-'''for k,v in COMMANDS.items():
-    if (combined == bind[k] or combined == bind_alt[k]):
-        action = v
-        break'''    
-'''elif (cursor_type == 1):
-                    cursor_char=char_insert if (insert_mode or len(field) == w) else char_normal
-                    libtcod.console_put_char(con_cursor, 0,0, cursor_char,
-                                             libtcod.BKGND_NONE)'''
 
 
 

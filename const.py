@@ -4,7 +4,9 @@
 '''
 
 
-import libtcodpy as libtcod
+from enum import Flag, auto
+
+import tcod as libtcod
 
 
 
@@ -18,120 +20,11 @@ import libtcodpy as libtcod
 
 GAME_TITLE = "Softly Into the Night"
 
-# Room size
-ROOMW       = 100
+ROOMW       = 100           #max level size, width and height
 ROOMH       = 75
-
-TILES_PER_ROW = 16          # Num tiles per row
-TILES_PER_COL = 16          # " per column
-
-
-
-
-
-
-# commands #
-
-    # for Input of special chars
-K_ESCAPE    = 19
-K_UP        = 24
-K_DOWN      = 25
-K_RIGHT     = 26
-K_LEFT      = 27
-K_ENTER     = 28
-K_PAGEUP    = 30
-K_PAGEDOWN  = 31
-K_HOME      = 127
-K_END       = 144
-K_BACKSPACE = 174
-K_DELETE    = 175
-K_INSERT    = 254
-
-
-
-
-
-
-
-
-#
-# Tiles
-#
-
-FLOOR           =   249     # centered dot
-WALL            = ord('#')
-STAIRUP         = ord('<')
-STAIRDOWN       = ord('>')
-FUNGUS          = ord('\"')
-TREE            =   5       # club
-SHROOM          =   6       # spade
-
-#
-# Thing types
-#
-
-T_TRAP          = ord('!')
-T_TREE          =   5       # club
-T_SHROOM        =   6       # spade
-T_FUNGUS        = ord('\"')
-T_FOUNTAIN      =   144     # faucet-looking thing
-T_DOORCLOSED    = ord('+')
-T_DOOROPEN      = ord('-')
-T_MONEY         = ord('$')
-T_POTION        =   173     # upside down '!'
-T_PHONE         =   168     # upside down '?' - basically a "magic scroll"
-T_CORPSE        = ord('%')
-T_FOOD          = ord(',')
-T_BULLET        = ord(':')
-T_ROCK          = ord('.')
-T_BOULDER       = ord('0')
-T_CONTAINER     = ord('|')
-T_TERMINAL      =   167     # o underlined
-T_MULTIITEMS    = ord('&')
-T_MELEEWEAPON   = ord('/')
-T_THROWWEAPON   = ord('\\')
-T_CHEMWEAPON    = ord('=')
-T_LAUNCHER      =   151     # sqrt
-T_GUN           =   169     # pistol-looking char
-T_LASERGUN      =   170     # backward pistol-looking char
-T_SHIELD        = ord(')')
-T_CLOAK         = ord('(')
-T_ARMOR         = ord(']')
-T_HELMET        = ord('[')
-T_FLUID         = ord('~')
-T_SCRAPELEC     =   171     # 1/2
-T_SCRAPMETAL    =   172     # 1/4
-T_CREDIT        =   172     # 1/4
-'''
-unused chars:
-({}';|_?!*
-'''
-
-#
-# special chars #
-#
-
-# border 0
-# single-line on all sides
-CH_VW       = [179, 179, 186] # vertical wall
-CH_HW       = [196, 205, 205] # horizontal wall
-CH_TLC      = [218, 213, 201] # top-left corner
-CH_BLC      = [192, 212, 200] # bottom-left corner
-CH_BRC      = [217, 190, 188] # bottom-right corner
-CH_TRC      = [191, 184, 187] # top-right corner
-
-
-
-#
-# equip types
-#
-i=0;
-EQ_MAINHAND =i; i+=1;
-EQ_OFFHAND  =i; i+=1;
-EQ_BODY     =i; i+=1;
-EQ_BACK     =i; i+=1;
-EQ_HEAD     =i; i+=1;
-EQ_AMMO     =i; i+=1;
+MAXLEVEL    = 20            #deepest dungeon level
+TILES_PER_ROW = 16          # Num tiles per row (size of the char sheet 
+TILES_PER_COL = 16          # " per column         used for ASCII display)
 
 
 
@@ -140,9 +33,13 @@ EQ_AMMO     =i; i+=1;
 # Gameplay Constants
 #
 
+SKILLMAX            = 2     # highest skill level you can attain
+
 AVG_HEARING         = 100
+AVG_SPD             = 100
+
 COMBATROLL          = 20    # die roll
-AVG_SPD             = 100 
+
 NRG_MOVE            = 1     # multiplier 
 NRG_ATTACK          = 200 
 NRG_BOMB            = 150 
@@ -154,10 +51,20 @@ NRG_EXAMINE         = 200
 NRG_QUAFF           = 100
 NRG_EAT             = 200   # per unit of consumption
 NRGSAVED_FASTSHOT   = 50
-DMG_FIRE            = 1    
+
+MAX_FLUID_IN_TILE   = 10
+
 DMG_BIO             = 1
-SKILLMAX            = 2     # highest skill level you can attain
+
 CHEM_DAMAGE         = 5     # damage chem effect causes when exposure meter fills
+
+#MAXFIRE     = 5     #max fire level; 0 is no fire, max is blazing flame
+MAXTEMP     = 500   #maximum temperature a thing can reach
+BURNTEMP    = 100   #avg. temperature at which a thing will set fire
+FIREBURN    = 50    #dmg fire deals to things (in fire damage) per turn
+FIREHURT    = 1     #lo dmg dealt per turn to things w/ burning status effect
+
+ROLL_SAVE_PARAL = 10    #affects chance to undo paralysis
 
 DIRECTIONS={
     (-1,-1) : 'northwest',
@@ -181,6 +88,147 @@ DIRECTIONS_TERSE={
     (0,1)   : 'S',
     (1,1)   : 'SE',
 }
+DIRECTION_FROM_INT={
+    0   : (1,0,),
+    1   : (1,-1,),
+    2   : (0,-1,),
+    3   : (-1,-1,),
+    4   : (-1,0,),
+    5   : (-1,1,),
+    6   : (0,1,),
+    7   : (1,1,),
+    }
+
+
+
+
+#
+# Keys
+#
+
+    # special character key inputs
+K_ESCAPE    = 19
+K_UP        = 24
+K_DOWN      = 25
+K_RIGHT     = 26
+K_LEFT      = 27
+K_ENTER     = 28
+K_PAGEUP    = 30
+K_PAGEDOWN  = 31
+K_HOME      = 127
+K_END       = 144
+K_BACKSPACE = 174
+K_DELETE    = 175
+K_INSERT    = 254
+
+
+
+
+
+
+
+#
+# Tiles
+#
+
+FLOOR           =   249     # centered dot
+WALL            = ord('#')
+DOORCLOSED      = ord('+')
+DOOROPEN        = ord('-')
+STAIRUP         = ord('<')
+STAIRDOWN       = ord('>')
+FUNGUS          = ord('\"')
+TREE            =   5       # club
+SHROOM          =   6       # spade
+PUDDLE          =   7       # circle
+SHALLOW         = ord('_')
+WATER           = ord('~')
+DEEPWATER       =   247     # double ~
+
+#
+# Thing types
+#
+
+T_TRAP          = ord('!')
+T_TREE          =   5       # club
+T_SHROOM        =   6       # spade
+T_FUNGUS        = ord('\"')
+T_FOUNTAIN      =   144     # faucet-looking thing
+T_MONEY         = ord('$')
+T_BOTTLE        =   173     # upside down '!'
+T_PHONE         =   168     # upside down '?' - basically a "magic scroll"
+T_CORPSE        = ord('%')
+T_FOOD          = ord(',')
+T_BULLET        = ord(':')
+T_ROCK          = ord('.')
+T_BOULDER       = ord('0')
+T_DUST          = ord('^')
+T_CONTAINER     = ord('|')
+T_TERMINAL      =   167     # o underlined
+#T_MULTIITEMS    = ord('&')
+T_MELEEWEAPON   = ord('/')
+T_THROWWEAPON   = ord('\\')
+T_CHEMWEAPON    = ord('=')
+T_LAUNCHER      =   151     # sqrt
+T_GUN           =   169     # pistol-looking char
+T_LASERGUN      =   170     # backward pistol-looking char
+T_SHIELD        = ord(')')
+T_CLOAK         = ord('(')
+T_ARMOR         = ord(']')
+T_HELMET        = ord('[')
+T_FLUID         = ord('~')
+T_GAS           = ord(' ')
+T_SCRAPELEC     =   171     # 1/2
+T_SCRAPMETAL    =   172     # 1/4
+T_CREDIT        =   172     # 1/4
+T_WOOD          =   246     # div
+T_LOG           =   22      # horizontal rectangle
+T_GORE          = ord('*')
+T_CHEST         =   127     # house looking thing
+'''
+unused chars:
+({}';|_?!*
+'''
+
+# special chars #
+
+# border 0
+# single-line on all sides
+CH_VW       = [179, 179, 186] # vertical wall
+CH_HW       = [196, 205, 205] # horizontal wall
+CH_TLC      = [218, 213, 201] # top-left corner
+CH_BLC      = [192, 212, 200] # bottom-left corner
+CH_BRC      = [217, 190, 188] # bottom-right corner
+CH_TRC      = [191, 184, 187] # top-right corner
+
+
+#
+# Things, specific
+#
+
+class THG(Flag):
+    GORE = auto()
+    JUG = auto()
+    CORPSE_SHROOM = auto()
+    TREE = auto()
+    LOG = auto()
+    WOOD = auto()
+    SAWDUST = auto()
+
+
+
+#
+# equip types
+#
+i=0;
+EQ_MAINHAND =i; i+=1;
+EQ_OFFHAND  =i; i+=1;
+EQ_BODY     =i; i+=1;
+EQ_BACK     =i; i+=1;
+EQ_HEAD     =i; i+=1;
+EQ_AMMO     =i; i+=1;
+
+
 
 
 #
@@ -200,7 +248,10 @@ GENDER_OTHER    = 255
 # Monster and item flags
 
 i = 1
-DEAD        = i; i+=1;
+ONGRID      = i; i+=1;  # Is positioned on the game grid
+DEAD        = i; i+=1;  # Is dead
+WET         = i; i+=1;  # Is wet
+BLOODY      = i; i+=1;  # Is covered in blood
 RAVAGED     = i; i+=1;  # Creature is starved: strong desire for food
 THIEF       = i; i+=1;  # Creature desires gold / treasure and will steal it
 MEAN        = i; i+=1;  # Creature is always hostile to rogues
@@ -208,9 +259,9 @@ CONFU       = i; i+=1;  # Is confused
 TRIPN       = i; i+=1;  # Is hallucinating
 SLEEP       = i; i+=1;  # Is asleep
 FIRE        = i; i+=1;  # Is burning
-WET         = i; i+=1;  # Is wet
+ACID        = i; i+=1;  # Is corroding in acid
 SICK        = i; i+=1;  # Is poisoned / ill
-IRRIT       = i; i+=1;  # Is irritated
+IRRIT       = i; i+=1;  # Is irritated by chemicals
 BLIND       = i; i+=1;  # Is blinded
 PARAL       = i; i+=1;  # Is paralyzed
 COUGH       = i; i+=1;  # Is in a coughing fit
@@ -221,13 +272,14 @@ NVISION     = i; i+=1;  # Has Night vision
 IMMUNE      = i; i+=1;  # Immune to poison
 SEEINV      = i; i+=1;  # Can see invisible
 SEEXRAY     = i; i+=1;  # LOS not blocked by walls
-CANTALK     = i; i+=1;  # Can engage in jolly conversation
-CANFLY      = i; i+=1;  # Can fly
 FLYING      = i; i+=1;  # Is currently flying
+CANFLY      = i; i+=1;  # Can fly
+CANTALK     = i; i+=1;  # Can engage in jolly conversation
 CANEAT      = i; i+=1;  # Can be eaten
 CANQUAFF    = i; i+=1;  # Can be quaffed
 CANEQUIP    = i; i+=1;  # Can be equipped
 CANUSE      = i; i+=1;  # Can be used
+CARRIESFLUID= i; i+=1;  # Can contain fluids
 
 
 #
@@ -262,6 +314,14 @@ TASTE_SWEET = i; i+=1;
 TASTE_SALTY = i; i+=1;
 TASTE_SAVORY = i; i+=1;
 
+TASTES = {
+    TASTE_NASTY : "yuck, disgusting!",
+    TASTE_BITTER : "ack, bitter.",
+    TASTE_SWEET : "yum, sweet.",
+    TASTE_SALTY : "ack, salty.",
+    TASTE_SAVORY : "mmm... delicious!",
+}
+
 
 
 
@@ -279,10 +339,13 @@ MAT_PLASTIC     = i; i+=1;
 MAT_STONE       = i; i+=1;
 MAT_DUST        = i; i+=1;
 MAT_WOOD        = i; i+=1;
+MAT_SAWDUST     = i; i+=1;
 MAT_PAPER       = i; i+=1;
 MAT_LEATHER     = i; i+=1;
 MAT_CLOTH       = i; i+=1;
 MAT_GLASS       = i; i+=1;
+MAT_GAS         = i; i+=1;
+MAT_WATER       = i; i+=1;
 
 
 
@@ -302,28 +365,42 @@ AMMO_ACID       = i; i+=1;
 # Skills
 #
 i=0;
-SKL_GUNS        = i; i+=1;
-SKL_HEAVY       = i; i+=1;
-SKL_TECH        = i; i+=1;
-SKL_ENGINR      = i; i+=1;
-SKL_FIGHTR      = i; i+=1;
+SKL_GUNS        = i; i+=1; #kinetic weapons; rifles, pistols, railguns
+SKL_HEAVY       = i; i+=1; #heavy weapons; missiles, chem/bio/flame weapons
+SKL_ENERGY      = i; i+=1; #energy weapons; lasers, masers, sonic
+SKL_COMPUT      = i; i+=1; #computers
+SKL_ROBOTS      = i; i+=1; #robotics
+SKL_FIGHT       = i; i+=1; #melee combat
 SKL_PILOT       = i; i+=1;
-SKL_ATHLET      = i; i+=1;
-SKL_PERSUA      = i; i+=1;
-SKL_CHEMIS      = i; i+=1;
-SKL_SNEAK       = i; i+=1;
+SKL_ATHLET      = i; i+=1; #athlete
+SKL_PERSUA      = i; i+=1; #persuade
+SKL_CHEMIS      = i; i+=1; #chemistry
+SKL_SNEAK       = i; i+=1; #stealth
 
-SKILLS = {
-"guns" : SKL_GUNS,
-"tech" : SKL_TECH,
-"chemistry" : SKL_CHEMIS,
-"engineering" : SKL_ENGINR,
-"fighting" : SKL_FIGHTR,
+SKILLS={ # ID : name
+SKL_GUNS    : "guns",
+SKL_HEAVY   : "heavy weapons",
+SKL_ENERGY  : "energy weapons",
+SKL_COMPUT  : "computers",
+SKL_ROBOTS  : "robotics",
+SKL_FIGHT   : "fighting",
+SKL_PILOT   : "pilot",
+SKL_ATHLET  : "athletics",
+SKL_PERSUA  : "persuasion",
+SKL_CHEMIS  : "chemistry",
+SKL_SNEAK   : "stealth",
+    }
+'''"guns" : SKL_GUNS,
+"heavy weapons" : SKL_HEAVY,
+"energy weapons" : SKL_ENERGY,
+"computers" : SKL_COMPUT,
+"robotics" : SKL_ROBOTS,
+"fighting" : SKL_FIGHT,
 "piloting" : SKL_PILOT,
 "athletics" : SKL_ATHLET,
 "persuasion" : SKL_PERSUA,
-"heavy weapons" : SKL_HEAVY,
-    }
+"chemistry" : SKL_CHEMIS,
+"stealth" : SKL_SNEAK,'''
 
 
 

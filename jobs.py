@@ -21,16 +21,16 @@ JOBS = {
 CLS_ATHLETE     : ("A", "athlete",   70, 300, 0,'', {'msp':20,'dfn':4,'carry':15,},(SKL_ATHLET,),),
 CLS_CHEMIST     : ("C", "chemist",   60, 500, 2,'L',{'hpmax':-5,'mpmax':5,},(SKL_CHEMIS,),),
 CLS_DEPRIVED    : ("d", "deprived",  40, 0,   0,'', {'hpmax':-5,'mpmax':-5,'atk':-5,},(),),
-CLS_ENGINEER    : ("E", "engineer",  60, 500, 0,'C',{'hpmax':5,'carry':10,},(SKL_ENGINR,),),
-CLS_POLITICIAN  : ("I", "politician",60, 1000,3,'K',{'hpmax':-5,'mpmax':-5,},(SKL_PERSUA),),
+CLS_ENGINEER    : ("E", "engineer",  60, 500, 0,'C',{'hpmax':5,'carry':10,},(SKL_ROBOTS,),),
 CLS_JANITOR     : ("j", "janitor",   60, 100, 0,'J',{},(),),
-CLS_SECURITY    : ("O", "security",  75, 300, 4,'', {'atk':3,},(),),
+CLS_SECURITY    : ("O", "security",  75, 300, 4,'', {'atk':3,},(SKL_ENERGY,),),
 CLS_PILOT       : ("p", "pilot",     60, 500, 0,'P',{'sight':10,},(SKL_PILOT,),),
-CLS_RIOTPOLICE  : ("P", "police",    75, 300, 3,'', {'hpmax':5,'mpmax':-5,'atk':3,'asp':10,},(SKL_FIGHTR,),),
-CLS_SOLDIER     : ("S", "soldier",   90, 300, 1,'', {'hpmax':10,'mpmax':-5,'atk':5,'asp':15,'msp':10,'carry':20,},(SKL_HEAVY,SKL_GUNS,),),
-CLS_THIEF       : ("t", "thief",     60, 1000,0,'', {'mpmax':-5,'dfn':2,'msp':10,'carry':15,},(SKL_SNEAK,),),
-CLS_TECHNICIAN  : ("T", "technician",60, 500, 1,'', {'mpmax':5,},(SKL_TECH,),),
+CLS_POLITICIAN  : ("I", "politician",60, 1000,3,'K',{'hpmax':-5,'mpmax':-5,},(SKL_PERSUA),),
+CLS_RIOTPOLICE  : ("P", "police",    75, 300, 3,'', {'hpmax':5,'mpmax':-5,'atk':3,'asp':10,},(SKL_FIGHT,SKL_ENERGY,),),
 CLS_SMUGGLER    : ("u", "smuggler",  60, 1000,0,'', {'hpmax':5,'carry':10,},(SKL_PERSUA,SKL_GUNS,),),
+CLS_SOLDIER     : ("S", "soldier",   90, 300, 1,'', {'hpmax':10,'mpmax':-5,'atk':5,'asp':15,'msp':10,'carry':20,},(SKL_HEAVY,SKL_GUNS,),),
+CLS_TECHNICIAN  : ("T", "technician",60, 500, 1,'', {'mpmax':5,},(SKL_COMPUT,),),
+CLS_THIEF       : ("t", "thief",     60, 1000,0,'', {'mpmax':-5,'dfn':2,'msp':10,'carry':15,},(SKL_SNEAK,),),
     }
 
 

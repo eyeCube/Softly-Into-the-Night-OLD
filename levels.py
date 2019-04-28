@@ -7,19 +7,29 @@
 import libtcodpy as libtcod
 import random
 
+from const import *
 import tilemap
 
 
 # generate
 # main procedural level generator
-# This generator is inspired by the procedural generation used in Brogue's
-#   level architect algorithms.
-def generate(Map, nRooms=50):
-    floor = tilemap.TileMap(ROOMW,ROOMH)
-    hyper = tilemap.TileMap(ROOMW,ROOMH)
-    for rr in range(nRooms):
-        build_random_room(hyper)
-        #try to put this room on the floor
+# Parameters:
+#   Map : TileMap object (pointer)
+#   level : current dungeon level that we're creating
+#   nRooms : maximum number of "rooms" to generate on this floor
+def generate(Map, level, nRooms=50):
+    if level == 0:
+        # create base
+        Map.cellular_automata(
+            FUNGUS,FLOOR,8, (-1, -1,-1,-1,0, 1,1,1,1,), simultaneous=True )
+        # create rooms
+    elif level == 1:
+        #unfinished code...
+        floor = tilemap.TileMap(ROOMW,ROOMH)
+        hyper = tilemap.TileMap(ROOMW,ROOMH)
+        for rr in range(nRooms):
+            build_random_room(hyper)
+            #try to put this room on the floor
 
 # algorithm assumes a blank TileMap object is passed in
 def build_random_room(Map):

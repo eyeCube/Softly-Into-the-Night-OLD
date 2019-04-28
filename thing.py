@@ -36,8 +36,13 @@ SPD_PERAGI  =
 class Thing(Observable):
     new_id = -1
     
-    def __init__(self, x=None,y=None,z=0,_type=None,name=None,color=None,material=None):
+    def __init__(self, x=None,y=None,z=0,_type=None,name=None,
+                 color=None,material=None):
         super(Thing,self).__init__()
+
+        if _type is not None:
+            if type(_type) == int:
+                _type = chr(_type) #ensure type is string
         
         self.id=Thing.get_new_id()
         
@@ -51,17 +56,20 @@ class Thing(Observable):
         self.equip      = Equip()
         self.stats      = Stats(self)
         self.statMods   = {}    # when equipped by someone else
+        self.inv        = None  # inventory
         self.isSolid    = False # cannot be moved through if solid
         self.isCreature = False
         self.x          = x     # position in the game world
         self.y          = y
         self.z          = z
-        self.type       = _type  # char (int) represents type/species
-        self.mask       = _type  # char (int) displayed to screen
-        self.mass       = 0  # KG
+        self.type       = _type  # char represents type/species
+        self.mask       = _type  # char displayed to screen
+        self.mass       = 0         # KG
         self.material   = material  # what's it made of?
+        self.nutrition  = None  # amount of hunger recovery
         
     #   values for creatures
+        self.ai         = None
         self.mutations  = None  # number of mutations this obj has undergone
         self.gender     = None
         self.job        = None  # what class/profession?
@@ -69,10 +77,7 @@ class Thing(Observable):
         self.fov_map    = None  # libtcod fov_map object
         self.senseEvents= None
         self.purse      = None  # value of currency held
-        self.ai         = None  # can remain None
-        
-    #   values for multiple types of objs
-        self.inv        = None  # inventory
+        self.satiation  = None  # fullness / hunger tracker
 
     #   inanimate things
         self.ammoType   = None  # which type of ammo does it use?
@@ -124,7 +129,7 @@ class Stats:  # Stats and attributes of a obj
         self.spd        = 0     # energy restored per turn
         self.asp        = 0     # attack speed; mods energy cost of attacking
         self.msp        = 0     # move speed; mods energy cost of moving
-        self.carry      = 0     # carrying capacity
+        self.carry      = 0     # carrying capacity maximum
         self.atk        = 0     # attack
         self.dmg        = 0     # damage
         self.dfn        = 0     # defense
@@ -189,6 +194,8 @@ class Equip:
     def __iter__(self):
         for var in vars(self):
             yield var
+
+
 
 # Slot class:
 # equip slot for creatures' Equip object
@@ -266,13 +273,21 @@ def effect_remove(obj,modID):
 
 #fire damage
 def burn(obj, dmg):
+    #get obj resistance
     res = obj.stats.resfire
+    if rog.on(obj, WET):    
+        res += 50               #wet things have ++fire res
+        rog.makenot(obj,WET)    #wet things get dried
     #increase temperature
     dmg = int( dmg*(1-(res/100)) )
     obj.stats.temp += max(0, dmg )
-    if obj.stats.temp >= 100:
-        obj.stats.temp = 100
-        rog.set_fire(obj) 
+    obj.stats.temp = min(MAXTEMP, obj.stats.temp)
+    #set burning status
+    if (not rog.on(obj, FIRE) and obj.stats.temp >= BURNTEMP): #should depend on material?
+        rog.set_status(obj, FIRE)
+#reduce temperature
+def cooldown(obj, amt):
+    obj.stats.temp = max(0, obj.stats.temp - amt)
 #bio damage
 def disease(obj, dmg):
     res = obj.stats.resbio
@@ -280,8 +295,8 @@ def disease(obj, dmg):
     dmg = int( dmg*(1-(res/100)) )
     obj.stats.sick += max(0, dmg )
     if obj.stats.sick >= 100:
-        obj.stats.sick = 100
-        rog.make(obj, SICK) 
+        obj.stats.sick = 0      #reset sickness meter
+        rog.set_status(obj, SICK)
 #rad damage
 def irradiate(obj, dmg):
     res = obj.stats.resbio
@@ -289,9 +304,8 @@ def irradiate(obj, dmg):
     dmg = int( dmg*(1-(res/100)) )
     obj.stats.rads += max(0, dmg )
     if obj.stats.rads >= 100:
-        obj.stats.rads = 100
         obj.stats.rads = 0 # reset rads meter after mutation
-        mutate(obj) 
+        rog.mutate(obj) 
 #chem damage
 def exposure(obj, dmg):
     res = obj.stats.resbio
@@ -299,7 +313,8 @@ def exposure(obj, dmg):
     dmg = int( dmg*(1-(res/100)) )
     obj.stats.expo += max(0, dmg )
     if obj.stats.expo >= 100:
-        rog.hurt(obj, CHEM_DAMAGE) #instant damage when expo meter fills
+        obj.stats.expo = 0          #reset exposure meter
+        rog.hurt(obj, CHEM_DAMAGE)  #instant damage when expo meter fills
         _random_chemical_effect(obj) #inflict chem status effect
 #elec damage  
 def electrify(obj, dmg):
@@ -313,10 +328,11 @@ def electrify(obj, dmg):
     if dmg >= 4:
         rog.kill(obj) # insta-death from massive electric shock
 
-# SHOULD THESE BE IN rogue.py???
 def mutate(obj):
     if not obj.isCreature: return False
     obj.mutations += 1
+    if obj.mutations > 3:
+        rog.kill(obj)
     return True
 def paralyze(obj, turns):
     if not obj.isCreature: return False
@@ -326,6 +342,9 @@ def paralyze(obj, turns):
 
 
 #functions for building objs
+
+#these functions do not register the objects in the game world.
+#just create the Thing and init some default values.
 
 #create_creature
 #this function does not set the individual monster stats
@@ -342,7 +361,6 @@ def create_creature(name, typ, xs,ys, col):
     creat.isCreature    = True
     creat.mutations     = 0
     creat.gender        = dice.roll(2) - 1
-    creat.inv           = []
     creat.fov_map       = rog.fov_init()
     creat.path          = rog.path_init_movement()
     return creat
@@ -356,10 +374,11 @@ def create_corpse(obj):
     corpse.y        = obj.y
     corpse.color    = obj.color
     corpse.material = obj.material
-    corpse.stats.hp = int(obj.mass) + 1
+    corpse.stats.hpmax = int(obj.mass) + 1
     corpse.stats.resfire= obj.stats.resfire
     corpse.stats.resbio = obj.stats.resbio
     corpse.flags    = obj.flags
+    rog.givehp(corpse)
     return corpse
 
 def create_ashes(obj):
@@ -373,6 +392,9 @@ def create_ashes(obj):
     ashes.color     = COL['white']
     ashes.material  = MAT_DUST
     ashes.mass      = max(0.5, int(obj.mass/20))
+    ashes.stats.resfire = 100
+    ashes.stats.resbio  = 100
+    ashes.stats.reselec = 100
     return ashes
 
 

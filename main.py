@@ -18,6 +18,7 @@ from colors import COLORS as COL
 import debug
 import time
 import weapons
+import stuff
 
 #
 
@@ -40,6 +41,7 @@ def main():
     rog.create_window(settings.window_width, settings.window_height)
     rog.create_consoles()
     rog.create_map()
+    rog.create_data()
     rog.create_view()
     rog.create_clock()
     rog.create_log()
@@ -50,6 +52,10 @@ def main():
     # init managers
     rog.create_const_managers()
     rog.create_perturn_managers()
+    
+    #map generation
+    rog.map_generate(rog.map(),rog.dlvl())
+
     # init player object
     pc=rog.create_player(15,15)
     obs=observer.Observer_playerChange()
@@ -58,6 +64,10 @@ def main():
     
     
     ##TESTING
+    rog.gain(pc,"hpmax",100)
+    log=stuff.create(18,18,THG.LOG)
+    rog.burn(log,200)
+    #fluids.smoke(16,16)
     '''pc.stats.hpmax      = 20
     pc.stats.mpmax      = 20
     pc.stats.sight      = 20

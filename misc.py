@@ -14,7 +14,7 @@ from const  import *
 import orangio  as IO
 import word
 import colors
-COL=colors.COLORS
+COL = colors.COLORS
 
 
 
