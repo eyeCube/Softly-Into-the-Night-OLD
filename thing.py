@@ -278,6 +278,7 @@ def burn(obj, dmg):
     if rog.on(obj, WET):    
         res += 50               #wet things have ++fire res
         rog.makenot(obj,WET)    #wet things get dried
+        #steam=stuff.create("steam", obj.x, obj.y)
     #increase temperature
     dmg = int( dmg*(1-(res/100)) )
     obj.stats.temp += max(0, dmg )
@@ -348,7 +349,7 @@ def paralyze(obj, turns):
 
 #create_creature
 #this function does not set the individual monster stats
-#it just creates a obj and gives it some default values / init stuff
+#it just creates a obj and gives it some default values / init's stuff
 def create_creature(name, typ, xs,ys, col):
     creat=Thing()
     creat.name          = name
@@ -377,7 +378,8 @@ def create_corpse(obj):
     corpse.stats.hpmax = int(obj.mass) + 1
     corpse.stats.resfire= obj.stats.resfire
     corpse.stats.resbio = obj.stats.resbio
-    corpse.flags    = obj.flags
+    corpse.stats.reselec= obj.stats.reselec
+    rog.copyflags(corpse, obj)
     rog.givehp(corpse)
     return corpse
 
@@ -385,7 +387,7 @@ def create_ashes(obj):
     if obj.mass < 1: return
     ashes=Thing()
     ashes.name      = "ashes"
-    ashes.type      = chr(247)
+    ashes.type      = T_DUST
     ashes.mask      = ashes.type
     ashes.x         = obj.x
     ashes.y         = obj.y
@@ -396,6 +398,7 @@ def create_ashes(obj):
     ashes.stats.resbio  = 100
     ashes.stats.reselec = 100
     return ashes
+
 
 
 

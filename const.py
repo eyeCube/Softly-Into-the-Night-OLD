@@ -46,6 +46,7 @@ NRG_BOMB            = 150
 NRG_PICKUP          = 50    # grab thing and wield it (requires empty hand)
 NRG_POCKET          = 200   # picking up and putting in your inventory
 NRG_OPENCONTAINER   = 50    # Should it cost energy just to look in a container?
+NRG_OPEN            = 50    # Cost to open/close a door
 NRG_RUMMAGE         = 100   # Cost of picking an item from a container
 NRG_EXAMINE         = 200
 NRG_QUAFF           = 100
@@ -63,6 +64,7 @@ MAXTEMP     = 500   #maximum temperature a thing can reach
 BURNTEMP    = 100   #avg. temperature at which a thing will set fire
 FIREBURN    = 50    #dmg fire deals to things (in fire damage) per turn
 FIREHURT    = 1     #lo dmg dealt per turn to things w/ burning status effect
+FIRELIGHT   = 10    #how much light is produced by fire?
 
 ROLL_SAVE_PARAL = 10    #affects chance to undo paralysis
 

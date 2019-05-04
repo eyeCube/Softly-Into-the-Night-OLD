@@ -52,6 +52,7 @@ import textwrap
 
 from const import *
 from manager import Manager
+import exceptions
 import maths
 import word
 
@@ -202,14 +203,14 @@ g
 ,
 NONE
 
-// Light Bomb
-Shift+b
+// Open/Close
+o
 NONE
 NONE
 
 // Examine
 x
-Shift+/
+/
 NONE
 
 // Move view
@@ -235,6 +236,11 @@ NONE
 //---------\\
 //  MENUS   |
 //---------//
+
+// Display Help Menu
+Shift+/
+NONE
+NONE
 
 // Select
 SPACE
@@ -327,13 +333,14 @@ COMMANDS = {        # translate commands into actions
     'up'            : {'target': (0,  0, -1,) },
     'down'          : {'target': (0,  0,  1,) },
     'get'           : {'get': True},
-    'bomb'          : {'bomb': True},
+    'open'          : {'open': True},
     'look'          : {'look': True},
     'move view'     : {'move view': True},
     'fixed view'    : {'fixed view': True},
     'find player'   : {'find player': True},
     'quit'          : {'quit game': True},
     
+    'help'          : {'help': True},
     'select'        : {'select': True},
     'exit'          : {'exit': True},
     'pgup'          : {'page up': True},
@@ -522,7 +529,7 @@ class TextInputManager(Manager):
     def run(self):
         super(TextInputManager, self).run()
         
-        libtcod.sys_sleep_milli(5)  # checking for input 200 times per second is enough so just sleep a little
+        libtcod.sys_sleep_milli(5)  #reduce CPU usage
         
         self.update()
         
@@ -719,6 +726,7 @@ def key_get_special_combo(k):   # combine shift,ctrl,alt, and key press
 
 # files #
 
+#is line a "comment"? Return whether string line should be ignored.
 def file_is_line_comment(line):
     return ((line[0]=='/' and line[1]=='/') or line[0]=='\n')
 
@@ -740,10 +748,10 @@ def console_invert_color(con,x,y):
 # returns key and mouse objects in a tuple
 #
 def get_raw_input():
-    libtcod.sys_sleep_milli(1)  # prevent from checking a billion times/second
+    libtcod.sys_sleep_milli(1)  # prevent from checking a billion times/second to reduce CPU usage
 
     # we use the check_for_event instead of the wait_for_event function
-    # because wait_for_event is stupid and causes lots of problems
+    # because wait_for_event causes lots of problems
     libtcod.sys_check_for_event(
         libtcod.EVENT_KEY
         | libtcod.EVENT_MOUSE_PRESS     # we only want to know mouse press
@@ -798,7 +806,7 @@ def init_keyBindings():
     except FileNotFoundError:
         print("'key_bindings.txt' File Not Found. Creating new file from defaults...")
         _keyBindings_writeFromDefault()
-        _init_key_bindings()
+        _init_keyBindings()
 
 #
 # *DO NOT CALL THIS FUNCTION*
@@ -814,9 +822,14 @@ def _init_keyBindings():
                 # for special key inputs like NumPad digits)
     combin = [] # list of tuples (shift,ctrl,alt) for key combinations
                 
+    numCommands=0   #counter
+    
     with open(file_keyBindings, 'r') as bindings:
         for line in bindings:
             if file_is_line_comment(line): continue #ignore comments
+
+            #read this line as a command
+            numCommands += 1
             
             #init
             line=word.remove_blankspace(line) #ignore white space
@@ -858,13 +871,19 @@ def _init_keyBindings():
         
     print("Key bindings loaded from '{}'".format(file_keyBindings))
     
-    # bind special combined key input to commands #
-    
     n = NUM_ALT_CMDS
-    for i,v in enumerate(COMMANDS.keys()):
-        for j in range(n):
-            bind.update({ (codes[i*n+j], combin[i*n+j],) : v })
-#
+    # error checking
+    if not ( numCommands == n*len(COMMANDS.keys()) ):
+        raise(exceptions.Error_wrongNumberCommandsLoaded)
+    # bind special combined key input to commands #
+    try:
+        for i,v in enumerate(COMMANDS.keys()):
+            for j in range(n):
+                index = i*n + j
+                bind.update({ (codes[index], combin[index],) : v })
+    except:
+        raise(exceptions.Error_wrongNumberCommandsLoaded)
+#end def _init_keyBindings
 
 def _keyBindings_writeFromDefault():
     try:

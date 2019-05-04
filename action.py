@@ -44,12 +44,15 @@ def bomb_pc(pc): # drop a lit bomb
 def pickup_pc(pc):
     rog.alert("Pick up what? <hjklyubn.>")
     args=IO.get_direction()
-    if not args: return
+    if not args:
+        rog.alert()
+        return
     dx,dy,dz=args
     xx,yy=pc.x + dx, pc.y + dy
     
     thing=rog.inanat(xx,yy) if (xx == pc.x and yy == pc.y) else rog.thingat(xx,yy)
     if thing:
+        
         #thing is creature! You can't pick up creatures :(
         if thing.isCreature:
             rog.alert("You can't pick that up!")
@@ -62,7 +65,7 @@ def pickup_pc(pc):
                     q="That thing is on fire! Are you sure? y/n",
                     mode='wait',border=None)
                 answer=answer.lower()
-                if answer == "y" or answer == " ":
+                if answer == "y" or answer == " " or answer == K_ENTER:
                     rog.alert("You burn your hands!")
                     rog.burn(pc, FIREBURN)
                     rog.hurt(pc, FIREHURT)
@@ -133,15 +136,41 @@ def drop_pc(pc,item):
         rog.msg("{t}{n} dropped {i}.".format(t=pc.title,n=pc.name,i=item.name))
     else: rog.alert("You can't put that there!")
 
+def open_pc(pc):
+    rog.alert("Open what? <hjklyubn.>".format(i=item.name))
+    args=IO.get_direction()
+    if not args: return
+    dx,dy,dz=args
+    xto=pc.x+dx
+    yto=pc.y+dy
+    
+    #open containers
+    #close containers
+    #open doors
+    if rog.tile_get(xto,yto) == DOORCLOSED:
+        rog.drain(pc, 'nrg', NRG_OPEN)
+        rog.tile_change(xto,yto, DOOROPEN)
+        rog.msg("{n} opened a door.".format(n=pc.name))
+        return
+    #close doors
+    if rog.tile_get(xto,yto) == DOOROPEN:
+        rog.drain(pc, 'nrg', NRG_OPEN)
+        rog.tile_change(xto,yto, DOORCLOSED)
+        rog.msg("{n} closed a door.".format(n=pc.name))
+        return
+        
+    
+
         
 def equip_pc(pc,item):
-    #fornow, just wield it THIS SCRIPT NEEDS WORK>>>>...
+    #fornow, just wield it THIS SCRIPT NEEDS SERIOUS WORK*****>>>>...
+    '''
     rog.drain(pc, 'nrg', NRG_RUMMAGE + NRG_WIELD)
-    if rog.hasequip(pc,item):
-        if rog.unwield(pc,item):
+    if rog.has_equip(pc, item):
+        if rog.deequip(pc, item.equipType):
             rog.msg("{t}{n} wields {i}.".format(t=pc.title,n=pc.name,i=item.name))
         else: rog.alert("You are already wielding something in that hand.")
-    else: rog.wield(pc,item)
+    else: rog.wield(pc,item)'''
 
 
 def examine_pc(thing):
@@ -169,7 +198,7 @@ def use(obj, item):
 #a thing puts a thing in its inventory
 def pocketThing(obj, item):
     rog.drain(obj, 'nrg', NRG_POCKET)
-    rog.give(obj,item)
+    rog.give(obj, item)
     rog.release_inanimate(item)
     rog.msg("{t}{n} pockets {i}.".format(
         t=obj.title,n=obj.name,i=item.name))

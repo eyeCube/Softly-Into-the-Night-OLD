@@ -37,7 +37,7 @@ def play(pc, pcAct):
     #timer.reset() #DEBUG TESTING. USED WITH timer.print()
     
     rog.release_souls()
-    rog.compute_fovs() # maybe we should just recalc manually...
+    rog.compute_fovs() 
     
     # monster turn #
     
@@ -49,9 +49,10 @@ def play(pc, pcAct):
         for mon in rog.list_creatures():
             if rog.on(mon,DEAD): continue
             
-            ai.tick(mon)
-            spd=mon.stats.get('spd')
-            rog.gain(mon,'nrg',spd, Max=spd)
+            ai.tick(mon) # AI function
+            monspd=mon.stats.get('spd')
+            rog.gain(mon, 'nrg', monspd, Max=monspd) # give action points
+            
             
         return
     
@@ -101,6 +102,7 @@ class GlobalSettings:
         "SHOW FPS"          : 0,
         "HIGHLIGHT PC"      : 0,
         "HIGHLIGHT COLOR"   : "TRUEBLUE",
+        "SLEEP TIME"        : 1,
         "COLORED STRINGS"   : "__see__,green;__hear__,blue;fire,red;",
     }
 
@@ -127,6 +129,7 @@ class GlobalSettings:
         self.highlightColor = ""
         self.tileset = ""
         self.colors={}
+        self.sleep_time=0
         self._colored_strings=[]
         
     def apply(self):
@@ -180,6 +183,7 @@ class GlobalSettings:
     
     def parse_line(self,line):              #<- store settings in this object
         strng = self.parse_setting(line)
+        line = line.upper()
         
         if "RENDERER" in line:
             self.renderer = int(strng)
@@ -197,6 +201,8 @@ class GlobalSettings:
             self.highlightPC = bool(int(strng))
         elif "HIGHLIGHT COLOR" in line:
             self.highlightColor = strng.lower()
+        elif "SLEEP TIME" in line:
+            self.sleep_time = int(strng)
         elif "COLORED STRINGS" in line:
             self._colored_strings=[]
             elements = strng.split(";")
@@ -413,35 +419,57 @@ class Clock:
 # keeps track of what needs updating
 #
 class Update:
+    i=0;
+    #U_PCFOV     =i;i+=1;
+    U_GAME      =i;i+=1;
+    U_HUD       =i;i+=1;
+    U_MSG       =i;i+=1;
+    U_FINAL     =i;i+=1;
+    U_BASE      =i;i+=1;
     def __init__(self):
-        self.updates = {
-            'pcfov'     : True,
-            'game'      : True,
-            'hud'       : True,
-            'msg'       : True,
-            'final'     : True,
-            'base'      : True,
-            }
+        self.set_all_to_false() #init dict
     
-    def pcfov(self):    self.updates.update({'pcfov':True})
-    def game(self):     self.updates.update({'game' :True})
-    def hud(self):      self.updates.update({'hud'  :True})
-    def msg(self):      self.updates.update({'msg'  :True})
-    def final(self):    self.updates.update({'final':True})
-    def base(self):     self.updates.update({'base' :True})
+    #def pcfov(self):
+    #    self.updates.add(Update.U_PCFOV)
+    def game(self):
+        self.updates.update({Update.U_GAME : True})
+        self.updates.update({Update.U_FINAL : True})
+    def hud(self):
+        self.updates.update({Update.U_HUD : True})
+    def msg(self):
+        self.updates.update({Update.U_MSG : True})
+    def final(self):
+        self.updates.update({Update.U_FINAL : True})
+        self.updates.update({Update.U_BASE : True})
+    def base(self):
+        self.updates.update({Update.U_BASE : True})
 
-    def activate_all_necessary_updates(self):
-        if (self.updates['game']) :   self.final()
-        if (self.updates['final']):   self.base()
+    '''def activate_all_necessary_updates(self):
+        if Update.U_GAME in self.updates :   self.final()
+        if (self.updates['final']):   self.base()'''
     
     def get_updates(self):
-        lis = []
-        for k,v in self.updates.items():
-            if v==True: lis.append(k)
-        return lis
+        return self.updates.items()
 
     def set_all_to_false(self):
-        for k in self.updates.keys():   self.updates.update({k:False})
+        self.updates = {
+            Update.U_GAME   : False,
+            Update.U_HUD    : False,
+            Update.U_MSG    : False,
+            Update.U_FINAL  : False,
+            Update.U_BASE   : False,
+            }
+
+    def update(self):
+        clearMsg = False
+        #activate_all_necessary_updates()
+        if self.updates[Update.U_HUD]   : rog.render_hud(rog.pc());
+        if self.updates[Update.U_GAME]  : rog.render_gameArea(rog.pc());
+        if self.updates[Update.U_MSG]   : rog.logNewEntry(); clearMsg=True;
+        if self.updates[Update.U_FINAL] : rog.blit_to_final( rog.con_game(),0,0);
+        if self.updates[Update.U_BASE]  : rog.refresh();
+        if clearMsg: rog.msg_clear()
+        self.set_all_to_false()
     
 
 
@@ -458,6 +486,8 @@ class MessageLog:
         x = rog.msgs_x();y = rog.msgs_y(); w = rog.msgs_w();h = rog.msgs_h()
         rog.dbox(x,y,w,h,self.msgs[index], border=None,margin=0)
 
+    #delineate; indicate that the next turn has begun,
+        #so messages start on a new entry in the log
     def drawNew(self):
         self.msg_newEntry = True
         if self.msgs: self.print(-1)

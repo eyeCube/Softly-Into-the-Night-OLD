@@ -71,6 +71,7 @@ def stateless(bot):
     
     # iterate through each tile in sight and see what is there...
     # is there a better way to do this?
+    # This code is a little slow.
     sight=bot.stats.sight
     
     for x in range(     bot.x - sight,  bot.x + sight + 1 ):

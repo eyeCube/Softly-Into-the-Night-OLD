@@ -128,11 +128,13 @@ def con_final():            return Ref.con.final
     # update
 def create_update():    Ref.update=game.Update()
 def update_base():      Ref.update.base()
-def update_pcfov():     Ref.update.pcfov()
+#def update_pcfov():     Ref.update.pcfov()
 def update_game():      Ref.update.game()
 def update_msg():       Ref.update.msg()
 def update_hud():       Ref.update.hud()
 def update_final():     Ref.update.final()
+#apply all updates if applicable
+def game_update():      Ref.update.update()
 
 
     # map
@@ -141,6 +143,11 @@ def create_map():
     Ref.Map.init_specialGrids()
     Ref.Map.init_terrain()
 def map():          return Ref.Map
+def tile_get(x,y):          return Ref.Map.get_char(x,y)
+def tile_change(x,y,char):
+    updateNeeded=Ref.Map.tile_change(x,y,char)
+    if updateNeeded:
+        update_all_fovmaps()
 def map_reset_lighting():   Ref.Map.grid_lighting_init()
 def tile_lighten(x,y,value):Ref.Map.tile_lighten(x,y,value)
 def tile_darken(x,y,value): Ref.Map.tile_darken(x,y,value)
@@ -174,7 +181,7 @@ def view_x():       return  Ref.view.x
 def view_y():       return  Ref.view.y
 def view_w():       return  Ref.view.w
 def view_h():       return  Ref.view.h
-def view_max_x():   return  ROOMW - Ref.view.w
+def view_max_x():   return  ROOMW - Ref.view.w #constraints on view panning
 def view_max_y():   return  ROOMH - Ref.view.h
 def fixedViewMode_toggle(): Ref.view.fixed_mode_toggle()
 
@@ -186,13 +193,13 @@ def get_turn():         return Ref.clock.turn
 
 
     # player
-def pc(): return Ref.pc
 def create_player(sx,sy):
     pc = player.chargen()
     port(pc, sx,sy)
     player.init(pc)
     Ref.pc = pc
     return pc
+def pc(): return Ref.pc
 
 
     # gamedata
@@ -205,6 +212,7 @@ def level_down():       Ref.data.dlvl_update(Ref.data.dlvl() - 1)
 
     # log
 def create_log():       Ref.log=game.MessageLog()
+def logNewEntry():      Ref.log.drawNew()
 def msg(new):           Ref.log.add(new, str(get_turn()) )
 def msg_clear():
     clr=libtcod.console_new(msgs_w(), msgs_h())
@@ -262,8 +270,10 @@ def genocide(typ):
 def create_perturn_managers():
     Ref.pt_managers.update({'timers'    : managers.Manager_Timers()})
     Ref.pt_managers.update({'fire'      : managers.Manager_Fires()})
+    Ref.pt_managers.update({'fluids'    : managers.Manager_Fluids()})
     Ref.pt_managers.update({'status'    : managers.Manager_Status()})
     Ref.pt_managers.update({'meters'    : managers.Manager_Meters()})
+    
     # constant managers, manually ran
 def create_const_managers():
     Ref.c_managers.update({'fov'        : managers.Manager_FOV()})
@@ -312,18 +322,6 @@ def makeConBox(w,h,text):
     con = libtcod.console_new(w,h)
     dbox(0,0, w,h, text, con=con, wrap=False,disp='mono')
     return con
-def game_update():
-    clearMsg = False
-    Ref.update.activate_all_necessary_updates()
-    pc=Ref.pc
-    for update in Ref.update.get_updates():
-        if update=='hud'        : render_hud(pc)
-        elif update=='game'     : render_gameArea(pc)
-        elif update=='msg'      : Ref.log.drawNew(); clearMsg=True
-        elif update=='final'    : blit_to_final( con_game(),0,0)
-        elif update=='base'     : refresh()
-    if clearMsg: msg_clear()
-    Ref.update.set_all_to_false()
 
 
 
@@ -349,7 +347,7 @@ def blit_to_final(con,xs,ys, xdest=0,ydest=0): # window-sized blit to final
     libtcod.console_blit(con, xs,ys,window_w(),window_h(),
                          con_final(), xdest,ydest)
 #@debug.printr
-def alert(text):    # message that doesn't go into history
+def alert(text=""):    # message that doesn't go into history
     dbox(msgs_x(),msgs_y(),msgs_w(),msgs_h(),text,wrap=False,border=None,con=con_final())
     refresh()
 
@@ -365,7 +363,7 @@ def inanat(x,y):        return Ref.Map.inanat(x,y)
 def monat (x,y):        return Ref.Map.monat(x,y)
 def solidat(x,y):       return Ref.Map.solidat(x,y)
 def wallat(x,y):        return (not Ref.Map.get_nrg_cost_enter(x,y) )
-def fluidsat(x,y):      return Ref.Map.fluidsat(x,y)
+def fluidsat(x,y):      return Ref.pt_managers['fluids'].fluidsat(x,y)
 def lightsat(x,y):      return Ref.Map.lightsat(x,y)
 def fireat(x,y):        return Ref.pt_managers['fire'].fireat(x,y)
 
@@ -386,14 +384,24 @@ def mapx(x):        return x - view_port_x() + view_x()
 def mapy(y):        return y - view_port_y() + view_y()
 
 # terraforming
-def dig(x,y):       Ref.Map.tile_change(x,y,FLOOR)
+def dig(x,y):
+    #dig a hole in the floor if no solids here
+    #else dig the wall out
+    #use rogue's tile_change func so we update all FOVmaps
+    tile_change(x,y,FLOOR)
+def singe(x,y): #burn tile
+    if Ref.Map.get_char(x,y) == FUNGUS:
+        tile_change(x,y,FLOOR)
 
 # Thing functions
 def is_creature(obj):   return obj.isCreature
 def is_solid(obj):      return obj.isSolid
-def make(obj,flag,val=True):    obj.flags.add(flag)
-def makenot(obj,flag,val=True): obj.flags.remove(flag)
-def hasequip(obj,item): return item in obj.equip
+def make(obj,flag):     obj.flags.add(flag)
+def makenot(obj,flag):  obj.flags.remove(flag)
+def copyflags(toObj,fromObj): #use this to set an object's flags to that of another object.
+    for flag in fromObj.flags:
+        make(toObj, flag)
+def has_equip(obj,item):return item in obj.equip
 def on  (obj,flag):     return (flag in obj.flags)
 def give(obj,item):
     if on(item,FIRE):
@@ -473,23 +481,27 @@ def electrify(obj, dmg): thing.electrify(obj, dmg)
 def paralyze(obj, turns): thing.paralyze(obj, turns)
 #mutate
 def mutate(obj): thing.mutate(obj)
-#delete thing 
-def kill(obj):
+def kill(obj): #remove a thing from the world
     if on(obj,DEAD): return
     make(obj,DEAD)
-    #corpse
-    if on(obj,FIRE):
-        if (obj.material==MAT_FLESH
-            or obj.material==MAT_WOOD
-            or obj.material==MAT_FUNGUS
-            or obj.material==MAT_VEGGIE
-            or obj.material==MAT_LEATHER
-            ):
-            create_ashes(obj)
-    elif obj.isCreature:
+    #creatures
+    if obj.isCreature:
+        #create a corpse
         if dice.roll(100) < monsters.corpse_recurrence_percent[obj.type]:
             create_corpse(obj)
-    #release
+    #inanimate things
+    else:
+        #burn to ashes
+        if on(obj,FIRE):
+            if (obj.material==MAT_FLESH
+                or obj.material==MAT_WOOD
+                or obj.material==MAT_FUNGUS
+                or obj.material==MAT_VEGGIE
+                or obj.material==MAT_LEATHER
+                ):
+                create_ashes(obj)
+    #remove dead thing
+    clear_status_all(obj)
     if on(obj,ONGRID):
         if obj.isCreature:
             Ref.environ.kill(obj)
@@ -587,6 +599,7 @@ def list_remove_fluid(obj):     Lists.fluids.remove(obj)
 #       FOV      #
 #----------------#
 
+#THIS CODE NEEDS TO BE UPDATED. ONLY MAKE AS MANY FOVMAPS AS NEEDED.
 def fov_init():  # normal type FOV map init
     fovMap=libtcod.map_new(ROOMW,ROOMH)
     libtcod.map_copy(Ref.Map.fov_map,fovMap)  # get properties from Map
@@ -597,8 +610,8 @@ def fov_compute(obj):
         obj.fov_map, obj.x,obj.y, obj.stats.get('sight'),
         light_walls = True, algo=libtcod.FOV_RESTRICTIVE)
 def update_fovmap_property(fovmap, x,y, value): libtcod.map_set_properties( fovmap, x,y,value,True)
-def update_fov(obj):    Ref.c_managers['fov'].add(obj)
 def compute_fovs():     Ref.c_managers['fov'].run()
+def update_fov(obj):    Ref.c_managers['fov'].add(obj)
 # circular FOV function
 def can_see(obj,x,y):
     if (get_light_value(x,y) == 0 and not on(obj,NVISION)):
@@ -606,12 +619,19 @@ def can_see(obj,x,y):
     return ( in_range(obj.x,obj.y, x,y, obj.stats.get('sight')) #<- circle-ize
              and libtcod.map_is_in_fov(obj.fov_map,x,y) )
 #copies Map 's fov data to all creatures - only do this when needed
-# !!!! NOTE:: first update Map 's fovmap !!!!
+#   also flag all creatures for updating their fov maps
 def update_all_fovmaps():
     for creat in list_creatures():
         if has_sight(creat):
             fovMap=creat.fov_map
             libtcod.map_copy(Ref.Map.fov_map,fovMap)
+            update_fov(tt)
+#******maybe we should overhaul this FOV system!~*************
+        #creatures share fov_maps. There are a few fov_maps
+        #which have different properties like x-ray vision, etc.
+        #the only fov_maps we have should all be unique. Would save time.
+        #update_all_fovmaps only updates these unique maps.
+        #this would probably be much better, I should do this for sure.
 
 
 
@@ -664,6 +684,7 @@ def path_step(path):
 def release_thing(obj):
     grid_remove(obj)
 def register_inanimate(obj):
+    print("registering {} at {},{}".format(obj.name,obj.x,obj.y))
     make(obj,ONGRID)
     grid_insert(obj)
     list_add_inanimate(obj)
@@ -868,6 +889,8 @@ def set_status(obj, status, t=-1):
     Ref.pt_managers['status'].add(obj, status, t)
 def clear_status(obj, status):
     Ref.pt_managers['status'].remove(obj, status)
+def clear_status_all(obj):
+    Ref.pt_managers['status'].remove_all(obj)
 
 
 

@@ -110,7 +110,7 @@ def commands(pc, pcAct):
                 return
 
             # out of bounds
-            if not ( rog.is_in_grid_x(xto) and rog.is_in_grid_y(yto) ):
+            if ( not rog.is_in_grid_x(xto) or not rog.is_in_grid_y(yto) ):
                 return
             
             # fight if there is a monster present
@@ -123,12 +123,18 @@ def commands(pc, pcAct):
                 if action.move(pc, dx,dy):
                     rog.view_center_player()
 
-        if act == "bomb":
-            action.bomb_pc(pc)
-            return
         if act == "get":
             action.pickup_pc(pc)
             return
+        if act == "open": #open or close
+            action.open_pc(pc)
+            return
+
+        #unused actions
+        '''if act == "bomb":
+            action.bomb_pc(pc)
+            return'''
+        
         #
         #
         # special actions #

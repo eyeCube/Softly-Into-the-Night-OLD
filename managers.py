@@ -71,73 +71,33 @@ class Manager_Timers(Manager):
 
 
 
-#
-# Status Meters
-#
-    #Status Meters are the build-up counters for status effects like fire, sickness, etc.
-        
-class Manager_Meters(Manager):
-
-    def __init__(self):
-        super(Manager_Meters, self).__init__()
-
-        pass
-
-    def run(self):
-        super(Manager_Meters, self).run()
-
-        for thing in rog.list_things():
-            #print(thing.name," is getting cooled down") #TESTING
-            # cool down temperature meter if not currently burning
-            if (thing.stats.temp > 0 and not rog.on(thing,FIRE)):
-                thing.stats.temp -= 1
-            # sickness meter
-            if (thing.stats.sick > 0):
-                thing.stats.sick -= 1
-            # exposure meter
-            if (thing.stats.expo > 0):
-                thing.stats.expo -= 1
-            # rads meter
-            #if (thing.stats.rads > 0):
-            #    thing.stats.rads -= 1
-        
-
-    def close(self):
-        super(Manager_Meters, self).close()
-        
-        pass
-
-
 
 #
 # Fires
 #
-    #manager for fires
-    # also controls light from fire, fire spreading,
-    #   messages from fires, putting out fires
-    # does not control burning status effect
-
-    #OVERHAUL FIRE SYSTEM:
-    #Fire should exist on tiles and feed from the
-    #fuel that's burning on that tile.
-    # If an object burns to ashes, the fire in that tile is put out
-    #   by this manager when it tries to spread/consume but
-    #   realizes that there is no more fuel in the tile it's on.
+    # stores fire grid; controls fires;
+    #   light and messages from fire, fire spreading and dousing
+    # Note: does not control burning status effect
 class Manager_Fires(Manager):
 
     def __init__(self):
         super(Manager_Fires, self).__init__()
 
         self.fires={}
+        self.newfires={}
         self.lights={}
+        self.removeList=[]
+        self.soundsList=[]
 
     def run(self):
         super(Manager_Fires, self).run()
 
-        removeList=[]
-        for x,y in self.fires:
-            _fluids = rog.fluidsat(x,y)
-            _things = rog.thingsat(x,y)
+        self.removeList=[]
+        self.soundsList=[]
+        for fx,fy in self.fires:
+            #print("running fire manager for fire at {},{}".format(x,y))
+            _fluids = rog.fluidsat(fx,fy)
+            _things = rog.thingsat(fx,fy)
             _exit=False
 
             #tiles that put out fires or feed fires
@@ -150,72 +110,56 @@ class Manager_Fires(Manager):
             #fluids that put out fires or feed fires
             '''for flud in _fluids:
                 if flud.extinguish:
-                    self.remove(x,y)
+                    self.remove(fx,fy)
                     _exit=True
                     continue
                 if flud.flammable:
-                    self.fire_spread(x,y)
+                    self.fire_spread(fx,fy)
                     continue
                     '''
 
             if _exit: continue
 
             #check for no fuel condition
-            if not _things: 
-                removeList.append((x,y,))
+            if not _things:
+                #print("no things to burn. Removing fire at {},{}".format(x,y))
+                self.removeList.append((fx,fy,))
                 continue
 
             #BURN THINGS ALIVE (or dead)
-            food=0  #amount of fuel gained by the fire
-            for obj in _things: #things that might fuel the fire
+            food=0  #counter for amount of fuel gained by the fire
+            for obj in _things: #things that might fuel the fire (or put it out)
                 textSee=""
-                canBurn=False
-                if rog.burn(obj, FIREBURN):
-                    canBurn=True
-                if canBurn: #burn it
-                    if obj.material == MAT_WOOD:
-                        rog.event_sound(x,y, SND_FIRE)
-                        food += 10
-                    elif obj.material == MAT_FLESH:
-                        food += 2
-                    elif obj.material == MAT_VEGGIE:
-                        food += 3
-                    elif obj.material == MAT_SAWDUST:
-                        food += 50
-                    elif obj.material == MAT_PAPER:
-                        food += 50
-                    elif obj.material == MAT_CLOTH:
-                        food += 20
-                    elif obj.material == MAT_LEATHER:
-                        food += 1
-                    elif obj.material == MAT_FUNGUS:
-                        food += 1
-                    elif obj.material == MAT_PLASTIC:
-                        food += 1
-                if not obj.isCreature:
-                    if rog.on(obj,DEAD):
-                        textSee="{t}{n} is destroyed by fire.".format(
-                            t=obj.title,n=obj.name)
-                        rog.event_sight(x,y, textSee)
-                        continue
-                    #else: textSee=""
-                #else:
-                    #textSee="{t}{n} burns.".format(t=obj.title,n=obj.name)
-                rog.event_sight(x,y, textSee)
-            #end for (things)
-
-            if food < 5:
+                rog.burn(obj, FIREBURN)
+                if rog.on(obj,FIRE):
+                    food += self._gobble(obj)
+            
+            _FOOD_THRESHOLD=5
+            '''if food < _FOOD_THRESHOLD:
                 if dice.roll(food) == 1:
-                    removeList.append((x,y,))
-            else:
-                if food >= 10:
-                    iterations = 1+int((food - 10)/3)
-                    self.fire_spread(x,y,iterations)
+                    print("not enough food. Removing fire at {},{}".format(fx,fy))
+                    self.removeList.append((fx,fy,))
+            else:'''
+            if food >= _FOOD_THRESHOLD:
+                iterations = 1+int((food - _FOOD_THRESHOLD)/3)
+                self._spread(fx,fy,iterations)
                     
         #end for (fires)
-                    
-        for xx,yy in removeList:
+
+        #add new fires
+        self._fuseGrids()
+
+        #remove fires
+        for xx,yy in self.removeList:
+            #print("fire at {},{} is to be removed...".format(xx,yy))
             self.remove(xx,yy)
+            
+            '''doNotDie=False
+            #don't let the fire die if something in this tile is still burning.
+            for tt in _things:
+                if rog.on(tt, FIRE):
+                    doNotDie=True
+            if doNotDie == False:'''
                     
     #end def
             
@@ -230,8 +174,9 @@ class Manager_Fires(Manager):
     # set a tile on fire
     def add(self, x,y):
         if self.fireat(x,y): return
+        #print("fire addition!!")
         self.fires.update({ (x,y,) : True })
-        light=rog.create_light(x,y, 10, owner=None)
+        light=rog.create_light(x,y, FIRELIGHT, owner=None)
         self.lights.update({(x,y,) : light})
         
         #obj.observer_add(light)
@@ -239,28 +184,84 @@ class Manager_Fires(Manager):
         
     # remove a fire from a tile
     def remove(self, x,y):
+        #print("~trying to remove fire")
         if not self.fireat(x,y): return
+        #print("fire removal!")
         del self.fires[(x,y,)]
         light=self.lights[(x,y,)]
         rog.release_light(light)
-        obj=rog.thingat(x,y)
-        '''if obj:
+        del self.lights[(x,y,)]
+        '''obj=rog.thingat(x,y)
+        if obj:
             textSee="The fire on {n} is extinguished.".format(n=obj.name)
             rog.event_sight(obj.x,obj.y, textSee)
             #rog.event_sound(obj.x,obj.y, SND_DOUSE)'''
 
+    #tell it to add a fire but not yet
+    def _addLater(self, x,y):
+        if self.newfires.get((x,y,),False): return
+        self.newfires.update({ (x,y,) : True})
+    #put new fires onto fire grid
+    def _fuseGrids(self):
+        for k,v in self.newfires.items():
+            x,y = k
+            self.add(x,y)
+        self.newfires={} #reset grid2
+
     # look nearby a burning tile to try and set other stuff on fire
-    def fire_spread(self, xo, yo, iterations):
+    def _spread(self, xo, yo, iterations):
         #heat=FIREBURN #could vary based on what's burning here, etc...
         for ii in range(iterations):
             index = dice.roll(8) - 1
             x,y = DIRECTION_FROM_INT[index]
             fuel=rog.thingat(xo + x, yo + y)
             if fuel:
-                self.add(xo + x, yo + y)
+                self._addLater(xo + x, yo + y)
+
+    #consume an object
+    #get food value based on object passed in
+        #get sound effects "
+    def _gobble(self, obj):
+        #print("gobbling object {} at {},{}".format(obj.name,obj.x,obj.y))
+        food = 0
+        if obj.material == MAT_WOOD:
+            #print("wood")
+            self.soundsList.append({(obj.x,obj.y,):SND_FIRE})
+            food = 10
+        elif obj.material == MAT_FLESH:
+            food = 2
+            if not obj.isCreature: #corpses burn better than alive people
+                food = 3
+        elif obj.material == MAT_VEGGIE:
+            food = 3
+        elif obj.material == MAT_SAWDUST:
+            food = 50
+        elif obj.material == MAT_PAPER:
+            food = 50
+        elif obj.material == MAT_CLOTH:
+            food = 20
+        elif obj.material == MAT_LEATHER:
+            food = 1
+        elif obj.material == MAT_FUNGUS:
+            food = 1
+        elif obj.material == MAT_PLASTIC:
+            food = 1
+        return food
 
 
+#
+# Fluids
+#
 
+class Manager_Fluids(Manager):
+    def __init__(self):
+        self._fluids={}
+
+    def fluidsat(self,x,y):
+        return self._fluids.get((x,y,), ())
+
+
+    
 #
 # Status
 #
@@ -284,7 +285,7 @@ class Manager_Status(Manager):
 
         self.statuses={
             #example:
-            #SICK   : {obj1:DURATION,},
+            #UGLY   : {object : DURATION,},
             FIRE    : {},
             SICK    : {},
             IRRIT   : {},
@@ -296,16 +297,24 @@ class Manager_Status(Manager):
             }
         
 
+    #add a status effect to an object
     def add(self, obj, status, dur=-1):
-        #don't let it overwrite a status effect with a lesser duration...!
-        if dur == -1: #default duration
+        if dur == -1:   #default duration
             dur = Manager_Status.DURATIONS[status]
+        curDur = self.statuses[status].get(obj, 0)
+        if dur <= curDur:   #don't override effect with a lesser duration
+            return          #but you CAN override with a greater duration
         self.statuses[status].update({obj:dur})
-        rog.make(obj, status) #add flag
+        rog.make(obj, status)   #add flag
+    #remove an object's status effect
     def remove(self, obj, status):
         if obj in self.statuses[status]:
             del self.statuses[status][obj]
-            rog.makenot(obj, status) #remove flag
+            rog.makenot(obj, status)    #remove flag
+    #remove all status effects on a given object
+    def remove_all(self, obj):
+        for status in self.statuses.keys():
+            self.remove(obj, status)
 
     def run(self):
         super(Manager_Status, self).run()
@@ -327,7 +336,7 @@ class Manager_Status(Manager):
 #do an effect to an object. This works this way so that you don't have to
 #check every single thing in the game world;
 #  - "hey, 4 of destiny. Are you sick? Are you on fire? Are you irritated? Are you paralyzed? etc....
-#  - Hey inert rock. Are you sick? Are you on fire?
+#  - Hey inert rock. Are you sick? Are you on fire? ....
 # Blah... blah... too many checks!! Just check ones who need checking.
     def _tick(self, obj, status):
         if status == SICK:
@@ -363,6 +372,43 @@ class Manager_Status(Manager):
         
 
 
+
+
+#
+# Status Meters
+#
+    #Status Meters are the build-up counters for status effects like fire, sickness, etc.
+        
+class Manager_Meters(Manager):
+
+    def __init__(self):
+        super(Manager_Meters, self).__init__()
+
+        pass
+
+    def run(self):
+        super(Manager_Meters, self).run()
+
+        for thing in rog.list_things():
+            #print(thing.name," is getting cooled down") #TESTING
+            # cool down temperature meter if not currently burning
+            if (thing.stats.temp > 0 and not rog.on(thing,FIRE)):
+                thing.stats.temp -= 1
+            # sickness meter
+            if (thing.stats.sick > 0):
+                thing.stats.sick -= 1
+            # exposure meter
+            if (thing.stats.expo > 0):
+                thing.stats.expo -= 1
+            # rads meter
+            #if (thing.stats.rads > 0):
+            #    thing.stats.rads -= 1
+        
+
+    def close(self):
+        super(Manager_Meters, self).close()
+        
+        pass
 
 
 
@@ -947,208 +993,6 @@ class Manager_Menu(Manager):
     def refresh(self):
         self.draw()
         
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-''' Adding volume from similar sound types... maybe not the best idea!???
-            newVol=round(ev.volume*0.2) + cVol
-            self.sounds.update({k : (newVol, lis,)})'''
-            #n=misc.get_num_from_char(key.text.decode())
-
-'''
-class InputManager():
-    def __init__(self,x,y,w,h,default,mode):
-        # init
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
-        self.default = default
-        self.mode = mode
-        self.init_time   = time.time()
-        
-        self.text        = default   # displayed string
-        self.field       = []        # string of letters from which 'text' is created
-        for letter in text: self.field.append(letter)
-        
-        self.update          = True
-        self.update_text     = True
-        self.update_clear    = False
-        
-        self.console         = libtcod.console_new(w, h)
-        # cursor
-        self.cursor = Cursor()
-        self.cursor_type         = 0         # options to change cursor display
-        self.cursor_blink_delay  = 0.30      # seconds
-        self.cursor_blink_time   = 0         # timestamp for blinking cursor
-        self.cursor_pos          = len(field)
-        self.cursor_visible      = True
-        self.insert_mode         = False
-
-
-    def update(self):
-        if self.update:
-
-            if self.update_text:
-                self.text = ''.join(self.field)
-                if self.update_clear:   libtcod.console_clear(self.console)
-                libtcod.console_print_ex(self.console,0,0,
-                    libtcod.BKGND_NONE,libtcod.LEFT, self.text)
-            
-                libtcod.console_blit(self.console, 0,0, self.w,self.h,
-                                     0, self.x,self.y)
-            
-            cursor.setpos(self.x+self.cursor_pos,self.y)
-            cursor.draw()
-            
-            libtcod.console_flush()
-            update = clear_text = update_text = False
-
-
-    def get_input(self):
-        reply = None
-        if libtcod.console_is_key_pressed(key.vk):
-            reply = VK_TO_CHAR.get(key.vk, None)
-        
-        elif key.vk == libtcod.KEY_TEXT:
-            decoded = key.text.decode()
-            if (ord(decoded) >= 128 or decoded == '%'):
-                continue    # Prevent weird error-causing ASCII input
-            else: reply = decoded
-        return reply
-
-
-    def process_input(self,reply):
-        
-        if reply:
-
-            # wait mode #
-            
-            if mode=="wait": return reply
-            
-            # Update screen and reset cursor blinker
-            update= update_text= update_clear= cursor_visible= True # let user know their input was received
-            cursor_blink_time = time.time() + cursor_blink_delay #  doing a longer cursor blink than usual
-
-            # text mode #
-            
-            if mode=="text":
-                if time.time() - init_time < .05: continue  # get rid of any input in the buffer
-                #
-                # special input functions
-                #
-                if libtcod.console_is_key_pressed(key.vk):
-                    
-                    ans = ord(reply)
-                    if (ans == K_ENTER):    break
-                    if (ans == K_ESCAPE):   break
-                
-                    if (ans == K_BACKSPACE) :
-                        clear_text = True
-                        if (cursor_pos == w - 1 and len(field) == w):
-                            del field[ cursor_pos]  # Then acts like delete
-                        elif (cursor_pos > 0 and len(field) >= cursor_pos) :
-                            del field[ cursor_pos - 1]
-                            cursor_pos -= 1
-                            
-                    elif (ans == K_DELETE) :
-                        clear_text = True
-                        if len(field) > cursor_pos: del field[ cursor_pos]
-                    
-                    elif (ans == K_LEFT) :
-                        if cursor_pos > 0:  cursor_pos -= 1
-                        
-                    elif (ans == K_RIGHT) :
-                        if (cursor_pos < w - 1 and cursor_pos < len(field)):
-                            cursor_pos += 1
-                    
-                    elif (ans == K_INSERT) :            
-                        insert_mode = not insert_mode
-                #
-                # text input
-                #
-                elif key.vk == libtcod.KEY_TEXT:
-                    
-                            # insert mode
-                            
-                    if ( len(field)==w or insert_mode ) :
-                        if len(field) - 1 < cursor_pos:
-                            field.append(reply)
-                        else:
-                            field[cursor_pos] = reply
-                            
-                            # normal mode
-                    else:   
-                        first_half = field[:cursor_pos]
-                        second_half = field[cursor_pos:]
-                        field = []
-                        for c in first_half:
-                            field.append(c)
-                        field.append( reply)
-                        for c in second_half:
-                            field.append(c)
-                    
-                    # move cursor
-                    if cursor_pos < w - 1:
-                        cursor_pos +=1
-                    #
-                #
-            #
-        #
-
-            
-    def run(self):
-            
-        while True:
-            
-            libtcod.sys_sleep_milli(5) # checking for input 200 times per second is enough so just sleep a little
-            
-            time_stamp = time.time()
-            if time_stamp - cursor_blink_time >= cursor_blink_delay:
-                cursor_blink_time = time_stamp
-                update = True
-                cursor_visible = not cursor_visible
-            
-            self.update()
-            
-            
-            # Check for keyboard event
-            libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS,key,mouse)
-            
-            self.process_input(self.get_input())
-            
-        # end while
-
-        
-        return text
-
-
-
-'''
 
 
 

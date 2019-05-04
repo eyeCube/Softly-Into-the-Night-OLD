@@ -11,17 +11,18 @@ from colors import COLORS as COL
 
 
 STUFF={
-#flag       :  name             chr     col     Lo,kg,
-THG.GORE    : ("hunk of meat",  T_GORE, 'red',  1, 1,),
-THG.LOG     : ("log",           T_LOG, 'brown',100,20,),
-THG.WOOD    : ("wood",          T_WOOD, 'brown',10,2,),
+#flag       :  name             type     material, color,  Lo,kg,
+THG.GORE    : ("hunk of meat",  T_GORE, MAT_FLESH, 'red',  1, 1,),
+THG.LOG     : ("log",           T_LOG,  MAT_WOOD, 'brown',100,20,),
+THG.WOOD    : ("wood",          T_WOOD, MAT_WOOD, 'brown',10,2,),
     }
 
 
 def create(x,y,name):
-    name,typ,coln,lo,kg = STUFF[name]
-    tt = thing.Thing(x,y, _type=typ,name=name,color=COL[coln])
+    name,typ,mat,fgcol,lo,kg = STUFF[name]
+    tt = thing.Thing(x,y, _type=typ,name=name,color=COL[fgcol])
     tt.mass = kg
+    tt.material=mat
     if lo: hp(tt, lo)
     rog.register_inanimate(tt)
     return tt

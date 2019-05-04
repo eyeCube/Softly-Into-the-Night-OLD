@@ -33,11 +33,11 @@ def main():
 #------------------------------------------------#
     # INIT
 #------------------------------------------------#
-    
+
     # init settings
     settings=rog.init_settings()
     rog.init_keyBindings()
-    # init other global objects
+    # init global controllers
     rog.create_window(settings.window_width, settings.window_height)
     rog.create_consoles()
     rog.create_map()

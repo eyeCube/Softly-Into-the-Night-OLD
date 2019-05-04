@@ -11,6 +11,7 @@ import numpy as np
 import libtcodpy as libtcod
 import random
 import math
+from dataclasses import dataclass
 
 import rogue as rog
 from const import *
@@ -32,45 +33,41 @@ from colors import COLORS as COL
 #
 #   Tile
 #
+#Tiles are simple objects that can be minimally interacted with
+#   without much overhead (that's the plan).
+#   There is only one instance of each type of tile.
+#       References to a particular tile on the grid look at the unique
+#       instance created in the TILES constant.
 
+@dataclass
 class Tile():
-
-    # terrains
-    # args:
-        # typ: character ASCII code
-        # foreground color
-        # background color
-        # energy required to enter tile -- value 0 indicates impassible
-        # additional energy required to leave tile
-        # blocks sight
-        # volume dampen value
-        # ---blocks smell---Not used
-        #
-
-    def __init__(self, typ, fg,bg,
-                 nrg_enter,nrg_leave,opaque,volume_dampen):
-        
-        self.char=typ
-        self.fg=fg
-        self.bg=bg
-        self.nrg_enter=nrg_enter
-        self.nrg_leave=nrg_leave
-        self.opaque=opaque
-        self.dampen=volume_dampen
+    char:       str     #ASCII character to represent the tile
+    fg:         str     #foreground color
+    bg:         str     #background color
+    nrg_enter:  int     #action points it takes to enter this tile
+    nrg_leave:  int     #action points it takes to exit this tile
+    opaque:     bool    #False if you can see through it
+    dampen:     int     #volume dampen amount
 
 
+#unique instances of Tile object
+#each x,y position in the grid points to exactly one of these unique Tiles
+#   (so it is not necessary to instantiate dozens of each Tile type.)
 TILES={         #                 fgcolor ,bg, costEnter,Leave, opaque,damp
     FLOOR       : Tile(FLOOR,     'neutral', 'deep',    100,0,  False,1,),
-    WALL        : Tile(WALL,      'dkred', 'orange',     0,0,  True, 201,),
+    WALL        : Tile(WALL,      'dkred', 'orange',     0,0,  True, 50,),
     STAIRDOWN   : Tile(STAIRDOWN, 'accent', 'purple',  100,0,  False,1,),
     STAIRUP     : Tile(STAIRUP,   'accent', 'purple',  100,0,  False,1,),
     FUNGUS      : Tile(FUNGUS,    'green', 'dkgreen',  100,20, False,1,),
     SHROOM      : Tile(SHROOM,    'yellow', 'dkgreen',  150,20,  True,2,),
+    DOOROPEN    : Tile(DOOROPEN,  'brown', 'deep',    100,0,  False,1,),
+    DOORCLOSED  : Tile(DOORCLOSED,'brown', 'dkbrown', 0,0,    True,10,),
+    }
+    #water is now a fluid, not a tile...
     #PUDDLE      : Tile(PUDDLE,    'blue',   'deep',     100,10,  True,2,),
     #SHALLOW     : Tile(SHALLOW,   'blue',  'dkblue',     100,25,  True,2,),
     #WATER       : Tile(WATER,     'trueblue','dkblue',  100,50,  True,2,),
     #DEEPWATER   : Tile(DEEPWATER, 'dkblue', 'deep',     100,100,  True,2,),
-    }
         
 '''class Floor(Tile):
     def __init__(self, *args,**kwargs):
@@ -113,8 +110,7 @@ class TileMap():
             # init special grids
         self.grid_things =      [ [ [] for y in range(h)] for x in range(w) ]
         self.grid_lights =      [ [ [] for y in range(h)] for x in range(w) ]
-        self.grid_fluids =      [ [ [] for y in range(h)] for x in range(w) ]
-        self.grid_fires =       [ [ None for y in range(h)] for x in range(w) ]
+        #self.grid_fluids =      [ [ [] for y in range(h)] for x in range(w) ]
             # Init root FOVmap
         self.fov_map = libtcod.map_new(w,h)
             # init lightmap which stores luminosity values for each tile
@@ -125,24 +121,42 @@ class TileMap():
         self.con_memories = libtcod.console_new(w,h)
         self.con_map_state = libtcod.console_new(w,h)
     #
+    # init_terrain
     # call this to initialize the terrain tile grid with default data
+    # only call once!
     def init_terrain(self):
         w=self.w
         h=self.h
         for x in range(w):
             for y in range(h):
-                self.tile_change(x,y,FLOOR)
+                self._tile_init(x,y,FLOOR)
         for x in range(w):
             for y in range(h):
                 if random.random()*100 > 50:
-                    self.tile_change(x,y,FUNGUS)
-
-    
+                    self._tile_init(x,y,FUNGUS)
+                    
+    # tile_change
+        #change a tile, update fov_map if necessary
+        #return True if fov_maps for objects must now be updated, too
     def tile_change(self, x,y, typ):
-        self.grid_terrain[x][y] = TILES[typ]
-        libtcod.map_set_properties( self.fov_map, x, y,
-            (not self.get_blocks_sight(x,y)), True)
-        # UPDATE ALL FOVMAPS OF ALL CREATURES !!!!!!!!
+        try:
+            currentOpacity=self.get_blocks_sight(x,y)
+            self.grid_terrain[x][y] = TILES[typ]
+            newOpacity=self.get_blocks_sight(x,y)
+            #update fov_map base if we need to
+            if not (currentOpacity == newOpacity):
+                self._update_fov_map_cell_opacity(x,y,(not newOpacity))
+                return True
+            else:
+                return False
+        except IndexError:
+            print('''TILE CHANGE ERROR at {},{}. Cannot change to {}.
+Reason: out of bounds of grid array.'''.format(x,y,typ))
+            return False
+        except:
+            print('''TILE CHANGE ERROR at {},{}. Cannot change to {}.
+Reason: other.'''.format(x,y,typ))
+            return False
     #
     
     def get_blocks_sight(self,x,y):     return self.grid_terrain[x][y].opaque
@@ -375,6 +389,18 @@ class TileMap():
     def get_light_value(self, x, y):
         return self.grid_lighting[x][y]
 
+    # private functions
+
+    # initialize a tile that has not been set yet
+    # do not call this function from outside this class
+    def _tile_init(self, x,y, typ):
+        self.grid_terrain[x][y] = TILES[typ]
+        newOpacity = self.get_blocks_sight(x,y)
+        self._update_fov_map_cell_opacity(x,y,(not newOpacity))
+        
+    def _update_fov_map_cell_opacity(self, x,y, value):
+        libtcod.map_set_properties( self.fov_map, x, y, value, True)
+
 
 #-----------------------#
 # procedural generation #
@@ -428,119 +454,3 @@ class TileMap():
 
 
 
-
-
-
-
-
-
-
-
-'''
-
-    # temperature map
-    def get_temperature(self,x,y):      return self.grid_temperature[x][y]
-
-    def temperature_disperse(self):
-        new=np.full((self.w,self.h), 0)
-        for x,cols in enumerate(self.grid_temperature):
-            for y,tile in enumerate(cols):
-                xf=max(0, x - 1)
-                yf=max(0, y - 1)
-                xt=min(ROOMW - 1, x + 1)
-                yt=min(ROOMH - 1, y + 1)
-                for xx in range(xf,xt + 1):
-                    for yy in range(yf, yt + 1):
-                        give=tile/9
-                        new[xx][yy] += give'''
-                    
-'''SHOW LIGHTING
-libtcod.console_put_char(
-                    self.con_map_state, x,y,
-                    chr(light+48))'''
-
-                
-'''
-        # draw terrain #
-        for xx in range(view_w):
-            for yy in range(view_h):
-
-                x = xx + view_x
-                y = yy + view_y
-                
-                if libtcod.map_is_in_fov(pc.fov_map,x,y):
-                    
-                    thing = self.thingat(x,y)
-                    if thing:
-                        tilething = thing if not thing.isCreature else None
-                        self.discover_place(x,y,tilething)
-                        libtcod.console_put_char_ex(con,x,y,
-                            thing.mask, thing.color, thing.bgcolor)
-                    else:
-                        self.discover_place(x,y)
-                        libtcod.console_put_char_ex(con,x,y,
-                            self.get_discovered(x,y),
-                            self.get_color(x,y), self.get_bgcolor(x,y))
-                else:
-                    libtcod.console_put_char_ex(con,x,y,
-                        self.get_discovered(x,y),
-                        DKGRAY, BLACK)
-            # end for
-        # end for
-        #
-        if pc.stats.sight ==0:
-            self.discover_place(pc.x,pc.y)
-            libtcod.console_put_char_ex(con, pc.x-view_x,pc.y-view_y,
-                pc.mask, pc.color, pc.bgcolor)'''
-
-
-'''
-    @classmethod
-    def update_fovmap_property(cls, x,y, value):
-    # When something in the tile map changes,
-    # This function must be called.
-    
-        libtcod.map_set_properties( cls.fov_map, xx, yy,
-            value, True)
-
-    @classmethod
-    def compute_fovmap(cls,sight,x,y):
-        
-        libtcod.map_compute_fov( cls.fov_map, x,y,sight,
-                                light_walls = True,
-                                 algo=libtcod.FOV_RESTRICTIVE)
-        
-        return cls.fov_map
-    '''
-
-'''
-
-
-entity command look():
-    free action, passive action
-    fovmap = compute_fovmap(
-
-
-def compute_fovmap(sight,x,y,w,h):
-    create map from libtcod
-    for every tile in grid
-        figure out if the tile can be seen through by the calling entity
-        add itself to the map
-
-        
-
-    
-    def __init__(self, w, h):
-        self.width = w
-        self.height = h
-        
-    def create_terrainmap(self):
-        self.tmap = [[for j]
-    
-    def get_fovmap(self, x, y):
-        smap = libtcod.map_new(self.width,self.height)
-        blocks = self.map[x][y][1]
-        
-        
-
-'''
