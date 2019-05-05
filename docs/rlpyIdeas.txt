@@ -1,20 +1,170 @@
 
+
+
+
+INVESTIGATE:
+	TRACK: HOW MANY THINGS WITH STATUS EFFECTS ARE THERE?
+		after something burns to death, it should be removed from the game entirely, including being removed from all lists like the status effect list.
+	FIRE REMOVAL HAPPENING TOO OFTEN
+	CORPSES BURNING TO DEATH INDEFINITELY
+		ASHES NOT GETTING CREATED
+	FIRE LIGHTS SHOULD SHINE AT END OF TURN, UNSHINE ONLY IF NECESSARY
+	FIRE SHOULD NOT DIE AND REGEN EVERY GAME TURN, THIS WILL SLOW DOWN THE GAME A LOT.
+	SET_FIRE GETTING CALLED TOO OFTEN
+	GAME_UPDATE GETTING CALLED TOO OFTEN
+	IN_RANGE GETTING CALLED A LOT
+	maybe we shouldn't sleep so much? Or try wait instead of check for input?
+	refresh
+	
+	
+	
 Todo:
 	level generation
 	eating + corpse eating
-	gear, equipping gear
-	flame/bio throwers
 	status effects - fire, bio to start
+		fire tiles separate from burning status effect
 	skills
 	implement delayed actions ( immediate actions vs. )
 	town w/ shops
+	saving (use pickle)
+		save everything in game into ONE object, then serialize that object.
+		deserialize to load.
+		https://www.reddit.com/r/roguelikedev/comments/bd7oh5/memory_usage_for_large_maps/
+	improve speed
+		https://www.reddit.com/r/roguelikedev/comments/bhrmnr/how_to_make_game_less_laggy/
+	implants, robotic limbs
+	improve sounds - enemy hearing, reacting to sense events
+		sound of fire burning should only play when wood is burning
+		sound of fire should also be much quieter
+	aiming - similar to Sea of Green implementation
+	alert: can hear fire through walls
+	body swapping (controlling other entities)
+		change pc pointer to the object you want to control. Should be easy.
+	materials affect properties of objects
+	overhaul fire system: mix tilemap's grid_fires with fire manager
+		- make fires not thing-based but tile-based entities.
+		Status manager handles fire DOT
+		fire spreads when you move
+	checker the tiles in the grid, add random noise to color
+	Things drop their inventory when they die
+	terminals
+	companions
+	different AI for each creature type
+	Brogue-style UI with sidebar showing things in view, things you can hear, etc.
+	things get bloody during combat
+	holes that you can fall through
+	dark areas which are barely lit up are colored blue-ish
+	when in water:
+		vision affected
+		lose items
+		items in inventory get wet / rust
+	weapons
+	robotics
+		drone bots, swarm bots, nanobots
+		robots / androids / AI systems
+		cyborgs
+	railguns mounted guns
+	add_listener_sounds for monsters who can hear
+	make game exportable on as many platforms as possible
+		https://benob.itch.io/expelledrl 
+		this game is python tcod and exportable.
+	sounds should be visible as a colored musical note on the map.
+		what you see, hear, feel, smell, taste should only give a message if necessary to express to the player what's happening. Separate senses?
+	only update fov if:
+		thing moved
+		tilemap updated opacity of one or more tiles
+	mutations - have pros and cons
+		chargen allows you to select genetic mutations
+	overencumberance, volume???
 Done:
+	gear, equipping gear
 	chargen
 	highlight the player's tile background (optionally)	
+	different types of damage
+	
+	
+	weapons types
+		fighting
+			knives
+			batons
+			swords
+			staves
+			spears
+			axes
+			cudgels
+			electric saws
+			tasers
+			plasma swords
+			throwing weapons (non-explosive)
+				throwing knives, axes, spears
+				stones
+		heavy weapons
+			flame/bio throwers
+			nuclear weapons
+			guided missile weapons
+		directed energy weapons
+			stun guns (electricity damage)
+			microwave beams - crowd control
+			laser beams - disorienting / blinding
+				affected by fog, etc.
+			sonic weapons - deafening / lethal
+				causes lo dmg if sound loud enough.
+		bullet weapons
+			sniper with auto-targeting, tagging systems
+		explosives
+			grenades / bombs
+			molotov cocktails
+			mines
+		nonskilled weapons systems
+			plasma forcefields
+			stealth systems
+			tracking drones (buzzsaw drones, ...)
+	
+	
+
+Portals???	
+
+Worldgen
+	Levelgen
+		spanning tree
+		
+	
+Fire behavior
+	Check for dying conditions:
+		Each turn there's a chance to die depending on the fuel (or lack thereof) available in that tile.
+		If the tile of the fire is shallows or water or deepwater, then the fire goes out. If it's a puddle, the puddle turns into steam and the fire dies.
+	Each turn there's a chance to leap to an adjacent tile, adding a new fire at that spot.
+	When something on fire moves, the tile it moves to catches fire.
+	When something is on fire, everything in its inventory takes burn damage too.
+	
+Electricty status
+	idea: add an electric meter
+		when full, you get paralyzed
+	
+	
+	
+Material of object influences several things about it. Rather than having dozens of describing variables about the object's physics, it just has one variable: material. Examples of how material affects its interactivity:
+	brittleness - likelihood to shatter when killed
+	malleability - tendency to lose its shape when struck
+	bounciness - tendency to bounce when striking a surface
+	reflectiveness - ability to reflect lasers
+	transparency - ability for light/LOS to pass through
+	flammability - brightness / intensity of the flame it produces
+	friction - tendency to slow when sliding across surfaces
+	density - affects settling point when suspended in fluid
 	
 	
 Hazards (bio, chem, radiation) stick around for a long time.
 Fires are shorter lasting.
+Brightness of fires based on the material of the fuel.
+	wood burns bright gold, red, yellow
+	flesh does not burn brightly, burns red
+	cloth burns medium brightness
+	oil burns medium, burns green
+	tar burns bright, burns gold
+	fungus burns dimly blue
+levels.py could contain code for generating floors based on their depth
+	uses proc. gen. functions from TileMap
 
 	
 TYPES OF DAMAGE:
@@ -102,25 +252,32 @@ Skills:
 	The Skills are as follows:
 	
 	engineer
-		build computers; repair computers
+		build/repair computers and robots
+		"conjurer"
 	tech
 		use computers to immediately effect the real world around you
+		"enchanter"
+	chemistry
+		use labs to mix chemicals and create potions, poisons, bombs, fire, and bio weapons
+		"alchemy"
 	fighter
 		perform melee combat with blunt force and bladed weapons; hand-to-hand combat
 	guns
-		use and service small guns
+		use and service small guns, shotguns, rifles, snipers, assault weapons, nonlethal kinetic projectile weapons like anti-riot beanbag shotguns, etc.
 	heavy weapons
-		use and service heavy weapons (2-handed guns: machine guns, launchers, high-caliber rifles, etc.)
-		INCLUDES:
-		chemical weapons
-			use and service chemical weapons (fire and bio weapons)
+		use and service heavy weapons (2-handed guns: machine guns, launchers, guided missile weapons systems, nuclear weapons, chem/bio/flame weapons,)
+	energy weapons
+		use and service directed energy weapons
+			sonic weapons, lasers, masers, tasers, 
 	pilot
 		drive vehicles (aircraft, watercraft, landcraft)
+			aircraft: helicopters (can be implemented in gameplay), planes (fast travel)
+			watercraft: hovercraft, jetski?? NO: submarines, boats (water not deep enough)
+			landcraft: tanks, trucks
+		pilot drones
 	metalsmith
 		forge metal equipment using scrap metal
-	chemist
-		use labs to mix chemicals and create potions, poisons, bombs, fire, and bio weapons
-	athlete
+	athletics
 		perform athletic feats such as sprinting, climbing, jumping, and crawling through small spaces
 	persuade
 		smooth-talk people to win them over
@@ -353,3 +510,125 @@ Stats:
 	AV (Armor Value)
 	ResBIO (Resist BIO-type damage)
 	ResFIR (Resist FIRE-type damage)
+	
+	
+	NOTE: reload time:
+	 #reload time is separate from time it takes to refill the mag. pistol for example takes just one turn to replace the mag. Takes longer to actually fill the mag if you don't already have a full mag.
+Guns
+	attachments:
+		bayonet
+		suppressor
+	
+	flintlock musket
+		type: gun
+		hands: 2
+		Ammo: balls
+		attack: 0
+		damage: 5
+		atk spd: -25
+		mov spd: -20
+		range: 8
+		reload time: 5T
+		
+	flintlock pistol
+		
+	justy
+		type: gun
+		hands: 1
+		firing modes: semi
+		1.0kg
+		Ammo: small pistol cartridges
+		magazine type: small mags
+		attack: 15
+		damage: 5
+		atk spd: 10
+		mov spd: 0
+		range: 20
+		reload time: 1T
+	revolver
+		type: gun
+		hands: 1
+		firing modes: semi
+		2.0kg
+		Ammo: revolver cartridges, magnum cartridges
+		magazine type: multi-chamber cylinders
+		attack: 2
+		damage: 15
+		atk spd: -25
+		mov spd: 0
+		range: 15
+		reload time: 2T
+	ratslayer
+		type: gun
+		hands: 2
+		firing modes: semi 		//(what's the gameplay diff. btn. semi and bolt-action?)
+		3.25kg
+		Ammo: LR cartridges
+		magazine type: none 	//direct feed (how to show this?)
+		attack: 5
+		damage: 5
+		atk spd: 10
+		mov spd: -15
+		range: 10
+		reload time: 1T per 2 bullets loaded
+	cancan  (can cannon)
+		type: gun
+		hands: 2
+		5.0
+		Ammo: anything under 100 cubes
+		Powered by compressed air
+		attack: -10
+		damage: 3
+		atk spd: -25
+		mov spd: -30
+		range: 10
+		reload time: 3T
+		
+	
+		
+	
+Cartridges (Ammo)
+	LR cartridge
+		type: small rifle cartridge
+		0.010kg
+		damage: 5
+		attack: 5
+	mushroom rifle cartridge
+		type: medium rifle cartridge
+		0.02kg
+		damage: 15
+		attack: 0
+		damage +10 vs. flesh
+	FMJ rifle cartridge
+		type: medium rifle cartridge
+		0.025kg
+		damage: 10
+		attack: 5
+		change to pierce target: 50%
+		damage +5 vs. metal
+	armor-piercing rifle cartridge
+		type: big rifle cartridge
+		0.05kg
+		damage: 15
+		attack: 5
+		atk spd: -10
+		change to pierce target: 75%
+		damage +15 vs. metal
+	Magnum cartridge
+		type: magnum cartridge
+		0.010kg
+		damage: 25
+		attack: -15
+		atk spd: -50
+	Revolver cartridge
+		type: revolver cartridge
+		0.010kg
+		damage: 15
+		atk spd: -20
+		
+	
+	
+	
+	
+	
+	
