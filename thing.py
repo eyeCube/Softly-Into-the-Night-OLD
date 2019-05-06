@@ -271,7 +271,7 @@ def effect_remove(obj,modID):
     # elemental damage #
     # cause status effects
 
-#fire damage
+#fire damage (increase temperature)
 def burn(obj, dmg):
     #get obj resistance
     res = obj.stats.resfire
@@ -282,9 +282,9 @@ def burn(obj, dmg):
     #increase temperature
     dmg = int( dmg*(1-(res/100)) )
     obj.stats.temp += max(0, dmg )
-    obj.stats.temp = min(MAXTEMP, obj.stats.temp)
+    obj.stats.temp = min(FIRE_METERMAX, obj.stats.temp)
     #set burning status
-    if (not rog.on(obj, FIRE) and obj.stats.temp >= BURNTEMP): #should depend on material?
+    if (not rog.on(obj, FIRE) and obj.stats.temp >= FIRE_TEMP): #should depend on material?
         rog.set_status(obj, FIRE)
 #reduce temperature
 def cooldown(obj, amt):
@@ -296,7 +296,7 @@ def disease(obj, dmg):
     dmg = int( dmg*(1-(res/100)) )
     obj.stats.sick += max(0, dmg )
     if obj.stats.sick >= 100:
-        obj.stats.sick = 0      #reset sickness meter
+        obj.stats.sick = 100        #cap out sickness meter
         rog.set_status(obj, SICK)
 #rad damage
 def irradiate(obj, dmg):
@@ -320,14 +320,12 @@ def exposure(obj, dmg):
 #elec damage  
 def electrify(obj, dmg):
     res = obj.stats.reselec
-    dmg *= (1-(res/100))
-    dmg /= 25
-    dmg = 1+int(dmg)
-    rog.sap(obj, dmg) # MP damage from lightning
-    if dmg >= 2:
+    dmg = int(dmg * (1-(res/100)) / 10)
+    if dmg:
+        rog.hurt(obj, dmg)
+        rog.sap(obj, dmg)
+    if dmg >= 5:
         rog.paralyze(obj, 1) # paralysis from high damage
-    if dmg >= 4:
-        rog.kill(obj) # insta-death from massive electric shock
 
 def mutate(obj):
     if not obj.isCreature: return False

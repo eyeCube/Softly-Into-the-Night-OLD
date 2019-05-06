@@ -38,13 +38,12 @@ def play(pc, pcAct):
     
     rog.release_souls()
     rog.compute_fovs() 
-    
-    # monster turn #
-    
+
+#-------------------#
+#   NPC turn        #
+#-------------------#
+
     if pc.stats.nrg <= 0:
-        
-        rog.turn_pass()
-        rog.managers_perturn_run()
         
         for mon in rog.list_creatures():
             if rog.on(mon,DEAD): continue
@@ -52,11 +51,14 @@ def play(pc, pcAct):
             ai.tick(mon) # AI function
             monspd=mon.stats.get('spd')
             rog.gain(mon, 'nrg', monspd, Max=monspd) # give action points
-            
-            
+        
+        rog.turn_pass()
+        rog.managers_perturn_run()            
         return
-    
-    # player turn #
+
+#-------------------#
+#   player turn     #
+#-------------------#
 
     rog.pc_listen_sights()
     rog.pc_listen_sounds()
@@ -483,6 +485,7 @@ class MessageLog:
         self.msg_newEntry       = True
     
     def print(self,index):
+        #todo: pass colored indeces into dbox func. to allow colored messages
         x = rog.msgs_x();y = rog.msgs_y(); w = rog.msgs_w();h = rog.msgs_h()
         rog.dbox(x,y,w,h,self.msgs[index], border=None,margin=0)
 

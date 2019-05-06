@@ -26,7 +26,6 @@ import maths
 import player
 import thing
 import tilemap
-import weapons
 from colors import COLORS as COL
 
 
@@ -39,7 +38,7 @@ IDENTIFIER = {
     STAIRDOWN       : "a staircase leading down",
     STAIRUP         : "a staircase leading up",
     T_FOOD          : "some foodstuffs",
-    T_ROCK          : "a rock or stone",
+    T_STONE         : "a rock or stone",
     T_CORPSE        : "a corpse or skeleton",
     ord("?")        : "a silhouette or light",
     }
@@ -213,7 +212,10 @@ def level_down():       Ref.data.dlvl_update(Ref.data.dlvl() - 1)
     # log
 def create_log():       Ref.log=game.MessageLog()
 def logNewEntry():      Ref.log.drawNew()
-def msg(new):           Ref.log.add(new, str(get_turn()) )
+def msg(txt, col=None):
+    if col is None: #default text color
+        col=COL['white']
+    Ref.log.add(txt, str(get_turn()) )
 def msg_clear():
     clr=libtcod.console_new(msgs_w(), msgs_h())
     libtcod.console_blit(clr, 0,0, msgs_w(),msgs_h(),  con_game(), 0,0)
@@ -357,14 +359,14 @@ def alert(text=""):    # message that doesn't go into history
 #-------------#
 
 # tilemap
-def thingsat(x,y):      return Ref.Map.thingsat(x,y)
-def thingat(x,y):       return Ref.Map.thingat(x,y)
-def inanat(x,y):        return Ref.Map.inanat(x,y)
-def monat (x,y):        return Ref.Map.monat(x,y)
-def solidat(x,y):       return Ref.Map.solidat(x,y)
-def wallat(x,y):        return (not Ref.Map.get_nrg_cost_enter(x,y) )
-def fluidsat(x,y):      return Ref.pt_managers['fluids'].fluidsat(x,y)
-def lightsat(x,y):      return Ref.Map.lightsat(x,y)
+def thingat(x,y):       return Ref.Map.thingat(x,y) #Thing object
+def thingsat(x,y):      return Ref.Map.thingsat(x,y) #list
+def inanat(x,y):        return Ref.Map.inanat(x,y) #inanimate Thing at
+def monat (x,y):        return Ref.Map.monat(x,y) #monster at
+def solidat(x,y):       return Ref.Map.solidat(x,y) #solid Thing at
+def wallat(x,y):        return (not Ref.Map.get_nrg_cost_enter(x,y) ) #tile wall
+def fluidsat(x,y):      return Ref.pt_managers['fluids'].fluidsat(x,y) #list
+def lightsat(x,y):      return Ref.Map.lightsat(x,y) #list
 def fireat(x,y):        return Ref.pt_managers['fire'].fireat(x,y)
 
 def cost_enter(x,y):    return Ref.Map.get_nrg_cost_enter(x,y)
@@ -681,6 +683,10 @@ def path_step(path):
 #     Things     #
 #----------------#
 
+def create_stuff(ID, x,y):
+    tt = stuff.create(x,y, ID)
+    register_inanimate(tt)
+    return tt
 def release_thing(obj):
     grid_remove(obj)
 def register_inanimate(obj):
@@ -739,6 +745,7 @@ def init_fluidContainer(obj, size):
 #   Equipment   #
 #---------------#
 
+#equipping things
 def equip(obj,item,equipType): # equip an item in 'equipType' slot
     slotName = thing.getSlotName(equipType)
     slot = obj.equip.__dict__[slotName]
@@ -747,8 +754,11 @@ def equip(obj,item,equipType): # equip an item in 'equipType' slot
     if not item.equipType == equipType: #can't be wielded in mainhand
         return None
     if not slot.isEmpty(): #already wielding something
-        return None 
+        return None
+    #add special effects; light, etc.
+    #add stat effects
     effID = effect_add(obj,item.statMods)
+    #put item in slot
     slot.setSlot(item, effID)
     return effID
 def deequip(obj,equipType): # remove equipment from slot 'equipType'
@@ -756,12 +766,16 @@ def deequip(obj,equipType): # remove equipment from slot 'equipType'
     slot = obj.equip.__dict__[slotName]
     if slot.isEmpty(): #nothing equipped here
         return None
+    #remove any special effects; light, etc.
+    #remove stat effects
     effect_remove(obj, slot.getModID() )
+    #remove item from slot
     item = slot.clear()
     return item
+
 # build equipment and place in the world
 def create_weapon(name,x,y):
-    weap=weapons.create_weapon(name,x,y)
+    weap=gear.create_weapon(name,x,y)
     register_inanimate(weap)
     return weap
 def create_gear(name,x,y):

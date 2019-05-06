@@ -18,7 +18,7 @@ class Data:
 
     def __init__(self, x,y, t=T_FLUID, name=None,
                  color=None, material=None, d=1,v=1,kg=1,
-                 flammable=False, extinguish=False):
+                 burns=False, putsout=False):
 
         self._type=t
         self.name=name
@@ -27,8 +27,8 @@ class Data:
         self.density=d
         self.viscosity=v
         self.mass=kg
-        self.flammable=flammable
-        self.extinguish=extinguish  #does it put out fires?
+        self.flammable=burns
+        self.extinguish=putsout  #does it put out fires?
 
 #Tile fluid container
 class Fluid:
@@ -47,22 +47,23 @@ class Fluid:
         self.size=0
     
     def add(self, name, quantity=1):
-        floodFill = False
+        newQuant = self.dic.get(name, 0) + quantity
+        self.dic.update({name : newQuant})
+        self.size += quantity
+        
+        '''floodFill = False
         if self.size + quantity > MAX_FLUID_IN_TILE:
             quantity = MAX_FLUID_IN_TILE - self.size
             floodFill = True #partial floodfill / mixing
             #how should the fluids behave when you "inject" a new fluid into a full lake of water, etc.?
             #regular floodfill will not cut it
             #maybe just replace the current fluid with the new fluid to keep it simple.
-            
-        newQuant = self.dic.get(name, 0) + quantity
-        self.dic.update({name : newQuant})
-        self.size += quantity
+            '''
 
-        if floodFill:
+        '''if floodFill:
             #do flood fill algo.
             #this is going to also have to run a cellular automata to distribute different types of fluids
-            return
+            return'''
 
     def removeType(self, name, quantity=1):
         if self.size > 0:
@@ -77,6 +78,8 @@ class Fluid:
             else:
                 #we've run out of this type of fluid
                 self.dic.remove(name)
+
+
             
         
 
@@ -87,22 +90,32 @@ FLUIDS = {
 #   kg      : mass
 #   flamm   : flammable?
 #   snuff   : snuffs out fires?
-#name       : (    type,   name,      color,          material,   d,    v,    kg,  flamm,snuff,
-"smoke"     : Data(T_GAS,  "smoke",   COL['white'],   MAT_GAS,    0.01, 0.01, 0,   False,False,),
-"water"     : Data(T_FLUID,"water",   COL['blue'],    MAT_WATER,  1,    1,    0.1, False,True,),
-"blood"     : Data(T_FLUID,"blood",   COL['red'],     MAT_WATER,  0.9,  2,    0.1, False,True,),
+#  ID       : (    type,   name,      color,          material,   d,    v,    kg,  flamm,snuff,
+FL_SMOKE    : Data(T_GAS,  "smoke",   COL['white'],   MAT_GAS,    0.05, 0.01, 0,   False,False,),
+FL_WATER    : Data(T_FLUID,"water",   COL['blue'],    MAT_WATER,  1,    1,    0.1, False,True,),
+FL_BLOOD    : Data(T_FLUID,"blood",   COL['red'],     MAT_WATER,  1.1,  2,    0.1, False,True,),
+FL_ACID     : Data(T_FLUID,"acid",    COL['green'],   MAT_WATER,  1.2,  0.5,  0.1, False,True,),
+FL_OIL      : Data(T_FLUID,"oil",     COL['purple'],  MAT_OIL,    0.9,  3,    0.1, True,False,),
     }
-def create_fluid(x,y,name):
-    fluid = FLUIDS[name] #maybe this should return an actual new Fluid object...
+FLUID_COMBONAMES={
+FL_SMOKE    : "smokey",
+FL_WATER    : "watery",
+FL_BLOOD    : "bloody",
+FL_ACID     : "acidic",
+FL_OIL      : "oily",
+    }
+
+#create a fluid
+def create_fluid(x,y,ID,volume):
+    fluid = Fluid(x,y)
+    fluid.add(ID, volume)
     return fluid
 
         
-#****????
-#should fluids be Things, creatures, tiles, or something else???
-#
-
 
 def simulate_flow():
+#idea: if any fluid tiles contain more than the maximum allowed,
+    #always flow outward using flood fill if necessary.
     for fluid in rog.list_fluids():
         #simultaneous cellular automata
         newMap = TileMap(self.w,self.h)

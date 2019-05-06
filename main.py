@@ -17,8 +17,7 @@ from thing import Thing
 from colors import COLORS as COL
 import debug
 import time
-import weapons
-import stuff
+import gear
 
 #
 
@@ -65,8 +64,9 @@ def main():
     
     ##TESTING
     rog.gain(pc,"hpmax",100)
-    log=stuff.create(18,18,THG.LOG)
+    log=rog.create_stuff(18,18,THG.LOG)
     rog.burn(log,200)
+    box=rog.create_stuff(20,18,THG.BOX)
     #fluids.smoke(16,16)
     '''pc.stats.hpmax      = 20
     pc.stats.mpmax      = 20
@@ -80,7 +80,7 @@ def main():
     rog.givemp(pc)
         #EQUIP
     #print(pc.stats.get('atk'))
-    item=weapons.create_weapon("sword",pc.x,pc.y)
+    item=gear.create_weapon("sword",pc.x,pc.y)
     rog.equip(pc, item, EQ_MAINHAND)
     #print(pc.stats.get('atk'))
     #rog.deequip(pc,EQ_MAINHAND)

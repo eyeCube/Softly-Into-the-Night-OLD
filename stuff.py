@@ -11,20 +11,25 @@ from colors import COLORS as COL
 
 
 STUFF={
-#flag       :  name             type     material, color,  Lo,kg,
-THG.GORE    : ("hunk of meat",  T_GORE, MAT_FLESH, 'red',  1, 1,),
-THG.LOG     : ("log",           T_LOG,  MAT_WOOD, 'brown',100,20,),
-THG.WOOD    : ("wood",          T_WOOD, MAT_WOOD, 'brown',10,2,),
+#flag       :  name             type     material, color,  Lo,kg,solid,push,
+THG.GORE    : ("hunk of meat",  T_GORE, MAT_FLESH, 'red',  1, 1,False,False,),
+THG.LOG     : ("log",           T_LOG,  MAT_WOOD, 'brown',250,100,False,False,),
+THG.WOOD    : ("wood",          T_WOOD, MAT_WOOD, 'brown', 50,2,False,False,),
+THG.BOX     : ("crate",         T_BOX,  MAT_WOOD, 'brown',100,10,True,True,),
+THG.GRAVE   : ("gravestone",    T_GRAVE,MAT_STONE,'silver',100,200,True,False,),
     }
 
 
-def create(x,y,name):
-    name,typ,mat,fgcol,lo,kg = STUFF[name]
+#create a thing from STUFF; does not register thing
+def create(x,y,ID):
+    name,typ,mat,fgcol,lo,kg,solid,push = STUFF[ID]
     tt = thing.Thing(x,y, _type=typ,name=name,color=COL[fgcol])
     tt.mass = kg
     tt.material=mat
     if lo: hp(tt, lo)
-    rog.register_inanimate(tt)
+    tt.isSolid = solid
+    if push: make(tt, CANPUSH)
+    #_applyResistancesFromMaterial(tt, mat)
     return tt
 
 '''

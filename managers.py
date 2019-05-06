@@ -130,7 +130,7 @@ class Manager_Fires(Manager):
             food=0  #counter for amount of fuel gained by the fire
             for obj in _things: #things that might fuel the fire (or put it out)
                 textSee=""
-                rog.burn(obj, FIREBURN)
+                rog.burn(obj, FIRE_BURN)
                 if rog.on(obj,FIRE):
                     food += self._gobble(obj)
             
@@ -176,7 +176,7 @@ class Manager_Fires(Manager):
         if self.fireat(x,y): return
         #print("fire addition!!")
         self.fires.update({ (x,y,) : True })
-        light=rog.create_light(x,y, FIRELIGHT, owner=None)
+        light=rog.create_light(x,y, FIRE_LIGHT, owner=None)
         self.lights.update({(x,y,) : light})
         
         #obj.observer_add(light)
@@ -343,10 +343,10 @@ class Manager_Status(Manager):
             pass
         
         elif status == FIRE:
-            if obj.stats.temp < BURNTEMP: #cooled down too much to keep burning
+            if obj.stats.temp < FIRE_TEMP: #cooled down too much to keep burning
                 self.remove(obj, status)
                 return
-            rog.hurt(obj, FIREHURT)
+            rog.hurt(obj, FIRE_HURT)
             #create a fire at the location of burning things
             if rog.on(obj,ONGRID):
                 rog.set_fire(obj.x,obj.y)
@@ -393,13 +393,13 @@ class Manager_Meters(Manager):
             #print(thing.name," is getting cooled down") #TESTING
             # cool down temperature meter if not currently burning
             if (thing.stats.temp > 0 and not rog.on(thing,FIRE)):
-                thing.stats.temp -= 1
+                thing.stats.temp -= FIRE_METERLOSS
             # sickness meter
             if (thing.stats.sick > 0):
-                thing.stats.sick -= 1
+                thing.stats.sick -= BIO_METERLOSS
             # exposure meter
             if (thing.stats.expo > 0):
-                thing.stats.expo -= 1
+                thing.stats.expo -= CHEM_METERLOSS
             # rads meter
             #if (thing.stats.rads > 0):
             #    thing.stats.rads -= 1
@@ -551,7 +551,7 @@ class Manager_SoundsHeard(Manager):
         super(Manager_SoundsHeard,self).run()
         
         atLeastOneMsg=False
-        text="__Hear__"
+        text="You hear"
         for k,v in self.sounds.items():
             vol,lis=v
             if not vol: continue
@@ -897,6 +897,8 @@ class Manager_Menu(Manager):
     #   - keysItems: {unique id : pointer to menu item}
     #   - keysItems can be manually created and passed in
     #   or automatically created if autoItemize == True
+    #       (in which case you pass in an iterable)
+    #       iterable can contain strings or an object with attr "name"
         self.name=name
         self.x=x
         self.y=y
@@ -992,6 +994,36 @@ class Manager_Menu(Manager):
         return item.name if hasattr(item,'name') else item
     def refresh(self):
         self.draw()
+
+
+def Manager_DelayedAction(Manager):
+    
+    def __init__(self): 
+        super(Manager_Menu, self).__init__()
+
+        self.actors={}
+
+    def run(self):
+        newDic = {}
+        for actor,turns in self.actors.items():
+            turns = turns - 1
+            if turns:
+                newDic.update({actor : turns})
+            else:
+                #finish task
+                self.remove(actor)
+        self.actors = newDic
+
+    def add(self, actor, turns):
+        #rog.busy(actor)
+        self.actors.update({actor : turns})
+
+    def remove(self, actor):
+        #rog.free(actor)
+        del self.actors[actor]
+
+    
+    
         
 
 

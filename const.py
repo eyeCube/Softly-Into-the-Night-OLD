@@ -33,13 +33,17 @@ TILES_PER_COL = 16          # " per column         used for ASCII display)
 # Gameplay Constants
 #
 
+#skills
 SKILLMAX            = 2     # highest skill level you can attain
 
+#stats
 AVG_HEARING         = 100
 AVG_SPD             = 100
 
+#combat
 COMBATROLL          = 20    # die roll
 
+#action potential cost to perform actions
 NRG_MOVE            = 1     # multiplier 
 NRG_ATTACK          = 200 
 NRG_BOMB            = 150 
@@ -53,21 +57,31 @@ NRG_QUAFF           = 100
 NRG_EAT             = 200   # per unit of consumption
 NRGSAVED_FASTSHOT   = 50
 
-MAX_FLUID_IN_TILE   = 10
+#fluids
+MAX_FLUID_IN_TILE   = 100
 
-DMG_BIO             = 1
+#status effects
+# bio (sick)
+BIO_METERLOSS   = 2     # sickness points lost per turn
+BIO_HURT        = 1     # damage per turn while sick
 
-CHEM_DAMAGE         = 5     # damage chem effect causes when exposure meter fills
+# chem (exposure)
+CHEM_METERLOSS  = 5     # exposure points lost per turn
+CHEM_HURT       = 5     # damage chem effect causes when exposure meter fills
 
-#MAXFIRE     = 5     #max fire level; 0 is no fire, max is blazing flame
-MAXTEMP     = 500   #maximum temperature a thing can reach
-BURNTEMP    = 100   #avg. temperature at which a thing will set fire
-FIREBURN    = 50    #dmg fire deals to things (in fire damage) per turn
-FIREHURT    = 1     #lo dmg dealt per turn to things w/ burning status effect
-FIRELIGHT   = 10    #how much light is produced by fire?
+# temp (fire)
+FIRE_METERLOSS  = 10    # temperature points lost per turn
+FIRE_METERMAX   = 1000   #maximum temperature a thing can reach
+FIRE_TEMP       = 100   #avg. temperature at which a thing will set fire
+FIRE_BURN       = 50    #dmg fire deals to things (in fire damage) per turn
+FIRE_HURT       = 1     #lo dmg dealt per turn to things w/ burning status effect
+FIRE_LIGHT      = 10    #how much light is produced by fire?
+#FIRE_LEVELMAX     = 3     #max fire level; 0 is no fire, max is blazing flame
 
+# paralysis
 ROLL_SAVE_PARAL = 10    #affects chance to undo paralysis
 
+#direction
 DIRECTIONS={
     (-1,-1) : 'northwest',
     (1,-1)  : 'northeast',
@@ -160,33 +174,35 @@ T_MONEY         = ord('$')
 T_BOTTLE        =   173     # upside down '!'
 T_PHONE         =   168     # upside down '?' - basically a "magic scroll"
 T_CORPSE        = ord('%')
-T_FOOD          = ord(',')
-T_BULLET        = ord(':')
-T_ROCK          = ord('.')
+T_FOOD          = ord('&')
+T_BULLET        = ord('.')
 T_BOULDER       = ord('0')
 T_DUST          = ord('^')
-T_CONTAINER     = ord('|')
+T_POLE          = ord('|')
 T_TERMINAL      =   167     # o underlined
-#T_MULTIITEMS    = ord('&')
 T_MELEEWEAPON   = ord('/')
 T_THROWWEAPON   = ord('\\')
-T_CHEMWEAPON    = ord('=')
-T_LAUNCHER      =   151     # sqrt
+T_HEAVYWEAPON   = ord('=')
 T_GUN           =   169     # pistol-looking char
-T_LASERGUN      =   170     # backward pistol-looking char
+T_ENERGYWEAPON  =   170     # backward pistol-looking char
+T_BOMB          = ord('*')
+#T_LAUNCHER      =   151     # sqrt
 T_SHIELD        = ord(')')
 T_CLOAK         = ord('(')
 T_ARMOR         = ord(']')
 T_HELMET        = ord('[')
 T_FLUID         = ord('~')
 T_GAS           = ord(' ')
-T_SCRAPELEC     =   171     # 1/2
-T_SCRAPMETAL    =   172     # 1/4
-T_CREDIT        =   172     # 1/4
+T_SCRAPMETAL    =   171     # 1/2
+T_SCRAPELEC     =   172     # 1/4
+#T_CREDIT        =   172     # 1/4
 T_WOOD          =   246     # div
-T_LOG           =   22      # horizontal rectangle
-T_GORE          = ord('*')
+T_BOX           =   22      # horizontal rectangle
+T_LOG           =   28      # upside down gun-looking char
 T_CHEST         =   127     # house looking thing
+T_VORTEX        =   21 
+T_GRAVE         =   241     # +/-
+
 '''
 unused chars:
 ({}';|_?!*
@@ -202,20 +218,6 @@ CH_TLC      = [218, 213, 201] # top-left corner
 CH_BLC      = [192, 212, 200] # bottom-left corner
 CH_BRC      = [217, 190, 188] # bottom-right corner
 CH_TRC      = [191, 184, 187] # top-right corner
-
-
-#
-# Things, specific
-#
-
-class THG(Flag):
-    GORE = auto()
-    JUG = auto()
-    CORPSE_SHROOM = auto()
-    TREE = auto()
-    LOG = auto()
-    WOOD = auto()
-    SAWDUST = auto()
 
 
 
@@ -281,6 +283,7 @@ CANEAT      = i; i+=1;  # Can be eaten
 CANQUAFF    = i; i+=1;  # Can be quaffed
 CANEQUIP    = i; i+=1;  # Can be equipped
 CANUSE      = i; i+=1;  # Can be used
+CANPUSH     = i; i+=1;  # Can be pushed
 CARRIESFLUID= i; i+=1;  # Can contain fluids
 
 
@@ -348,6 +351,7 @@ MAT_CLOTH       = i; i+=1;
 MAT_GLASS       = i; i+=1;
 MAT_GAS         = i; i+=1;
 MAT_WATER       = i; i+=1;
+MAT_OIL         = i; i+=1;
 
 
 
@@ -355,11 +359,15 @@ MAT_WATER       = i; i+=1;
 # Ammo types
 #
 i=0;
-AMMO_BULLETS    = i; i+=1;
-AMMO_ELEC       = i; i+=1;
+AMMO_BULLETS    = i; i+=1;  #bullets for rifles, pistols, etc.
+AMMO_BALLS      = i; i+=1;  #balls for muskets
+AMMO_SHOT       = i; i+=1;  #shotgun shells
+AMMO_ELEC       = i; i+=1;  #electricity
+AMMO_FLUIDS     = i; i+=1;  #any fluids
 AMMO_OIL        = i; i+=1;
 AMMO_HAZMATS    = i; i+=1;
 AMMO_ACID       = i; i+=1;
+AMMO_CHEMS      = i; i+=1;
 
 
 
@@ -367,12 +375,13 @@ AMMO_ACID       = i; i+=1;
 # Skills
 #
 i=0;
+SKL_FIGHT       = i; i+=1; #melee combat; throwing weapons
 SKL_GUNS        = i; i+=1; #kinetic weapons; rifles, pistols, railguns
 SKL_HEAVY       = i; i+=1; #heavy weapons; missiles, chem/bio/flame weapons
 SKL_ENERGY      = i; i+=1; #energy weapons; lasers, masers, sonic
+SKL_EXPLOS      = i; i+=1; #explosives; 
 SKL_COMPUT      = i; i+=1; #computers
 SKL_ROBOTS      = i; i+=1; #robotics
-SKL_FIGHT       = i; i+=1; #melee combat
 SKL_PILOT       = i; i+=1;
 SKL_ATHLET      = i; i+=1; #athlete
 SKL_PERSUA      = i; i+=1; #persuade
@@ -380,12 +389,13 @@ SKL_CHEMIS      = i; i+=1; #chemistry
 SKL_SNEAK       = i; i+=1; #stealth
 
 SKILLS={ # ID : name
+SKL_FIGHT   : "fighting",
 SKL_GUNS    : "guns",
 SKL_HEAVY   : "heavy weapons",
 SKL_ENERGY  : "energy weapons",
+SKL_EXPLOS  : "explosives",
 SKL_COMPUT  : "computers",
 SKL_ROBOTS  : "robotics",
-SKL_FIGHT   : "fighting",
 SKL_PILOT   : "pilot",
 SKL_ATHLET  : "athletics",
 SKL_PERSUA  : "persuasion",
@@ -442,6 +452,43 @@ FACT_MONSTERS   = i; i+=1;
 
 
 
+#
+# ITEMS
+#
+i=0;
+
+
+
+#
+# gear qualities
+#
+i=0;
+QU_CRUDE    =i; i+=1;
+QU_MARKET   =i; i+=1;
+QU_POLICE   =i; i+=1;
+QU_MILITARY =i; i+=1;
+
+QUALITIES={
+# ID        :   name        %Acc,Atk,Dmg,Dur,$$$,KG,
+QU_CRUDE    : ("crude",     (-50,-25,-25,-50,-50,33,),),
+QU_MARKET   : ("market",    (-25,0,  0,  -25,-25,10,),),
+QU_POLICE   : ("police",    (0,  25, 0,  0,  0,  0,),),
+QU_MILITARY : ("military",  (25, 50, 25, 25, 50, -5,),),
+    }
+
+
+
+#
+# FLUIDS
+#
+i=0;
+FL_SMOKE    =i; i+=1;
+FL_WATER    =i; i+=1;
+FL_BLOOD    =i; i+=1;
+FL_ACID     =i; i+=1;
+FL_OIL      =i; i+=1;
+
+
 
 #
 # Sounds
@@ -460,49 +507,31 @@ class Struct_Sound():
         self.textHear=textHear
 
 
-
-
-
 #
-# ITEMS
+# Things, specific
 #
-i=0;
 
-#
-# weapons
-#
-'''
-i=1
-WP_ARMINGSWORD  = i; i+=1;
-WP_LONGSWORD    = i; i+=1;
-WP_ESTOC        = i; i+=1;
-'''
+class THG:#(Flag)
+    i=0;
+    GORE                = i; i+=1;
+    JUG                 = i; i+=1;
+    CORPSE_SHROOM       = i; i+=1;
+    TREE                = i; i+=1;
+    LOG                 = i; i+=1;
+    WOOD                = i; i+=1;
+    SAWDUST             = i; i+=1;
+    GRAVE               = i; i+=1;
+    BOX                 = i; i+=1;
 
 
 
 
-'''
-DEEP        = libtcod.Color(20,20,0)
-ACCENT      = libtcod.Color(255,230,165)
-LTGRAY      = libtcod.Color(200,200,200)
-GRAY        = libtcod.grey
-DKGRAY      = libtcod.Color(80,80,80)
-VDKGRAY     = libtcod.Color(50,50,50)
-GOLD        = libtcod.Color(255,150,50)
-LTCYAN      = libtcod.Color(150,200,200)
-LTPINK      = libtcod.Color(255,0,75)
-RED         = libtcod.Color(150,0,0)
-DKRED       = libtcod.Color(60,0,0)
-BLUE        = libtcod.Color(55,120,170)
-GREEN       = libtcod.Color(140,210,40)
-DKGREEN     = libtcod.Color(0,100,0)
-YELLOW      = libtcod.Color(200,200,50)
-SWAMP       = libtcod.Color(50,50,0)
-ORANGE      = libtcod.Color(255,155,40)
-TEAL        = libtcod.Color(0,100,150)
-MAGENTA     = libtcod.Color(200,50,150)
-VIOLET      = libtcod.Color(150,50,200)
-PURPLE      = libtcod.Color(180,60,180)'''
+
+
+
+
+
+
 
 
 

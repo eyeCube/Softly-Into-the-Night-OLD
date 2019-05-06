@@ -50,15 +50,31 @@ def pickup_pc(pc):
     dx,dy,dz=args
     xx,yy=pc.x + dx, pc.y + dy
     
-    thing=rog.inanat(xx,yy) if (xx == pc.x and yy == pc.y) else rog.thingat(xx,yy)
-    if thing:
+    things=rog.thingsat(xx,yy)
+    if pc in things:
+        things.remove(pc)
+
+    choice=None
+    if len(things) > 1:
+        rog.alert("There are multiple things here. Pick up which item?")
+        choices = [] #["all",] #should player be able to pickup multiple things at once? Maybe could be a delayed action?
+        for thing in things:
+            choices.append(thing)
+        choice=rog.menu(
+            "pick up", rog.view_port_x()+2, rog.view_port_y()+2, choices
+            )
+    else:
+        if things:
+            choice=things[0]
+
+    if (choice and not choice == "all"):
         
         #thing is creature! You can't pick up creatures :(
-        if thing.isCreature:
+        if choice.isCreature:
             rog.alert("You can't pick that up!")
             return
         #thing is on fire! What are you doing trying to pick it up??
-        if rog.on(thing,FIRE):
+        if rog.on(choice,FIRE):
             answer=""
             while True:
                 answer=rog.prompt(0,0,rog.window_w(),1,maxw=1,
@@ -67,13 +83,15 @@ def pickup_pc(pc):
                 answer=answer.lower()
                 if answer == "y" or answer == " " or answer == K_ENTER:
                     rog.alert("You burn your hands!")
-                    rog.burn(pc, FIREBURN)
-                    rog.hurt(pc, FIREHURT)
+                    rog.burn(pc, FIRE_BURN)
+                    rog.hurt(pc, FIRE_HURT)
                     break
                 elif answer == "n" or answer == K_ESCAPE:
                     return
         # put in inventory
-        pocketThing(pc, thing)
+        pocketThing(pc, choice)
+    #elif choice == "all":
+    #    
     else:
         rog.alert("There is nothing there to pick up.")
 
@@ -276,7 +294,7 @@ def fight(attkr,dfndr,adv=0):
     if message:
         if hit==False: v="misses"
         elif dmg==0: v='cannot penetrate'; x="'s armor!"
-        elif killed: v='kills'
+        elif killed: v='defeats'
         else: v='hits'
         rog.event_sight(
             dfndr.x,dfndr.y,
