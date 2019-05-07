@@ -9,7 +9,6 @@
 
 from const import *
 import rogue as rog
-import orangio as IO
 import dice
 import weapons
 import maths
@@ -22,11 +21,19 @@ occupations={}
 dirStr=" <hjklyubn.>"
 
 
+#do functions pick which action to do based on whether it's the player acting
+def do_towel(obj, item):
+    if obj==Ref.pc():
+        towel_pc(obj, item)
+    else:
+        towel(obj, item)
+
+
 # player only actions #
 
 def bomb_pc(pc): # drop a lit bomb
     rog.alert("Place bomb where?{d}".format(d=dirStr))
-    args=IO.get_direction()
+    args=rog.get_direction()
     if not args: return
     dx,dy,dz=args
     xx,yy=pc.x + dx, pc.y + dy
@@ -43,7 +50,7 @@ def bomb_pc(pc): # drop a lit bomb
 # grab an item from the game world, removing it from the grid
 def pickup_pc(pc):
     rog.alert("Pick up what?{d}".format(d=dirStr))
-    args=IO.get_direction()
+    args=rog.get_direction()
     if not args:
         rog.alert()
         return
@@ -118,6 +125,8 @@ def inventory_pc(pc,pcInv):
             keysItems.update({"e":"equip"})
         if rog.on(item,CANUSE):
             keysItems.update({"u":"use"})
+        if rog.on(item,CANOPEN):
+            keysItems.update({"o":"open"})
         keysItems.update({"x":"examine"})
         keysItems.update({"d":"drop"})
         keysItems.update({"t":"throw"})
@@ -137,14 +146,14 @@ def inventory_pc(pc,pcInv):
         elif opt == "eat":      rmg=True; eat_pc(pc, item)
         elif opt == "quaff":    rmg=True; quaff_pc(pc, item)
         elif opt == "use":      rmg=True; use_pc(pc, item)
-        elif opt == "examine":  rmg=True; examine_pc(item)
+        elif opt == "examine":  rmg=True; examine_pc(pc, item)
         
         if rmg: rog.drain(pc, 'nrg', NRG_RUMMAGE)
 #
 
 def drop_pc(pc,item):
     rog.alert("Place {i} where?{d}".format(d=dirStr,i=item.name))
-    args=IO.get_direction()
+    args=rog.get_direction()
     if not args: return
     dx,dy,dz=args
     
@@ -153,7 +162,7 @@ def drop_pc(pc,item):
 
 def open_pc(pc):
     rog.alert("Open what?{d}".format(d=dirStr))
-    args=IO.get_direction()
+    args=rog.get_direction()
     if not args: return
     dx,dy,dz=args
     xto=pc.x+dx
@@ -173,7 +182,6 @@ def throw_pc(pc):
     pass
     
 
-        
 def equip_pc(pc,item):
     pass
     #fornow, just wield it THIS SCRIPT NEEDS SERIOUS WORK*****>>>>...
@@ -185,12 +193,53 @@ def equip_pc(pc,item):
         else: rog.alert("You are already wielding something in that hand.")
     else: rog.wield(pc,item)'''
 
-
-def examine_pc(thing):
+def examine_pc(pc, item):
     rog.drain(pc, 'nrg', NRG_EXAMINE)
     rog.dbox(0,0,40,30, thing.DESCRIPTIONS[item.name])
 
+def rest_pc(pc):
+    turns=rog.prompt(0,0,rog.window_w(),1,maxw=3,
+                     q="How long do you want to rest? Enter number of turns:",
+                     mode='wait',border=None)
+    for t in range(turns):
+        rog.queue_action(pc, wait)
 
+def towel_pc(pc, item):
+    options={}
+    options.update({"W" : "wrap around"})
+    options.update({"l" : "lie"})
+    options.update({"s" : "sail"})
+    options.update({"w" : "wield"})
+    options.update({"h" : "wear on head"})
+    options.update({"x" : "wave"})
+    options.update({"d" : "dry"})
+    choice=rog.menu("use towel",0,0,options,autoItemize=False)
+    if choice == "wear on head":
+        pass
+    elif choice == "wrap around":
+        dirTo=rog.get_direction()
+        if not args: return
+        dx,dy,dz=args
+        xto = pc.x + dx; yto = pc.y + dy;
+
+        if (dx==0 and dy==0 and dz==0):
+            pass #wrap around self
+        
+    elif choice == "wield":
+        if rog.on(item, WET):
+            pass #equip it
+        else:
+            rog.alert("You can't wield a towel that isn't wet!")
+            
+    elif choice == "dry":
+        #itSeemsCleanEnough=...
+        if ( itSeemsCleanEnough and not rog.on(item, WET) ):
+            pass #dry self
+        else:
+            if not itSeemsCleanEnough:
+                rog.alert("It doesn't seem clean enough.")
+            elif rog.on(item, WET):
+                rog.alert("It's too wet.")
 
 ################################################
 
@@ -201,8 +250,10 @@ def wait(obj):
     obj.stats.nrg=0
 
 def cough(obj):
-    rog.drain(obj, 'nrg', NRG_COUGH)
+    wait(obj)
     rog.event_sound(obj.x,obj.y, SND_COUGH)
+    rog.event_sight(obj.x,obj.y, "{t}{n} hacks up a lung.".format(
+        t=obj.title,n=obj.name))
 
 #use
 #"use" an item, whatever that means for the specific item

@@ -348,13 +348,14 @@ def chargen():
         pc = rog.create_monster('@',0,0,COLORS['white'],mutate=0)
         pc.name = _name
         pc.title = _title
-        pc.mask = pc.type
+        pc.mask = '@'
         pc.job = _className
         pc.gender = _genderName
         pc.pronouns = _pronouns
         pc.faction = FACT_ROGUE
         #add additional skill
         rog.train(pc,_skillID)
+        #add specific class stats
     
     return pc
 #

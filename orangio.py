@@ -116,12 +116,11 @@ KEYBINDINGS_TEXT_DEFAULT = '''//file name: {filename}
 //by the file reader, and are thus ignored.
 
 //  Key Bindings Information
-//Bindings are not case-sensitive.
 //In order to remove one binding, set it to: NONE 
 //Bindings may begin with any combination of shift, ctrl,
 //and alt keys, followed by a plus (+) symbol:
 //  Shift+ or Ctrl+ or Alt+
-//Example key bindings:
+//Example key bindings (note bindings are NOT case-sensitive):
 //  CTRL+ALT+DELETE
 //  shift+=
 //  f
@@ -218,9 +217,14 @@ t
 NONE
 NONE
 
-// Examine
+// Examine or Look
 x
 /
+Shift+L
+
+// Rest
+r
+Shift+t
 NONE
 
 // Move view
@@ -347,6 +351,7 @@ COMMANDS = {        # translate commands into actions
     'sprint'        : {'sprint': True},
     'throw'         : {'throw': True},
     'look'          : {'look': True},
+    'rest'          : {'rest': True},
     'move view'     : {'move view': True},
     'fixed view'    : {'fixed view': True},
     'find player'   : {'find player': True},

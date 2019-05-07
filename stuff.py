@@ -31,6 +31,8 @@ def _fluidContainer(tt):
     rog.init_fluidContainer(tt, 20)
 def _bigFluidContainer(tt):
     rog.init_fluidContainer(tt, 100)
+def _wood(tt):
+    rog.make(tt, CANWET)
 def _boxOfItems1(tt):
     rog.init_inventory(tt, 100)
     #newt=
@@ -38,26 +40,43 @@ def _boxOfItems1(tt):
 def _dosimeter(tt):
     #todo: make this script
     #use function two options: 1) toggles on/off. 2) displays a reading only when you use it.
+    rog.make(tt, WATERKILLS)
     rog.make(tt, CANUSE)
-    def func(obj, tt): 
+    def funcPlayer(obj, tt): 
         xx=obj.x
         yy=obj.y
         reading = rog.radsat(xx,yy)
-        rog.msg("The counter reads '{} rads'".format(reading))
-        #rog.drain(obj, 'nrg', NRG_USE)
-    tt.useFunction = func
+        rog.msg("The geiger counter reads '{} rads'".format(reading))
+        rog.drain(obj, 'nrg', NRG_USE)
+    def funcMonster(obj, tt):
+        rog.drain(obj, 'nrg', NRG_USE)
+        rog.event_sight(obj.x,obj.y,"{t}{n} looks at a geiger counter.")
+    tt.useFunctionPlayer = funcPlayer
+    tt.useFunctionMonster = funcMonster
+def _towel(tt):
+    rog.make(tt, CANWET)
+    rog.make(tt, CANUSE)
+    rog.make(tt, CANEQUIP)
+    tt.equipType = EQ_BODY #Head?? Which is default "equip?"
+    tt.useFunctionPlayer = action.towel_pc
+    tt.useFunctionMonster = action.towel
+def _torch(tt):
+    rog.make(tt, CANEQUIP)
+    tt.equipType=EQ_OFFHAND
 
 
 STUFF={
 #flag       :  name             type     material, color,  Lo,kg,  solid,push?,script,
 THG.GORE    : ("hunk of meat",  T_GORE, MAT_FLESH, 'red',  1, 1,   False,False,_food_meal,),
-THG.LOG     : ("log",           T_LOG,  MAT_WOOD, 'brown',250,20,  False,False,None,),
-THG.WOOD    : ("wood",          T_WOOD, MAT_WOOD, 'brown', 50,2,   False,False,None,),
+THG.LOG     : ("log",           T_LOG,  MAT_WOOD, 'brown',500,20,  False,False,_wood,),
+THG.WOOD    : ("wood",          T_WOOD, MAT_WOOD, 'brown',100,2,   False,False,_wood,),
 THG.BOX     : ("crate",         T_BOX,  MAT_WOOD, 'brown',100,10,  True,True,  _boxOfItems1,),
 THG.GRAVE   : ("grave",         T_GRAVE,MAT_STONE,'silver',100,200,True,False, None,),
-THG.BIGPOT  : ("cauldron",      T_POT,  MAT_METAL,'metal', 500,100,True,True, _bigFluidContainer,),
+THG.BIGPOT  : ("cauldron",      T_POT,  MAT_METAL,'metal',1000,100,True,True, _bigFluidContainer,),
 THG.STILL   : ("still",         T_STILL,MAT_METAL,'metal', 20, 100,True,False, _still,),
-THG.DOSIMETER:("geiger counter",T_DEVICE,MAT_METAL,'yellow',1,0.5,False,False, _dosimeter,),
+THG.DOSIMETER:("geiger counter",T_DEVICE,MAT_METAL,'yellow',1,0.5, False,False,_dosimeter,),
+THG.TOWEL   : ("towel",         T_TOWEL,MAT_CLOTH,'accent', 10,0.8,False,False,_towel,),
+THG.TORCH   : ("torch",         T_TORCH,MAT_WOOD, 'brown',500,1.1, False,False,_torch,),
     }
 
 

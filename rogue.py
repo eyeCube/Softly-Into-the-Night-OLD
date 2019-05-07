@@ -285,6 +285,7 @@ def create_const_managers():
     Ref.c_managers.update({'events'     : managers.Manager_Events()})
     Ref.c_managers.update({'sights'     : managers.Manager_SightsSeen()})
     Ref.c_managers.update({'sounds'     : managers.Manager_SoundsHeard()})
+    Ref.c_managers.update({'actionQueue': managers.Manager_ActionQueue()})
 
 
 
@@ -465,12 +466,12 @@ def sap(obj, dmg):
     if obj.stats.mp <= 0:
         zombify(obj)
 #deal fire damage
-def burn(obj, dmg):
+def burn(obj, dmg, maxTemp=FIRE_MAXTEMP):
     if on(obj,WET):
-        makenot(obj, WET)
+        clear_status(obj, WET)
         #steam=create_fluid(obj.x, obj.y, "steam")
         return False
-    thing.burn(obj, dmg)
+    thing.burn(obj, dmg, maxTemp)
     return True
 def cooldown(obj, temp=999):
     thing.cooldown(obj, temp)
@@ -530,8 +531,8 @@ def event_sight(x,y,text):
     Ref.c_managers['events'].add_sight(x,y,text)
 def event_sound(x,y,data):
     if (not data): return
-    volume,text=data
-    Ref.c_managers['events'].add_sound(x,y,text,volume)
+    volume,text1,text2=data
+    Ref.c_managers['events'].add_sound(x,y,text1,text2,volume)
 def listen_sights(obj):     return  Ref.c_managers['events'].get_sights(obj)
 def listen_sounds(obj):     return  Ref.c_managers['events'].get_sounds(obj)
 def add_listener_sights(obj):       Ref.c_managers['events'].add_listener_sights(obj)
@@ -916,6 +917,14 @@ def clear_status_all(obj):
     Ref.bt_managers['status'].remove_all(obj)
 
 
+#-----------#
+#  actions  #
+#-----------#
+
+def queue_action(obj, act):
+    pass
+    #Ref.c_managers['actionQueue'].add(obj, act)
+
 
 #----------#
 # managers #
@@ -980,9 +989,20 @@ def routine_print_msgHistory():
 def Input(x,y, w=1,h=1, default='',mode='text',insert=False):
     return IO.Input(x,y,w=w,h=h,default=default,mode=mode,insert=insert)
 
+def get_direction():
+    return IO.get_direction()
+
 #prompt
 # show a message and ask the player for input
-# mode: 'text' or 'wait'
+# Arguments:
+#   x,y:        top-left position of the prompt box
+#   w,h:        width, height of the prompt dbox
+#   maxw:       maximum length of the response the player can give
+#   q:          question to display in the prompt dbox
+#   default:    text that is the default response
+#   mode:       'text' or 'wait'
+#   insert:     whether to begin in Insert mode for the response
+#   border:     border style of the dbox
 def prompt(x,y, w,h, maxw=1, q='', default='',mode='text',insert=False,border=0):
     #libtcod.console_clear(con_final())
     dbox(x,y,w,h,text=q,
@@ -1001,9 +1021,11 @@ def prompt(x,y, w,h, maxw=1, q='', default='',mode='text',insert=False,border=0)
 
 #menu
 #this menu freezes time until input given.
-#keysItems can be an iterable or a dict.
-    #If a dict, autoItemize must be set to False
-#autoItemize: create keys for your items automagically
+# Arguments:
+#   autoItemize: create keys for your keysItems iterable automagically
+#   keysItems can be an iterable or a dict.
+#       **If a dict, autoItemize MUST be set to False
+#       dict allows you to customize what buttons correspond to which options
 def menu(name, x,y, keysItems, autoItemize=True):
     manager=managers.Manager_Menu(name, x,y, window_w(),window_h(), keysItems=keysItems, autoItemize=autoItemize)
     result=None

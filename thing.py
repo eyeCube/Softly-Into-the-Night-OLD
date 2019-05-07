@@ -124,7 +124,7 @@ class Stats:  # Stats and attributes of a obj
             # Base stats
         self.sight      = 0
         self.hearing    = 0
-        self.range      = 0     # maximum range
+        self.range      = 0     # maximum effective range
         self.nrg        = 0     # energy, capacity to do actions
         self.spd        = 0     # energy restored per turn
         self.asp        = 0     # attack speed; mods energy cost of attacking
@@ -139,14 +139,14 @@ class Stats:  # Stats and attributes of a obj
         self.mp         = 0     # current mana
         self.mpmax      = 0     # maximum mana
         self.element    = 0     # what type of damage does it deal?
+        self.temp       = 0     # temperature (fire meter)
+        self.rads       = 0     # radiation (rad meter)
+        self.expo       = 0     # exposure (chem meter)
+        self.sick       = 0     # sickness (bio meter)
         self.resfire    = 0     # resist heat
         self.resbio     = 0     # resist biohazards
         self.reselec    = 0     # resist electricity
         self.resphys    = 0     # resist physical damage
-        self.temp       = 0     # temperature (fire damage)
-        self.rads       = 0     # radiation (rad damage)
-        self.expo       = 0     # exposure (chem damage)
-        self.sick       = 0     # sickness (bio damage)
 
 
     def __getitem__(self,key):      return self.__dict__[key]
@@ -162,7 +162,7 @@ class Stats:  # Stats and attributes of a obj
         total = getattr(self,stat)
         for mod in self.mods.values():
             if mod.get(stat): total += mod.get(stat)
-        return total
+        return max(0, total)
 
     '''def quaff(self, obj):
         obj.stats.hp += 10
@@ -274,17 +274,17 @@ def effect_remove(obj,modID):
 
 #   TEMP METER
 #fire damage (increase temperature)
-def burn(obj, dmg):
+#   temperature cannot exceed maxTemp
+def burn(obj, dmg, maxTemp):
     #get obj resistance
     res = obj.stats.resfire
     if rog.on(obj, WET):    
-        res += 50               #wet things have ++fire res
-        rog.makenot(obj,WET)    #wet things get dried
+        rog.clear_status(obj,WET)    #wet things get dried
         #steam=stuff.create("steam", obj.x, obj.y)
     #increase temperature
     dmg = int( dmg*(1-(res/100)) )
     obj.stats.temp += max(0, dmg )
-    obj.stats.temp = min(FIRE_METERMAX, obj.stats.temp)
+    obj.stats.temp = min(maxTemp, obj.stats.temp)
     #set burning status
     if (not rog.on(obj, FIRE) and obj.stats.temp >= FIRE_TEMP): #should depend on material?
         rog.set_status(obj, FIRE)
@@ -364,7 +364,7 @@ def irritate(obj, dmg):
     dmg = int(dmg * (1-(res/100)) / 10)
     obj.stats.expo += max(0, dmg)
     if obj.stats.expo >= 100:
-        obj.stats.expo = 0          #reset exposure meter
+        obj.stats.expo = 50 #leave some exposure
         rog.set_status(obj, IRRIT)
         
 #   NON-METER ELEMENTAL DAMAGE
@@ -376,7 +376,7 @@ def electrify(obj, dmg):
         rog.hurt(obj, dmg)
         rog.sap(obj, dmg)
     if dmg >= 5:
-        rog.paralyze(obj, 1) # paralysis from high damage
+        rog.paralyze(obj, ELEC_PARALYZETIME) # paralysis from high damage
 
 def mutate(obj):
     if not obj.isCreature: return False

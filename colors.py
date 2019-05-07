@@ -34,6 +34,7 @@ COLORS={
     'dkred'         : '50,0,0',
     'truered'       : '255,0,0',
     'purple'        : '180,60,120',
+    'truepurple'    : '172,0,255',
     'yellow'        : '115,190,60',
     'trueyellow'    : '255,255,0',
     'white'         : '255,255,255',

@@ -85,7 +85,7 @@ class Fluid:
 #effects
 def _wet(actor, n):
     if n>=10:
-        rog.make(actor, WET)
+        rog.set_status(actor, WET)
 def _oily(actor, n):
     if n>=10:
         rog.make(actor, OILY)
@@ -123,8 +123,8 @@ FL_SMOKE    : Data(T_GAS,  "smoke",   COL['white'],   0.05, 0.01, 0.01,False,Fal
 FL_WATER    : Data(T_FLUID,"water",   COL['blue'],    1,    1,    0.1, False,True, _wet, _hydrate,),
 FL_BLOOD    : Data(T_FLUID,"blood",   COL['red'],     1.1,  2,    0.12,False,True, _bloody,_blood,),
 FL_ACID     : Data(T_FLUID,"acid",    COL['green'],   1.21, 0.6,  0.2, False,False,_acid,_quaffAcid,),
-FL_STRONGACID: Data(T_FLUID,"strong acid",COL['bio'], 1.3,  0.9,  0.2, False,False,_strongAcid,_quaffStrongAcid,),
-FL_OIL      : Data(T_FLUID,"oil",     COL['purple'],  0.9,  3,    0.3, True,False, _oily, _sick,),
+FL_STRONGACID:Data(T_FLUID,"strong acid",COL['bio'],  1.3,  0.9,  0.2, False,False,_strongAcid,_quaffStrongAcid,),
+FL_OIL      : Data(T_FLUID,"oil",  COL['truepurple'], 0.9,  3,    0.3, True,False, _oily, _sick,),
 FL_MOONSHINE: Data(T_FLUID,"moonshine",COL['orange'], 1.2,  0.8,  0.15,True,False, _wet, _drunk,),
     }
 FLUID_COMBONAMES={
@@ -132,7 +132,9 @@ FL_SMOKE    : "smokey",
 FL_WATER    : "watery",
 FL_BLOOD    : "bloody",
 FL_ACID     : "acidic",
+FL_STRONGACID: "acidic",
 FL_OIL      : "oily",
+FL_MOONSHINE: "alcoholic",
     }
 
 #create a fluid

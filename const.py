@@ -94,6 +94,7 @@ RAVAGED     = i; i+=1;  # Creature is starved: strong desire for food
 THIEF       = i; i+=1;  # Creature desires gold / treasure and will steal it
 MEAN        = i; i+=1;  # Creature is always hostile to rogues
 DEAD        = i; i+=1;  # Is dead
+WATERKILLS  = i; i+=1;  # Is killed by water
 WET         = i; i+=1;  # Is wet
 OILY        = i; i+=1;  # Is oily
 BLOODY      = i; i+=1;  # Is covered in blood
@@ -116,12 +117,14 @@ VOMIT       = i; i+=1;  # Is in a vomiting fit
 DRUNK       = i; i+=1;  # Is drunk
 DEAF        = i; i+=1;  # Is deafened
 INVIS       = i; i+=1;  # Is invisible
+TRAUMA      = i; i+=1;  # Is psychologically traumatized
 NVISION     = i; i+=1;  # Has Night vision
 IMMUNE      = i; i+=1;  # Immune to poison
 SEEINV      = i; i+=1;  # Can see invisible
 SEEXRAY     = i; i+=1;  # LOS not blocked by walls
 FLYING      = i; i+=1;  # Is currently flying
 CANFLY      = i; i+=1;  # Can fly
+CANWET      = i; i+=1;  # Can get wet
 CANTALK     = i; i+=1;  # Can engage in jolly conversation
 CANEAT      = i; i+=1;  # Can be eaten
 CANQUAFF    = i; i+=1;  # Can be quaffed
@@ -136,10 +139,6 @@ HOLDSFLUID  = i; i+=1;  # Can contain fluids
 #
 # Gameplay Constants
 #
-
-SPRINT_SPEEDMOD     = 100   # move speed bonus when you sprint
-SLOW_SPEEDMOD       = -33   # speed penalty while slowed
-HASTE_SPEEDMOD      = 50    # speed bonus when hasty
 
 #items
 RATIONFOOD          = 100
@@ -170,8 +169,8 @@ NRG_RUMMAGE         = 100   # Cost of picking an item from a container
 NRG_EXAMINE         = 200
 NRG_QUAFF           = 100
 NRG_EAT             = 200   # AP cost per (unit of consumption) to eat
-NRG_USE             = 50
-NRG_COUGH           = 100   # energy wasted if you cough while in coughing fit
+NRG_READ            = 25    # cost to read a simple thing
+NRG_USE             = 100   # generic use function
 NRGSAVED_FASTSHOT   = 50
 
 #fluids
@@ -185,6 +184,7 @@ MAX_FLUID_IN_TILE   = 100
 #
 STATUSES={
 # ID    : defaultDur, onVerb, statusVerb,
+WET     : (100,     "is",   "wet",),
 SPRINT  : (10,      "begins", "sprinting",),
 TIRED   : (50,      "is", "tired",),
 HASTE   : (20,      "is", "hasty",),
@@ -198,7 +198,33 @@ COUGH   : (20,      "is", "in a coughing fit",),
 VOMIT   : (25,      "is", "wretching",),
 BLIND   : (20,      "is", "blinded",),
 DEAF    : (100,     "is", "deafened",),
+TRAUMA  : (99999999,"is", "traumatized",),
     }
+
+#wet
+WET_RESFIRE     = 50    # fire resistance gained while wet
+
+#sprint
+SPRINT_SPEEDMOD     = 100   # move speed bonus when you sprint
+
+#tired
+#
+
+#hasty
+HASTE_SPEEDMOD      = 50    # speed bonus when hasty
+
+#slow
+SLOW_SPEEDMOD       = -33   # speed penalty while slowed
+
+# temp (fire)
+FIRE_METERLOSS  = 10    #temperature points lost per turn
+FIRE_METERMAX   = 1000  #maximum temperature a thing can reach
+FIRE_MAXTEMP    = 400   #max temperature you can reach from normal means
+FIRE_TEMP       = 100   #avg. temperature at which a thing will set fire
+FIRE_BURN       = 40    #dmg fire deals to things (in fire damage) per turn
+FIRE_HURT       = 1     #lo dmg dealt per turn to things w/ burning status effect
+FIRE_LIGHT      = 12    #how much light is produced by fire?
+#FIRE_LEVELMAX     = 3     #max fire level; 0 is no fire, max is blazing flame
 
 # bio (sick)
 BIO_METERLOSS   = 2     # sickness points lost per turn
@@ -207,24 +233,37 @@ BIO_HURT        = 1     # damage per turn while sick
 # chem (exposure)
 CHEM_METERLOSS  = 5     # exposure points lost per turn
 CHEM_HURT       = 5     # damage chem effect causes when exposure meter fills
+
+# acid
 ACID_HURT       = 2
+
+# irritation
+IRRIT_ATKMOD    = -10
+IRRIT_RANGEMOD  = -10
+IRRIT_SIGHTMOD  = -5
+
+# paralysis
+PARAL_ROLLSAVE  = 10    #affects chance to undo paralysis
+
+# cough
+COUGH_CHANCE    = 33
 COUGH_ATKMOD    = -10
 COUGH_DFNMOD    = -10
 
-# temp (fire)
-FIRE_METERLOSS  = 10    # temperature points lost per turn
-FIRE_METERMAX   = 1000   #maximum temperature a thing can reach
-FIRE_TEMP       = 100   #avg. temperature at which a thing will set fire
-FIRE_BURN       = 50    #dmg fire deals to things (in fire damage) per turn
-FIRE_HURT       = 1     #lo dmg dealt per turn to things w/ burning status effect
-FIRE_LIGHT      = 10    #how much light is produced by fire?
-#FIRE_LEVELMAX     = 3     #max fire level; 0 is no fire, max is blazing flame
+# vomit
+VOMIT_CHANCE    = 10
 
-# paralysis
-ROLL_SAVE_PARAL = 10    #affects chance to undo paralysis
+# blind
+BLIND_SIGHTMOD = -9999
 
-#deaf
+# deaf
 DEAF_HEARINGMOD = -9999
+
+# trauma
+#
+
+#electricity
+ELEC_PARALYZETIME= 3
 
 
 
@@ -243,10 +282,10 @@ STAIRDOWN       = ord('>')
 FUNGUS          = ord('\"')
 TREE            =   5       # club
 SHROOM          =   6       # spade
-PUDDLE          =   7       # circle
-SHALLOW         = ord('_')
-WATER           = ord('~')
-DEEPWATER       =   247     # double ~
+##PUDDLE          =   7       # circle
+##SHALLOW         = ord('_')
+##WATER           = ord('~')
+##DEEPWATER       =   247     # double ~
 
 #
 # Thing types
@@ -261,6 +300,7 @@ T_MONEY         = ord('$')
 T_BOTTLE        =   173     # upside down '!'
 T_DEVICE        =   168     # upside down '?' - basically a "magic scroll"
 T_TERMINAL      =   167     # o underlined
+T_TORCH         = ord(';')
 T_CORPSE        = ord('%')
 T_FOOD          = ord('&')
 T_BULLET        = ord('.')
@@ -278,12 +318,13 @@ T_SHIELD        = ord(')')
 T_CLOAK         = ord('(')
 T_ARMOR         = ord(']')
 T_HELMET        = ord('[')
-T_FLUID         = ord('~')
-T_GAS           = ord(' ')
+T_FLUID         =   247     # ~~
+T_GAS           = ord('~')
 T_SCRAPMETAL    =   171     # 1/2
 T_SCRAPELEC     =   172     # 1/4
 #T_CREDIT        =   172     # 1/4
 T_WOOD          =   246     # div
+T_TOWEL         =   254     # vertical rectangle
 T_BOX           =   22      # horizontal rectangle
 T_LOG           =   28      # upside down gun-looking char
 T_CHEST         =   127     # house looking thing
@@ -465,7 +506,7 @@ SKL_SNEAK   : "stealth",
 #
 # Classes
 #
-#includes all jobs including non-playable jobs
+# includes all jobs, even non-playable jobs
 i=0;
 CLS_ENGINEER    = i; i+=1;
 CLS_TECHNICIAN  = i; i+=1;
@@ -541,17 +582,21 @@ FL_SMOKE        =i; i+=1;
 # Sounds
 #
 
+NOISE_SOME      = "something"
+NOISE_WHISPER   = "a whisper"
+NOISE_SQUEAK    = "a squeak"
 NOISE_LOUD      = "loud noises"
+NOISE_BANG      = "loud banging noises"
 NOISE_POP       = "popping noises"
-NOISE_SOME      = "something"
-NOISE_SOME      = "something"
+NOISE_SCREECH   = "someone screeching"
+NOISE_WATERFALL = "water falling"
 
                 # vol, superHearing, generic sound
-SND_FIRE        = (40, "a fire",)#NOISE_POP,)
-SND_FIGHT       = (100,"a struggle",)#NOISE_LOUD,)
-SND_DOUSE       = (30, "the whisping sound of steam",)
-SND_QUAFF       = (20, "gulping noises")
-SND_COUGH       = ()
+SND_FIRE        = (40, "a fire",    NOISE_POP,)
+SND_FIGHT       = (100,"a struggle",NOISE_LOUD,)
+SND_DOUSE       = (30, "a fire going out",NOISE_WHISPER,)
+SND_QUAFF       = (20, "gulping noises",NOISE_SOME,)
+SND_COUGH       = (80, "someone coughing",NOISE_SCREECH,)
 
 
 class Struct_Sound():
@@ -576,6 +621,21 @@ class THG:#(Flag)
     SAWDUST             = i; i+=1;
     GRAVE               = i; i+=1;
     BOX                 = i; i+=1;
+    POT                 = i; i+=1;
+    BIGPOT              = i; i+=1;
+    STILL               = i; i+=1;
+    DOSIMETER           = i; i+=1;
+    TOWEL               = i; i+=1;
+    TOOTHBRUSH          = i; i+=1;
+    FACEFLANNEL         = i; i+=1;
+    SOAP                = i; i+=1;
+    TINOFBISCUITS       = i; i+=1;
+    FLASK               = i; i+=1;
+    COMPASS             = i; i+=1;
+    MAP                 = i; i+=1;
+    BALLOFSTRING        = i; i+=1;
+    GNATSPRAY           = i; i+=1;
+    TORCH               = i; i+=1;
 
 
 
