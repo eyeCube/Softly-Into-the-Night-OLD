@@ -10,8 +10,6 @@ import tcod as libtcod
 
 
 
-
-
 #
 # Init Global Constants #
 #
@@ -20,8 +18,8 @@ import tcod as libtcod
 
 GAME_TITLE = "Softly Into the Night"
 
-ROOMW       = 100           #max level size, width and height
-ROOMH       = 75
+ROOMW       = 80            #max level size, width and height
+ROOMH       = 50
 MAXLEVEL    = 20            #deepest dungeon level
 TILES_PER_ROW = 16          # Num tiles per row (size of the char sheet 
 TILES_PER_COL = 16          # " per column         used for ASCII display)
@@ -30,66 +28,24 @@ TILES_PER_COL = 16          # " per column         used for ASCII display)
 
 
 #
-# Gameplay Constants
+# Engine Constants
 #
 
-SPRINT_SPEEDMOD     = 100   # move speed bonus when you sprint
-SLOW_SPEEDMOD       = -33   # speed penalty while slowed
-HASTE_SPEEDMOD      = 50    # speed bonus when hasty
+# special character key inputs
+K_ESCAPE    = 19
+K_UP        = 24
+K_DOWN      = 25
+K_RIGHT     = 26
+K_LEFT      = 27
+K_ENTER     = 28
+K_PAGEUP    = 30
+K_PAGEDOWN  = 31
+K_HOME      = 127
+K_END       = 144
+K_BACKSPACE = 174
+K_DELETE    = 175
+K_INSERT    = 254
 
-#items
-RATIONFOOD          = 100
-
-SATIETY_PER_RATION  = 100   # how much hunger is healed per ration of food
-WATER_HYDRATION     = 25    # how much hydration is healed per unit of water
-
-#skills
-SKILLMAX            = 2     # highest skill level you can attain
-
-#stats
-AVG_HEARING         = 100
-AVG_SPD             = 100
-
-#combat
-COMBATROLL          = 20    # die roll
-
-#action potential cost to perform actions
-NRG_MOVE            = 1     # multiplier 
-NRG_ATTACK          = 200 
-NRG_BOMB            = 150 
-NRG_PICKUP          = 50    # grab thing and wield it (requires empty hand)
-NRG_POCKET          = 200   # picking up and putting in your inventory
-NRG_OPENCONTAINER   = 50    # Should it cost energy just to look in a container?
-NRG_OPEN            = 50    # Cost to open/close a door
-NRG_RUMMAGE         = 100   # Cost of picking an item from a container
-NRG_EXAMINE         = 200
-NRG_QUAFF           = 100
-NRG_EAT             = 200   # AP cost per (unit of consumption) to eat
-NRGSAVED_FASTSHOT   = 50
-
-#fluids
-MAX_FLUID_IN_TILE   = 100
-
-#status effects
-# bio (sick)
-BIO_METERLOSS   = 2     # sickness points lost per turn
-BIO_HURT        = 1     # damage per turn while sick
-
-# chem (exposure)
-CHEM_METERLOSS  = 5     # exposure points lost per turn
-CHEM_HURT       = 5     # damage chem effect causes when exposure meter fills
-
-# temp (fire)
-FIRE_METERLOSS  = 10    # temperature points lost per turn
-FIRE_METERMAX   = 1000   #maximum temperature a thing can reach
-FIRE_TEMP       = 100   #avg. temperature at which a thing will set fire
-FIRE_BURN       = 50    #dmg fire deals to things (in fire damage) per turn
-FIRE_HURT       = 1     #lo dmg dealt per turn to things w/ burning status effect
-FIRE_LIGHT      = 10    #how much light is produced by fire?
-#FIRE_LEVELMAX     = 3     #max fire level; 0 is no fire, max is blazing flame
-
-# paralysis
-ROLL_SAVE_PARAL = 10    #affects chance to undo paralysis
 
 #direction
 DIRECTIONS={
@@ -126,28 +82,149 @@ DIRECTION_FROM_INT={
     }
 
 
+#
+# Flags
+#
+
+# Monster and item flags
+
+i = 1
+ONGRID      = i; i+=1;  # Is positioned on the game grid
+RAVAGED     = i; i+=1;  # Creature is starved: strong desire for food
+THIEF       = i; i+=1;  # Creature desires gold / treasure and will steal it
+MEAN        = i; i+=1;  # Creature is always hostile to rogues
+DEAD        = i; i+=1;  # Is dead
+WET         = i; i+=1;  # Is wet
+OILY        = i; i+=1;  # Is oily
+BLOODY      = i; i+=1;  # Is covered in blood
+CHARRED     = i; i+=1;  # Is charred from fire
+HASTE       = i; i+=1;  # Is hasty
+SLOW        = i; i+=1;  # Is slow
+SPRINT      = i; i+=1;  # Is sprinting
+TIRED       = i; i+=1;  # Is tired
+CONFU       = i; i+=1;  # Is confused
+TRIPN       = i; i+=1;  # Is hallucinating
+SLEEP       = i; i+=1;  # Is asleep
+FIRE        = i; i+=1;  # Is burning
+ACID        = i; i+=1;  # Is corroding in acid
+SICK        = i; i+=1;  # Is poisoned / ill
+IRRIT       = i; i+=1;  # Is irritated by chemicals
+BLIND       = i; i+=1;  # Is blinded
+PARAL       = i; i+=1;  # Is paralyzed
+COUGH       = i; i+=1;  # Is in a coughing fit
+VOMIT       = i; i+=1;  # Is in a vomiting fit
+DRUNK       = i; i+=1;  # Is drunk
+DEAF        = i; i+=1;  # Is deafened
+INVIS       = i; i+=1;  # Is invisible
+NVISION     = i; i+=1;  # Has Night vision
+IMMUNE      = i; i+=1;  # Immune to poison
+SEEINV      = i; i+=1;  # Can see invisible
+SEEXRAY     = i; i+=1;  # LOS not blocked by walls
+FLYING      = i; i+=1;  # Is currently flying
+CANFLY      = i; i+=1;  # Can fly
+CANTALK     = i; i+=1;  # Can engage in jolly conversation
+CANEAT      = i; i+=1;  # Can be eaten
+CANQUAFF    = i; i+=1;  # Can be quaffed
+CANEQUIP    = i; i+=1;  # Can be equipped
+CANUSE      = i; i+=1;  # Can be used
+CANPUSH     = i; i+=1;  # Can be pushed
+CANOPEN     = i; i+=1;  # Can open it like a container (not doors)
+HOLDSFLUID  = i; i+=1;  # Can contain fluids
+
 
 
 #
-# Keys
+# Gameplay Constants
 #
 
-    # special character key inputs
-K_ESCAPE    = 19
-K_UP        = 24
-K_DOWN      = 25
-K_RIGHT     = 26
-K_LEFT      = 27
-K_ENTER     = 28
-K_PAGEUP    = 30
-K_PAGEDOWN  = 31
-K_HOME      = 127
-K_END       = 144
-K_BACKSPACE = 174
-K_DELETE    = 175
-K_INSERT    = 254
+SPRINT_SPEEDMOD     = 100   # move speed bonus when you sprint
+SLOW_SPEEDMOD       = -33   # speed penalty while slowed
+HASTE_SPEEDMOD      = 50    # speed bonus when hasty
+
+#items
+RATIONFOOD          = 100
+
+SATIETY_PER_RATION  = 100   # how much hunger is healed per ration of food
+WATER_HYDRATION     = 25    # how much hydration is healed per unit of water
+
+#skills
+SKILLMAX            = 2     # highest skill level you can attain
+
+#stats
+AVG_HEARING         = 100
+SUPER_HEARING       = 500   # hearing level you need to be able to tell direction and volume of sounds
+AVG_SPD             = 100
+
+#combat
+COMBATROLL          = 20    # die roll
+
+#action potential cost to perform actions
+NRG_MOVE            = 1     # multiplier 
+NRG_ATTACK          = 200 
+NRG_BOMB            = 150 
+NRG_PICKUP          = 50    # grab thing and wield it (requires empty hand)
+NRG_POCKET          = 200   # picking up and putting in your inventory
+NRG_OPENCONTAINER   = 50    # Should it cost energy just to look in a container?
+NRG_OPEN            = 50    # Cost to open/close a door
+NRG_RUMMAGE         = 100   # Cost of picking an item from a container
+NRG_EXAMINE         = 200
+NRG_QUAFF           = 100
+NRG_EAT             = 200   # AP cost per (unit of consumption) to eat
+NRG_USE             = 50
+NRG_COUGH           = 100   # energy wasted if you cough while in coughing fit
+NRGSAVED_FASTSHOT   = 50
+
+#fluids
+MAX_FLUID_IN_TILE   = 100
 
 
+
+
+#
+# Status effects
+#
+STATUSES={
+# ID    : defaultDur, onVerb, statusVerb,
+SPRINT  : (10,      "begins", "sprinting",),
+TIRED   : (50,      "is", "tired",),
+HASTE   : (20,      "is", "hasty",),
+SLOW    : (10,      "is", "slowed",),
+FIRE    : (99999999,"catches", "on fire",),
+SICK    : (100,     "is", "sick",),
+ACID    : (7,       "begins", "corroding",),
+IRRIT   : (200,     "is", "irritated",),
+PARAL   : (5,       "is", "paralyzed",),
+COUGH   : (20,      "is", "in a coughing fit",),
+VOMIT   : (25,      "is", "wretching",),
+BLIND   : (20,      "is", "blinded",),
+DEAF    : (100,     "is", "deafened",),
+    }
+
+# bio (sick)
+BIO_METERLOSS   = 2     # sickness points lost per turn
+BIO_HURT        = 1     # damage per turn while sick
+
+# chem (exposure)
+CHEM_METERLOSS  = 5     # exposure points lost per turn
+CHEM_HURT       = 5     # damage chem effect causes when exposure meter fills
+ACID_HURT       = 2
+COUGH_ATKMOD    = -10
+COUGH_DFNMOD    = -10
+
+# temp (fire)
+FIRE_METERLOSS  = 10    # temperature points lost per turn
+FIRE_METERMAX   = 1000   #maximum temperature a thing can reach
+FIRE_TEMP       = 100   #avg. temperature at which a thing will set fire
+FIRE_BURN       = 50    #dmg fire deals to things (in fire damage) per turn
+FIRE_HURT       = 1     #lo dmg dealt per turn to things w/ burning status effect
+FIRE_LIGHT      = 10    #how much light is produced by fire?
+#FIRE_LEVELMAX     = 3     #max fire level; 0 is no fire, max is blazing flame
+
+# paralysis
+ROLL_SAVE_PARAL = 10    #affects chance to undo paralysis
+
+#deaf
+DEAF_HEARINGMOD = -9999
 
 
 
@@ -182,14 +259,14 @@ T_FUNGUS        = ord('\"')
 T_FOUNTAIN      =   144     # faucet-looking thing
 T_MONEY         = ord('$')
 T_BOTTLE        =   173     # upside down '!'
-T_PHONE         =   168     # upside down '?' - basically a "magic scroll"
+T_DEVICE        =   168     # upside down '?' - basically a "magic scroll"
+T_TERMINAL      =   167     # o underlined
 T_CORPSE        = ord('%')
 T_FOOD          = ord('&')
 T_BULLET        = ord('.')
 T_BOULDER       = ord('0')
 T_DUST          = ord('^')
 T_POLE          = ord('|')
-T_TERMINAL      =   167     # o underlined
 T_MELEEWEAPON   = ord('/')
 T_THROWWEAPON   = ord('\\')
 T_HEAVYWEAPON   = ord('=')
@@ -254,49 +331,6 @@ GENDER_OTHER    = 255
 
 
 
-
-#
-# Flags
-#
-
-# Monster and item flags
-
-i = 1
-ONGRID      = i; i+=1;  # Is positioned on the game grid
-DEAD        = i; i+=1;  # Is dead
-WET         = i; i+=1;  # Is wet
-BLOODY      = i; i+=1;  # Is covered in blood
-RAVAGED     = i; i+=1;  # Creature is starved: strong desire for food
-THIEF       = i; i+=1;  # Creature desires gold / treasure and will steal it
-MEAN        = i; i+=1;  # Creature is always hostile to rogues
-SPRINT      = i; i+=1;  # Is sprinting
-CONFU       = i; i+=1;  # Is confused
-TRIPN       = i; i+=1;  # Is hallucinating
-SLEEP       = i; i+=1;  # Is asleep
-FIRE        = i; i+=1;  # Is burning
-ACID        = i; i+=1;  # Is corroding in acid
-SICK        = i; i+=1;  # Is poisoned / ill
-IRRIT       = i; i+=1;  # Is irritated by chemicals
-BLIND       = i; i+=1;  # Is blinded
-PARAL       = i; i+=1;  # Is paralyzed
-COUGH       = i; i+=1;  # Is in a coughing fit
-VOMIT       = i; i+=1;  # Is in a vomiting fit
-DEAF        = i; i+=1;  # Is deafened
-INVIS       = i; i+=1;  # Is invisible
-NVISION     = i; i+=1;  # Has Night vision
-IMMUNE      = i; i+=1;  # Immune to poison
-SEEINV      = i; i+=1;  # Can see invisible
-SEEXRAY     = i; i+=1;  # LOS not blocked by walls
-FLYING      = i; i+=1;  # Is currently flying
-CANFLY      = i; i+=1;  # Can fly
-CANTALK     = i; i+=1;  # Can engage in jolly conversation
-CANEAT      = i; i+=1;  # Can be eaten
-CANQUAFF    = i; i+=1;  # Can be quaffed
-CANEQUIP    = i; i+=1;  # Can be equipped
-CANUSE      = i; i+=1;  # Can be used
-CANPUSH     = i; i+=1;  # Can be pushed
-CANOPEN     = i; i+=1;  # Can open it like a container (not doors)
-HOLDSFLUID  = i; i+=1;  # Can contain fluids
 
 
 #
@@ -363,7 +397,7 @@ MAT_CLOTH       = i; i+=1;
 MAT_GLASS       = i; i+=1;
 MAT_GAS         = i; i+=1;
 MAT_WATER       = i; i+=1;
-MAT_OIL         = i; i+=1;
+#MAT_OIL         = i; i+=1;
 
 
 
@@ -494,11 +528,12 @@ QU_MILITARY : ("military",  (25, 50, 25, 25, 50, -5,),),
 # FLUIDS
 #
 i=0;
-FL_SMOKE    =i; i+=1;
-FL_WATER    =i; i+=1;
-FL_BLOOD    =i; i+=1;
-FL_ACID     =i; i+=1;
-FL_OIL      =i; i+=1;
+FL_WATER        =i; i+=1;
+FL_OIL          =i; i+=1;
+FL_BLOOD        =i; i+=1;
+FL_ACID         =i; i+=1;
+FL_STRONGACID   =i; i+=1;
+FL_SMOKE        =i; i+=1;
 
 
 
@@ -506,10 +541,17 @@ FL_OIL      =i; i+=1;
 # Sounds
 #
 
-SND_FIRE        = (40, "a fire",)
-SND_FIGHT       = (100,"a struggle",)
+NOISE_LOUD      = "loud noises"
+NOISE_POP       = "popping noises"
+NOISE_SOME      = "something"
+NOISE_SOME      = "something"
+
+                # vol, superHearing, generic sound
+SND_FIRE        = (40, "a fire",)#NOISE_POP,)
+SND_FIGHT       = (100,"a struggle",)#NOISE_LOUD,)
 SND_DOUSE       = (30, "the whisping sound of steam",)
 SND_QUAFF       = (20, "gulping noises")
+SND_COUGH       = ()
 
 
 class Struct_Sound():

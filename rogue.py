@@ -475,11 +475,11 @@ def burn(obj, dmg):
 def cooldown(obj, temp=999):
     thing.cooldown(obj, temp)
 #deal bio damage
-def disease(obj, dmg): thing.disease(obj, dmg)
-#deal chem damage
-def exposure(obj, dmg): thing.exposure(obj, dmg)
-#deal rad damage
-def irradiate(obj, dmg): thing.irradiate(obj, dmg)
+def disease(obj, dmg): thing.disease(obj, dmg)      #sick damage
+def exposure(obj, dmg): thing.exposure(obj, dmg)    #chem damage
+def corrode(obj, dmg): thing.corrode(obj, dmg)      #acid damage
+def irradiate(obj, dmg): thing.irradiate(obj, dmg)  #rad damage
+def intoxicate(obj, dmg): thing.intoxicate(obj, dmg)#drunk damage
 #deal electric damage
 def electrify(obj, dmg): thing.electrify(obj, dmg)
 #paralyze
@@ -650,7 +650,8 @@ def update_all_fovmaps():
 #----------------#
 
 def can_hear(obj, x,y, volume):
-    if not obj.stats.get('hearing'): return False
+    if ( on(obj,DEAD) or on(obj,DEAF) or not obj.stats.get('hearing') ):
+         return False
     dist=maths.dist(obj.x, obj.y, x, y)
     maxHearDist=volume*obj.stats.get('hearing')/AVG_HEARING
     if (obj.x == x and obj.y == y): return (0,0,maxHearDist,)

@@ -200,6 +200,9 @@ def examine_pc(thing):
 def wait(obj):
     obj.stats.nrg=0
 
+def cough(obj):
+    rog.drain(obj, 'nrg', NRG_COUGH)
+    rog.event_sound(obj.x,obj.y, SND_COUGH)
 
 #use
 #"use" an item, whatever that means for the specific item

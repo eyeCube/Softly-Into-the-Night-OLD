@@ -53,7 +53,7 @@ class Tile():
 #unique instances of Tile object
 #each x,y position in the grid points to exactly one of these unique Tiles
 #   (so it is not necessary to instantiate dozens of each Tile type.)
-TILES={         #                 fgcolor ,bg, costEnter,Leave, opaque,damp
+TILES={         #                 fgcolor ,  bg,costEnter,Leave, opaque,damp
     FLOOR       : Tile(FLOOR,     'neutral', 'deep',    100,0,  False,1,),
     WALL        : Tile(WALL,      'dkred', 'orange',     0,0,  True, 50,),
     STAIRDOWN   : Tile(STAIRDOWN, 'accent', 'purple',  100,0,  False,1,),
@@ -61,7 +61,9 @@ TILES={         #                 fgcolor ,bg, costEnter,Leave, opaque,damp
     FUNGUS      : Tile(FUNGUS,    'green', 'dkgreen',  100,20, False,1,),
     SHROOM      : Tile(SHROOM,    'yellow', 'dkgreen',  150,20,  True,2,),
     DOOROPEN    : Tile(DOOROPEN,  'brown', 'deep',    100,0,  False,1,),
-    DOORCLOSED  : Tile(DOORCLOSED,'brown', 'dkbrown', 0,0,    True,10,),
+    DOORCLOSED  : Tile(DOORCLOSED,'brown', 'deep',    0,0,    True,10,),
+    VAULTOPEN   : Tile(VAULTOPEN, 'metal', 'deep',    100,0,  False,1,),
+    VAULTCLOSED : Tile(VAULTCLOSED,'metal', 'deep',   0,0,    True,100,),
     }
     #water is now a fluid, not a tile...
     #PUDDLE      : Tile(PUDDLE,    'blue',   'deep',     100,10,  True,2,),

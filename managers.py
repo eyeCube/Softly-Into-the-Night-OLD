@@ -280,66 +280,43 @@ class Manager_Fluids(Manager):
     #manager for all status effects
 class Manager_Status(Manager):
     #default durations for statuses
-    DURATIONS = {
-        SPRINT  : 10,
-        TIRED   : 50,
-        SLOW    : 10,
-        FIRE    : 9999999,
-        SICK    : 500,
-        ACID    : 25,
-        IRRIT   : 200,
-        PARAL   : 5,
-        COUGH   : 20,
-        VOMIT   : 50,
-        BLIND   : 100,
-        DEAF    : 100,
-        }
 
     def __init__(self):
         super(Manager_Status, self).__init__()
 
-        self.statuses={
-            #UGLY   : {object : DURATION,},
-            SPRINT  : {},
-            TIRED   : {},
-            SLOW    : {},
-            FIRE    : {},
-            SICK    : {},
-            IRRIT   : {},
-            PARAL   : {},
-            COUGH   : {},
-            VOMIT   : {},
-            BLIND   : {},
-            DEAF    : {},
-            }
+        self.statuses={}
         self.statMods={}
+        #for every status, make a dict
+        for k in STATUSES.keys():
+            self.statuses.update( {k : {}} )
         #copy statuses into statMods so they look the same
         for k,v in self.statuses.items():
-            self.statMods.update({k:v})
+            self.statMods.update( {k : v} )
         
 
     #add a status effect to an object
     def add(self, obj, status, dur=-1):
         if dur == 0: return False
         if dur == -1:   #default duration
-            dur = Manager_Status.DURATIONS[status]
+            dur = self._get_default_duration(status)
         curDur = self.statuses[status].get(obj, 0)
         if curDur:
             if dur <= curDur:   #don't override effect with a lesser duration
                 return False    # but you CAN override with a greater duration
             self.remove(obj, status) #remove current status before overriding
+        
+        #apply the status effect
         self.statuses[status].update( {obj : dur} )
         rog.make(obj, status)   #add flag
-        #stat mods
-        if status == SPRINT:
-            _id=rog.effect_add( {"msp" : SPRINT_SPEEDMOD} )
-            self.statMods[status].update( {obj : _id} )
-        if status == HASTE:
-            _id=rog.effect_add( {"spd" : HASTE_SPEEDMOD} )
-            self.statMods[status].update( {obj : _id} )
-        if status == SLOW:
-            _id=rog.effect_add( {"spd" : SLOW_SPEEDMOD} )
-            self.statMods[status].update( {obj : _id} )
+        self._apply_statMods(obj, status) # apply attribute modifiers
+        #message
+        if self._should_write_message(obj):
+            rog.msg("{t}{n} {v1} {v2}!".format(
+                t=obj.title,n=obj.name,
+                v1=self._get_verb1(status),
+                v2=self._get_verb2(status))
+                    )
+            
         return True
     
     #remove an object's status effect
@@ -347,12 +324,19 @@ class Manager_Status(Manager):
         if self.statuses[status].get(obj, None):
             del self.statuses[status][obj]
             rog.makenot(obj, status)    #remove flag
+            #message
+            if self._should_write_message(obj):
+                rog.msg("{t}{n} is no longer {v2}.".format(
+                    t=obj.title,n=obj.name,
+                    v2=self._get_verb2(status))
+                        )
             #stat mods
             if self.statMods[status].get(obj, None):
                 rog.effect_remove( self.statMods[status][obj] )
                 del self.statMods[status][obj]
-            if status == SPRINT:
-                self.add(obj, TIRED) #after done sprinting, get tired
+            #statuses that cause other statuses when elapsed
+            if status == SPRINT: #after done sprinting, get tired
+                self.add(obj, TIRED) 
             if status == PARAL: #after getting unparalyzed, temporarily slowed down you become
                 self.add(obj, SLOW)
         return True
@@ -375,14 +359,49 @@ class Manager_Status(Manager):
                 #tick down the timer by setting duration to current dur - 1
                 self._updateTimer(obj, status, dur - 1)
 
+
     # private functions #
                 
+    def _get_default_duration(self, status):
+        return STATUSES[status][0]
+    def _get_verb1(self, status):
+        return STATUSES[status][1]
+    def _get_verb2(self, status):
+        return STATUSES[status][2]
+    def _should_write_message(obj):
+        return obj==rog.pc() #or pc has super observation and is in sight...
+    
     #change the timer for a status effect
     def _updateTimer(self, obj, status, dur):
         if dur <= 0:
             self.remove(obj, status)
         else:
             self.statuses[status].update( {obj : dur} )
+
+    def _apply_statMods(obj, status):
+        #stat mods
+            
+        if status == SPRINT:
+            _id=rog.effect_add( {"msp" : SPRINT_SPEEDMOD} )
+            self.statMods[status].update( {obj : _id} )
+            
+        if status == HASTE:
+            _id=rog.effect_add( {"spd" : HASTE_SPEEDMOD} )
+            self.statMods[status].update( {obj : _id} )
+            
+        if status == SLOW:
+            _id=rog.effect_add( {"spd" : SLOW_SPEEDMOD} )
+            self.statMods[status].update( {obj : _id} )
+            
+        if status == COUGH:
+            _id=rog.effect_add(
+                {"atk" : COUGH_ATKMOD, "dfn" : COUGH_DFNMOD}
+                )
+            self.statMods[status].update( {obj : _id} )
+            
+        if status == DEAF:
+            _id=rog.effect_add( {"hearing" : DEAF_HEARINGMOD} )
+            self.statMods[status].update( {obj : _id} )
             
 #do an effect to an object. Only check the objects that need checking
     def _tick(self, obj, status):
@@ -403,6 +422,9 @@ class Manager_Status(Manager):
             if rog.on(obj,ONGRID):
                 rog.set_fire(obj.x,obj.y)
             
+        elif status == ACID:
+            rog.hurt(obj, ACID_HURT)
+            
         elif status == IRRIT:
             pass
         
@@ -411,7 +433,9 @@ class Manager_Status(Manager):
                 self.remove(obj, status)
                 
         elif status == COUGH:
-            pass
+            pass #chance to stop in a coughing fit (waste your turn)
+##            if dice.roll(20) <= ROLL_COUGH:
+##                rog.queue_action(obj, action.cough)
         
         elif status == VOMIT:
             pass
@@ -603,15 +627,18 @@ class Manager_SoundsHeard(Manager):
         super(Manager_SoundsHeard,self).run()
         
         atLeastOneMsg=False
-        text="You hear"
+        text="You hear "
         for k,v in self.sounds.items():
-            vol,lis=v
-            if not vol: continue
-            volTxt=self.get_volume_name(vol)
-            dirStr=DIRECTIONS_TERSE[k]
-            if not dirStr == "self":
-                text += " <{d}>".format(d=dirStr)
-            text += " ({v}) ".format(v=volTxt)
+            if rog.pc().stats.get("hearing") >= SUPER_HEARING:
+                vol,lis=v
+                if not vol: continue
+                if vol > VOLUME_DEAFEN:
+                    rog.set_status(rog.pc(), DEAF)
+                volTxt=self.get_volume_name(vol)
+                dirStr=DIRECTIONS_TERSE[k]
+                if not dirStr == "self":
+                    text += "<{d}>".format(d=dirStr)
+                text += "({v}) ".format(v=volTxt)
             for strng in lis:
                 text += "{s}, ".format(s=strng)
             text=text[:-2] + "."

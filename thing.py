@@ -272,6 +272,7 @@ def effect_remove(obj,modID):
     # elemental damage #
     # cause status effects
 
+#   TEMP METER
 #fire damage (increase temperature)
 def burn(obj, dmg):
     #get obj resistance
@@ -290,6 +291,8 @@ def burn(obj, dmg):
 #reduce temperature
 def cooldown(obj, amt):
     obj.stats.temp = max(0, obj.stats.temp - amt)
+    
+#   SICK METER
 #bio damage
 def disease(obj, dmg):
     res = obj.stats.resbio
@@ -299,6 +302,17 @@ def disease(obj, dmg):
     if obj.stats.sick >= 100:
         obj.stats.sick = 100        #cap out sickness meter
         rog.set_status(obj, SICK)
+#drunk damage
+def intoxicate(obj, dmg):
+    res = obj.stats.resbio
+    #increase sickness meter
+    dmg = int( dmg*(1-(res/100)) )
+    obj.stats.sick += max(0, dmg )
+    if obj.stats.sick >= 100:
+        obj.stats.sick = 100        #cap out sickness meter
+        rog.set_status(obj, DRUNK)
+        
+#   RADS METER
 #rad damage
 def irradiate(obj, dmg):
     res = obj.stats.resbio
@@ -307,7 +321,9 @@ def irradiate(obj, dmg):
     obj.stats.rads += max(0, dmg )
     if obj.stats.rads >= 100:
         obj.stats.rads = 0 # reset rads meter after mutation
-        rog.mutate(obj) 
+        rog.mutate(obj)
+        
+#   EXPOSURE METER
 #chem damage
 def exposure(obj, dmg):
     res = obj.stats.resbio
@@ -318,6 +334,14 @@ def exposure(obj, dmg):
         obj.stats.expo = 0          #reset exposure meter
         rog.hurt(obj, CHEM_DAMAGE)  #instant damage when expo meter fills
         _random_chemical_effect(obj) #inflict chem status effect
+#acid
+def corrode(obj, dmg):
+    res = obj.stats.resbio
+    dmg = int(dmg * (1-(res/100)) / 10)
+    obj.stats.expo += max(0, dmg)
+    if obj.stats.expo >= 100:
+        obj.stats.expo = 0          #reset exposure meter
+        rog.set_status(obj, ACID)
 #coughing
 def cough(obj, dmg):
     res = obj.stats.resbio
@@ -334,6 +358,16 @@ def vomit(obj, dmg):
     if obj.stats.expo >= 100:
         obj.stats.expo = 0          #reset exposure meter
         rog.set_status(obj, VOMIT)
+#irritating
+def irritate(obj, dmg):
+    res = obj.stats.resbio
+    dmg = int(dmg * (1-(res/100)) / 10)
+    obj.stats.expo += max(0, dmg)
+    if obj.stats.expo >= 100:
+        obj.stats.expo = 0          #reset exposure meter
+        rog.set_status(obj, IRRIT)
+        
+#   NON-METER ELEMENTAL DAMAGE
 #elec damage  
 def electrify(obj, dmg):
     res = obj.stats.reselec

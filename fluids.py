@@ -83,18 +83,33 @@ class Fluid:
             
         
 #effects
+def _wet(actor, n):
+    if n>=10:
+        rog.make(actor, WET)
+def _oily(actor, n):
+    if n>=10:
+        rog.make(actor, OILY)
+def _bloody(actor, n):
+    if n>=10:
+        rog.make(actor, BLOODY)
 def _cough(actor, n):
-    pass
+    rog.cough(actor, n)
 def _hydrate(actor, n):
     actor.hydration += n * WATER_HYDRATE
 def _blood(actor, n):
     pass
 def _acid(actor, n):
-    pass
+    rog.corrode(actor, n)
+def _strongAcid(actor, n):
+    rog.corrode(actor, n*3)
+def _quaffAcid(actor, n):
+    rog.corrode(actor, n*5)
+def _quaffStrongAcid(actor, n):
+    rog.corrode(actor, n*15)
 def _sick(actor, n):
-    pass
+    rog.disease(actor, n)
 def _drunk(actor, n):
-    pass
+    rog.intoxicate(actor, n)
 
 FLUIDS = {
 #attributes:
@@ -103,13 +118,14 @@ FLUIDS = {
 #   kg      : mass
 #   flamm   : flammable?
 #   snuff   : snuffs out fires?
-#  ID       : (    type,   name,      color,          d,    v,    kg,  flamm,snuff,effect,
-FL_SMOKE    : Data(T_GAS,  "smoke",   COL['white'],   0.05, 0.01, 0.01,False,False,_cough,),
-FL_WATER    : Data(T_FLUID,"water",   COL['blue'],    1,    1,    0.1, False,True, _hydrate,),
-FL_BLOOD    : Data(T_FLUID,"blood",   COL['red'],     1.1,  2,    0.12,False,True, _blood),
-FL_ACID     : Data(T_FLUID,"acid",    COL['green'],   1.21, 0.5,  0.2, False,True, _acid),
-FL_OIL      : Data(T_FLUID,"oil",     COL['purple'],  0.9,  3,    0.3, True,False, _sick),
-FL_MOONSHINE: Data(T_FLUID,"moonshine",COL['brown'],  1.2,  0.8,  0.15,True,False, _drunk),
+#  ID       : (    type,   name,      color,          d,    v,    kg,  flamm,snuff,touch,quaff,
+FL_SMOKE    : Data(T_GAS,  "smoke",   COL['white'],   0.05, 0.01, 0.01,False,False,None, _cough,),
+FL_WATER    : Data(T_FLUID,"water",   COL['blue'],    1,    1,    0.1, False,True, _wet, _hydrate,),
+FL_BLOOD    : Data(T_FLUID,"blood",   COL['red'],     1.1,  2,    0.12,False,True, _bloody,_blood,),
+FL_ACID     : Data(T_FLUID,"acid",    COL['green'],   1.21, 0.6,  0.2, False,False,_acid,_quaffAcid,),
+FL_STRONGACID: Data(T_FLUID,"strong acid",COL['bio'], 1.3,  0.9,  0.2, False,False,_strongAcid,_quaffStrongAcid,),
+FL_OIL      : Data(T_FLUID,"oil",     COL['purple'],  0.9,  3,    0.3, True,False, _oily, _sick,),
+FL_MOONSHINE: Data(T_FLUID,"moonshine",COL['orange'], 1.2,  0.8,  0.15,True,False, _wet, _drunk,),
     }
 FLUID_COMBONAMES={
 FL_SMOKE    : "smokey",
