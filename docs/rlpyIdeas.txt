@@ -55,14 +55,15 @@ Todo:
 	holes that you can fall through
 	dark areas which are barely lit up are colored blue-ish
 	when in water:
-		vision affected
-		lose items
-		items in inventory get wet / rust
-	weapons
+		vision affected if submerged
+		lose items if high water that is flowing
+		items in inventory get wet / rust if high water
+	weapons types
+	wrestling
 	robotics
 		drone bots, swarm bots, nanobots
 		robots / androids / AI systems
-		cyborgs
+		cyborg prosthetics, chip implants
 	railguns mounted guns
 	add_listener_sounds for monsters who can hear
 	make game exportable on as many platforms as possible
@@ -76,11 +77,13 @@ Todo:
 	mutations - have pros and cons
 		chargen allows you to select genetic mutations
 	overencumberance, volume???
+	displacing actors
 Done:
 	gear, equipping gear
 	chargen
 	highlight the player's tile background (optionally)	
 	different types of damage
+	overhauled fire
 	
 	
 	weapons types
@@ -121,6 +124,35 @@ Done:
 			tracking drones (buzzsaw drones, ...)
 	
 	
+	
+Thing mods:
+	tiny
+		volume /4
+		mass /4
+	small
+		volume /2
+		mass /2
+	big
+		volume x2
+		mass x2
+	giant
+		volume x4
+		mass x4
+	
+		
+	
+	
+Combat:
+	Knowledge
+		while you can see your foe, you gain knowledge about them each turn they are in vision.
+		Knowledge gained affected by distance and the number of foes you can examine
+			foes that can be examined are close enough to examine while also being in sight; of course player cannot be blinded
+		Engaging in combat grants the most knowledge.
+	
+	Reach:
+		if a weapon has reach, then you can perform a free attack by stepping towards a foe
+		foe must be in the direction you move
+		weapons with reach get -25% Atk when fighting in corridors or corners (surrounded by 5 or more adjacent walls)
 
 Portals???	
 
@@ -627,8 +659,57 @@ Cartridges (Ammo)
 		atk spd: -20
 		
 	
+Fluids
+	flow
+	can be picked up into containers
+	can be spilled from containers
+	can be poured into devices like the still
 	
 	
 	
 	
-	
+melee weapons
+	standing	
+.....
+.xxx.
+.x@x.
+.xxx.
+.....
+	moving
+	rapier-style
+.....	
+.....
+..x2.
+..1x.
+.....
+.....
+	slash-style
+.....	
+.....
+.x2x.
+..1..
+.....
+.....
+	knife-style
+.....	
+.....
+..2..
+.x1x.
+.....
+.....
+
+range (ranged weapons)
+........................
+........................
+...........5............
+.........55455..........
+........5443445.........
+.......543323345........
+.......543212345........
+......54321@12345.......
+.......543212345........
+.......543323345........
+........5443445.........
+.........55455..........
+...........5............
+........................

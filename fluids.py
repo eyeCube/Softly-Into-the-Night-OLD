@@ -82,6 +82,19 @@ class Fluid:
 
             
         
+#effects
+def _cough(actor, n):
+    pass
+def _hydrate(actor, n):
+    actor.hydration += n * WATER_HYDRATE
+def _blood(actor, n):
+    pass
+def _acid(actor, n):
+    pass
+def _sick(actor, n):
+    pass
+def _drunk(actor, n):
+    pass
 
 FLUIDS = {
 #attributes:
@@ -90,12 +103,13 @@ FLUIDS = {
 #   kg      : mass
 #   flamm   : flammable?
 #   snuff   : snuffs out fires?
-#  ID       : (    type,   name,      color,          material,   d,    v,    kg,  flamm,snuff,
-FL_SMOKE    : Data(T_GAS,  "smoke",   COL['white'],   MAT_GAS,    0.05, 0.01, 0,   False,False,),
-FL_WATER    : Data(T_FLUID,"water",   COL['blue'],    MAT_WATER,  1,    1,    0.1, False,True,),
-FL_BLOOD    : Data(T_FLUID,"blood",   COL['red'],     MAT_WATER,  1.1,  2,    0.1, False,True,),
-FL_ACID     : Data(T_FLUID,"acid",    COL['green'],   MAT_WATER,  1.2,  0.5,  0.1, False,True,),
-FL_OIL      : Data(T_FLUID,"oil",     COL['purple'],  MAT_OIL,    0.9,  3,    0.1, True,False,),
+#  ID       : (    type,   name,      color,          d,    v,    kg,  flamm,snuff,effect,
+FL_SMOKE    : Data(T_GAS,  "smoke",   COL['white'],   0.05, 0.01, 0.01,False,False,_cough,),
+FL_WATER    : Data(T_FLUID,"water",   COL['blue'],    1,    1,    0.1, False,True, _hydrate,),
+FL_BLOOD    : Data(T_FLUID,"blood",   COL['red'],     1.1,  2,    0.12,False,True, _blood),
+FL_ACID     : Data(T_FLUID,"acid",    COL['green'],   1.21, 0.5,  0.2, False,True, _acid),
+FL_OIL      : Data(T_FLUID,"oil",     COL['purple'],  0.9,  3,    0.3, True,False, _sick),
+FL_MOONSHINE: Data(T_FLUID,"moonshine",COL['brown'],  1.2,  0.8,  0.15,True,False, _drunk),
     }
 FLUID_COMBONAMES={
 FL_SMOKE    : "smokey",
@@ -133,4 +147,3 @@ def simulate_flow():
                     _doYourThing(x,y,num,nValues)
         self.COPY(newMap)
         
-

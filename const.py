@@ -33,6 +33,16 @@ TILES_PER_COL = 16          # " per column         used for ASCII display)
 # Gameplay Constants
 #
 
+SPRINT_SPEEDMOD     = 100   # move speed bonus when you sprint
+SLOW_SPEEDMOD       = -33   # speed penalty while slowed
+HASTE_SPEEDMOD      = 50    # speed bonus when hasty
+
+#items
+RATIONFOOD          = 100
+
+SATIETY_PER_RATION  = 100   # how much hunger is healed per ration of food
+WATER_HYDRATION     = 25    # how much hydration is healed per unit of water
+
 #skills
 SKILLMAX            = 2     # highest skill level you can attain
 
@@ -54,7 +64,7 @@ NRG_OPEN            = 50    # Cost to open/close a door
 NRG_RUMMAGE         = 100   # Cost of picking an item from a container
 NRG_EXAMINE         = 200
 NRG_QUAFF           = 100
-NRG_EAT             = 200   # per unit of consumption
+NRG_EAT             = 200   # AP cost per (unit of consumption) to eat
 NRGSAVED_FASTSHOT   = 50
 
 #fluids
@@ -259,6 +269,7 @@ BLOODY      = i; i+=1;  # Is covered in blood
 RAVAGED     = i; i+=1;  # Creature is starved: strong desire for food
 THIEF       = i; i+=1;  # Creature desires gold / treasure and will steal it
 MEAN        = i; i+=1;  # Creature is always hostile to rogues
+SPRINT      = i; i+=1;  # Is sprinting
 CONFU       = i; i+=1;  # Is confused
 TRIPN       = i; i+=1;  # Is hallucinating
 SLEEP       = i; i+=1;  # Is asleep
@@ -284,7 +295,8 @@ CANQUAFF    = i; i+=1;  # Can be quaffed
 CANEQUIP    = i; i+=1;  # Can be equipped
 CANUSE      = i; i+=1;  # Can be used
 CANPUSH     = i; i+=1;  # Can be pushed
-CARRIESFLUID= i; i+=1;  # Can contain fluids
+CANOPEN     = i; i+=1;  # Can open it like a container (not doors)
+HOLDSFLUID  = i; i+=1;  # Can contain fluids
 
 
 #

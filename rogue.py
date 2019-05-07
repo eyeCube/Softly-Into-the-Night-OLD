@@ -76,7 +76,8 @@ class Ref():        # stores global references to objects
     environ     = None
     manager     = None  # current active game state manager
     savedGame   = None
-    pt_managers = {}    # per turn managers that tick every game turn
+    et_managers = {}    # per turn managers that tick at end of each turn
+    bt_managers = {}    # per turn managers that tick at beginning of each turn
     c_managers  = {}    # const managers, ran manually
     
 
@@ -270,11 +271,13 @@ def genocide(typ):
 
     # constant managers, ran each turn
 def create_perturn_managers():
-    Ref.pt_managers.update({'timers'    : managers.Manager_Timers()})
-    Ref.pt_managers.update({'fire'      : managers.Manager_Fires()})
-    Ref.pt_managers.update({'fluids'    : managers.Manager_Fluids()})
-    Ref.pt_managers.update({'status'    : managers.Manager_Status()})
-    Ref.pt_managers.update({'meters'    : managers.Manager_Meters()})
+    #end of turn (end of monster's turn)
+    Ref.et_managers.update({'fire'      : managers.Manager_Fires()})
+    Ref.et_managers.update({'fluids'    : managers.Manager_Fluids()})
+    #beginning of turn (beginning of monster's turn)
+    Ref.bt_managers.update({'timers'    : managers.Manager_Timers()})
+    Ref.bt_managers.update({'status'    : managers.Manager_Status()})
+    Ref.bt_managers.update({'meters'    : managers.Manager_Meters()})
     
     # constant managers, manually ran
 def create_const_managers():
@@ -365,9 +368,9 @@ def inanat(x,y):        return Ref.Map.inanat(x,y) #inanimate Thing at
 def monat (x,y):        return Ref.Map.monat(x,y) #monster at
 def solidat(x,y):       return Ref.Map.solidat(x,y) #solid Thing at
 def wallat(x,y):        return (not Ref.Map.get_nrg_cost_enter(x,y) ) #tile wall
-def fluidsat(x,y):      return Ref.pt_managers['fluids'].fluidsat(x,y) #list
+def fluidsat(x,y):      return Ref.et_managers['fluids'].fluidsat(x,y) #list
 def lightsat(x,y):      return Ref.Map.lightsat(x,y) #list
-def fireat(x,y):        return Ref.pt_managers['fire'].fireat(x,y)
+def fireat(x,y):        return Ref.et_managers['fire'].fireat(x,y)
 
 def cost_enter(x,y):    return Ref.Map.get_nrg_cost_enter(x,y)
 def cost_leave(x,y):    return Ref.Map.get_nrg_cost_leave(x,y)
@@ -481,11 +484,17 @@ def irradiate(obj, dmg): thing.irradiate(obj, dmg)
 def electrify(obj, dmg): thing.electrify(obj, dmg)
 #paralyze
 def paralyze(obj, turns): thing.paralyze(obj, turns)
+#cough
+def cough(obj, dmg): thing.cough(obj, dmg)
 #mutate
 def mutate(obj): thing.mutate(obj)
 def kill(obj): #remove a thing from the world
     if on(obj,DEAD): return
     make(obj,DEAD)
+    #drop inventory
+    if obj.inv:
+        for tt in obj.inv:
+            drop(obj, tt)
     #creatures
     if obj.isCreature:
         #create a corpse
@@ -570,7 +579,6 @@ class Lists():
     inanimates  =[]     # nonliving
     lights      =[]
     fluids      =[]
-    #timers      =[]     # things with a tick() function
     
     @classmethod
     def things(cls):
@@ -736,7 +744,7 @@ def release_fluid(obj):
     
 #fluid containers
 def init_fluidContainer(obj, size):
-    make(obj,CARRIESFLUID)
+    make(obj,HOLDSFLUID)
     obj.fluidContainer = fluids.FluidContainer(size)
 
 
@@ -880,12 +888,12 @@ def release_light(light):
 
 #fire tile flag is independent of the status effect of burning
 def set_fire(x,y):
-    Ref.pt_managers['fire'].add(x,y)
+    Ref.et_managers['fire'].add(x,y)
 def douse(x,y): #put out a fire at a tile and cool down all things there
-    if not Ref.pt_managers['fire'].fireat(x,y): return
-    Ref.pt_managers['fire'].remove(x,y)
+    if not Ref.et_managers['fire'].fireat(x,y): return
+    Ref.et_managers['fire'].remove(x,y)
     for tt in thingsat(x,y):
-        Ref.pt_managers['status'].remove(tt, FIRE)
+        Ref.bt_managers['status'].remove(tt, FIRE)
         cooldown(tt)
 
 
@@ -900,11 +908,11 @@ def douse(x,y): #put out a fire at a tile and cool down all things there
     # status    = ID of the status effect
     # t         = duration (-1 is the default duration for that status)
 def set_status(obj, status, t=-1):
-    Ref.pt_managers['status'].add(obj, status, t)
+    Ref.bt_managers['status'].add(obj, status, t)
 def clear_status(obj, status):
-    Ref.pt_managers['status'].remove(obj, status)
+    Ref.bt_managers['status'].remove(obj, status)
 def clear_status_all(obj):
-    Ref.pt_managers['status'].remove_all(obj)
+    Ref.bt_managers['status'].remove_all(obj)
 
 
 
@@ -912,16 +920,19 @@ def clear_status_all(obj):
 # managers #
 #----------#
 
-def managers_perturn_run():
-    for v in Ref.pt_managers.values():
+def managers_beginturn_run():
+    for v in Ref.bt_managers.values():
+        v.run()
+def managers_endturn_run():
+    for v in Ref.et_managers.values():
         v.run()
 def manager_sights_run():   Ref.c_managers['sights'].run()
 def manager_sounds_run():   Ref.c_managers['sounds'].run()
 
 # constant managers #
-        
-def register_timer(obj):    Ref.pt_managers['timers'].add(obj)
-def release_timer(obj):     Ref.pt_managers['timers'].remove(obj)
+
+def register_timer(obj):    Ref.bt_managers['timers'].add(obj)
+def release_timer(obj):     Ref.bt_managers['timers'].remove(obj)
 
 # game state managers #
 

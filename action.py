@@ -19,13 +19,13 @@ import items
 
 
 occupations={}
-
+dirStr=" <hjklyubn.>"
 
 
 # player only actions #
 
 def bomb_pc(pc): # drop a lit bomb
-    rog.alert("Place bomb where? <hjklyubn>")
+    rog.alert("Place bomb where?{d}".format(d=dirStr))
     args=IO.get_direction()
     if not args: return
     dx,dy,dz=args
@@ -42,7 +42,7 @@ def bomb_pc(pc): # drop a lit bomb
 # pickup
 # grab an item from the game world, removing it from the grid
 def pickup_pc(pc):
-    rog.alert("Pick up what? <hjklyubn.>")
+    rog.alert("Pick up what?{d}".format(d=dirStr))
     args=IO.get_direction()
     if not args:
         rog.alert()
@@ -143,44 +143,39 @@ def inventory_pc(pc,pcInv):
 #
 
 def drop_pc(pc,item):
-    rog.alert("Place {i} where? <hjklyubn.>".format(i=item.name))
+    rog.alert("Place {i} where?{d}".format(d=dirStr,i=item.name))
     args=IO.get_direction()
     if not args: return
     dx,dy,dz=args
     
-    if not rog.wallat(pc.x+dx,pc.y+dy):
-        rog.drain(pc, 'nrg', NRG_RUMMAGE)
-        rog.drop(pc,item, dx,dy)
-        rog.msg("{t}{n} dropped {i}.".format(t=pc.title,n=pc.name,i=item.name))
-    else: rog.alert("You can't put that there!")
+    if not drop(pc, item):
+        rog.alert("You can't put that there!")
 
 def open_pc(pc):
-    rog.alert("Open what? <hjklyubn.>".format(i=item.name))
+    rog.alert("Open what?{d}".format(d=dirStr))
     args=IO.get_direction()
     if not args: return
     dx,dy,dz=args
     xto=pc.x+dx
     yto=pc.y+dy
     
-    #open containers
-    #close containers
-    #open doors
-    if rog.tile_get(xto,yto) == DOORCLOSED:
-        rog.drain(pc, 'nrg', NRG_OPEN)
-        rog.tile_change(xto,yto, DOOROPEN)
-        rog.msg("{n} opened a door.".format(n=pc.name))
-        return
-    #close doors
-    if rog.tile_get(xto,yto) == DOOROPEN:
-        rog.drain(pc, 'nrg', NRG_OPEN)
-        rog.tile_change(xto,yto, DOORCLOSED)
-        rog.msg("{n} closed a door.".format(n=pc.name))
-        return
-        
+    if not openClose(pc, xto, yto):
+        rog.alert("It won't open.")
+
+def sprint_pc(pc):
+    #if sprint cooldown elapsed
+    if not rog.on(pc, TIRED):
+        sprint(pc)
+    else:
+        rog.alert("You're too tired to sprint.")
+
+def throw_pc(pc):
+    pass
     
 
         
 def equip_pc(pc,item):
+    pass
     #fornow, just wield it THIS SCRIPT NEEDS SERIOUS WORK*****>>>>...
     '''
     rog.drain(pc, 'nrg', NRG_RUMMAGE + NRG_WIELD)
@@ -215,11 +210,22 @@ def use(obj, item):
 #pocket thing
 #a thing puts a thing in its inventory
 def pocketThing(obj, item):
+##    if not item: return False
     rog.drain(obj, 'nrg', NRG_POCKET)
     rog.give(obj, item)
     rog.release_inanimate(item)
     rog.msg("{t}{n} pockets {i}.".format(
         t=obj.title,n=obj.name,i=item.name))
+##    return True
+
+def drop(obj, item):
+    if not rog.wallat(pc.x+dx,pc.y+dy):
+        rog.drain(obj, 'nrg', NRG_RUMMAGE)
+        rog.drop(obj,item, dx,dy)
+        rog.msg("{t}{n} dropped {i}.".format(t=obj.title,n=obj.name,i=item.name))
+        return True
+    else:
+        return False
 
 
 #quaff
@@ -246,6 +252,28 @@ def move(obj,dx,dy):  # locomotion
     rog.drain(obj, 'nrg', nrg_cost)
     rog.port(obj, xto, yto)
     return True
+
+def openClose(obj, xto, yto):
+    #open containers
+    #close containers
+    #open doors
+    if rog.tile_get(xto,yto) == DOORCLOSED:
+        rog.drain(obj, 'nrg', NRG_OPEN)
+        rog.tile_change(xto,yto, DOOROPEN)
+        rog.msg("{n} opened a door.".format(n=obj.name))
+        return True
+    #close doors
+    if rog.tile_get(xto,yto) == DOOROPEN:
+        rog.drain(obj, 'nrg', NRG_OPEN)
+        rog.tile_change(xto,yto, DOORCLOSED)
+        rog.msg("{n} closed a door.".format(n=obj.name))
+        return True
+    return False
+
+def sprint(obj):
+    #if sprint cooldown elapsed
+    rog.set_status(obj, SPRINT)
+    rog.msg("{n} begins sprinting.".format(n=obj.name))
 
 
 #
@@ -293,9 +321,9 @@ def fight(attkr,dfndr,adv=0):
     # make a message describing the fight
     if message:
         if hit==False: v="misses"
-        elif dmg==0: v='cannot penetrate'; x="'s armor!"
-        elif killed: v='defeats'
-        else: v='hits'
+        elif dmg==0: v="cannot penetrate"; x="'s armor!"
+        elif killed: v="defeats"
+        else: v="hits"
         rog.event_sight(
             dfndr.x,dfndr.y,
             "{t1}{a} {v} {t2}{n}{x}".format(a=a,v=v,n=n,t1=t1,t2=t2,x=x)

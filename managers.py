@@ -47,28 +47,39 @@ class GameStateManager(Manager):
 #
 
 class Manager_Timers(Manager):
+    ID=0
 
     def __init__(self):
         super(Manager_Timers, self).__init__()
 
-        self.data=[]
+        self.data={}
 
     def run(self):
         super(Manager_Timers, self).run()
         
-        for datum in self.data:
-            datum.tick()
+        for _id,t in self.data.items():
+            t-=1
+            if t<=0:
+                self.remove(_id)
+            self.data.update({_id : t})
             
     def close(self):
         super(Manager_Timers, self).close()
         
         pass
 
-    def add(self,obj):
-        self.data.append(obj)
-    def remove(self,obj):
-        self.data.remove(obj)
+    def add(self,t):
+        _id=Manager_Timers.ID
+        Manager_Timers.ID +=1
+        self.data.update({_id : t})
+        return _id
+    def remove(self,_id):
+        self.data.remove(_id)
 
+'''
+timer=bt_managers['timers'].add(time)
+return timer
+'''
 
 
 
@@ -85,6 +96,7 @@ class Manager_Fires(Manager):
 
         self.fires={}
         self.newfires={}
+        #self.strongFires={} #fires that can't be put out
         self.lights={}
         self.removeList=[]
         self.soundsList=[]
@@ -269,7 +281,10 @@ class Manager_Fluids(Manager):
 class Manager_Status(Manager):
     #default durations for statuses
     DURATIONS = {
-        FIRE    : 99999,
+        SPRINT  : 10,
+        TIRED   : 50,
+        SLOW    : 10,
+        FIRE    : 9999999,
         SICK    : 500,
         ACID    : 25,
         IRRIT   : 200,
@@ -284,8 +299,10 @@ class Manager_Status(Manager):
         super(Manager_Status, self).__init__()
 
         self.statuses={
-            #example:
             #UGLY   : {object : DURATION,},
+            SPRINT  : {},
+            TIRED   : {},
+            SLOW    : {},
             FIRE    : {},
             SICK    : {},
             IRRIT   : {},
@@ -295,27 +312,58 @@ class Manager_Status(Manager):
             BLIND   : {},
             DEAF    : {},
             }
+        self.statMods={}
+        #copy statuses into statMods so they look the same
+        for k,v in self.statuses.items():
+            self.statMods.update({k:v})
         
 
     #add a status effect to an object
     def add(self, obj, status, dur=-1):
+        if dur == 0: return False
         if dur == -1:   #default duration
             dur = Manager_Status.DURATIONS[status]
         curDur = self.statuses[status].get(obj, 0)
-        if dur <= curDur:   #don't override effect with a lesser duration
-            return          #but you CAN override with a greater duration
-        self.statuses[status].update({obj:dur})
+        if curDur:
+            if dur <= curDur:   #don't override effect with a lesser duration
+                return False    # but you CAN override with a greater duration
+            self.remove(obj, status) #remove current status before overriding
+        self.statuses[status].update( {obj : dur} )
         rog.make(obj, status)   #add flag
+        #stat mods
+        if status == SPRINT:
+            _id=rog.effect_add( {"msp" : SPRINT_SPEEDMOD} )
+            self.statMods[status].update( {obj : _id} )
+        if status == HASTE:
+            _id=rog.effect_add( {"spd" : HASTE_SPEEDMOD} )
+            self.statMods[status].update( {obj : _id} )
+        if status == SLOW:
+            _id=rog.effect_add( {"spd" : SLOW_SPEEDMOD} )
+            self.statMods[status].update( {obj : _id} )
+        return True
+    
     #remove an object's status effect
     def remove(self, obj, status):
-        if obj in self.statuses[status]:
+        if self.statuses[status].get(obj, None):
             del self.statuses[status][obj]
             rog.makenot(obj, status)    #remove flag
+            #stat mods
+            if self.statMods[status].get(obj, None):
+                rog.effect_remove( self.statMods[status][obj] )
+                del self.statMods[status][obj]
+            if status == SPRINT:
+                self.add(obj, TIRED) #after done sprinting, get tired
+            if status == PARAL: #after getting unparalyzed, temporarily slowed down you become
+                self.add(obj, SLOW)
+        return True
+    
     #remove all status effects on a given object
     def remove_all(self, obj):
         for status in self.statuses.keys():
             self.remove(obj, status)
+        return True
 
+    #run: iterate status effects and tick down status timers
     def run(self):
         super(Manager_Status, self).run()
 
@@ -324,23 +372,27 @@ class Manager_Status(Manager):
         for status,dic in self.statuses.items():
             for obj, dur in dic.items():
                 self._tick(obj, status)
-                #tick down the timer
+                #tick down the timer by setting duration to current dur - 1
                 self._updateTimer(obj, status, dur - 1)
 
-    #status effects may have timers
+    # private functions #
+                
+    #change the timer for a status effect
     def _updateTimer(self, obj, status, dur):
         if dur <= 0:
             self.remove(obj, status)
         else:
-            self.add(obj, status, dur)
-#do an effect to an object. This works this way so that you don't have to
-#check every single thing in the game world;
-#  - "hey, 4 of destiny. Are you sick? Are you on fire? Are you irritated? Are you paralyzed? etc....
-#  - Hey inert rock. Are you sick? Are you on fire? ....
-# Blah... blah... too many checks!! Just check ones who need checking.
+            self.statuses[status].update( {obj : dur} )
+            
+#do an effect to an object. Only check the objects that need checking
     def _tick(self, obj, status):
         if status == SICK:
             pass
+        
+        elif status == SPRINT:
+            pass #chance to trip while sprinting
+##            if dice.roll(100) < SPRINT_TRIP_CHANCE:
+##                rog.knockdown(obj)
         
         elif status == FIRE:
             if obj.stats.temp < FIRE_TEMP: #cooled down too much to keep burning

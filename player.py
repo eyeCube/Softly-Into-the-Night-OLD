@@ -129,6 +129,12 @@ def commands(pc, pcAct):
         if act == "open": #open or close
             action.open_pc(pc)
             return
+        if act == "sprint": #begin sprinting
+            action.sprint_pc(pc)
+            return
+        if act == "throw": #throw an object
+            action.throw_pc(pc)
+            return
 
         #unused actions
         '''if act == "bomb":

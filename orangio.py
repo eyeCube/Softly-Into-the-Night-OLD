@@ -50,8 +50,8 @@ import libtcodpy as libtcod
 import time
 import textwrap
 
-from const import *
-from manager import Manager
+from const import *             #import key constants
+from manager import Manager     
 import exceptions
 import maths
 import word
@@ -183,7 +183,7 @@ u
 KP9
 NONE
 
-// Towards Self
+// Direct Towards Self
 .
 KP5
 NONE
@@ -205,6 +205,16 @@ NONE
 
 // Open/Close
 o
+Shift+=
+NONE
+
+// Sprint
+s
+NONE
+NONE
+
+// Throw
+t
 NONE
 NONE
 
@@ -219,7 +229,7 @@ NONE
 NONE
 
 // Fixed view mode
-Shift+v
+Ctrl+v
 NONE
 NONE
 
@@ -239,6 +249,16 @@ NONE
 
 // Display Help Menu
 Shift+/
+NONE
+NONE
+
+// Inventory
+i
+NONE
+NONE
+
+// Message History
+Shift+h
 NONE
 NONE
 
@@ -287,16 +307,6 @@ BACKSPACE
 NONE
 NONE
 
-// Message History
-Shift+h
-NONE
-NONE
-
-// Inventory
-i
-NONE
-NONE
-
 //---------\\
 // ADVANCED |
 //---------//
@@ -334,6 +344,8 @@ COMMANDS = {        # translate commands into actions
     'down'          : {'target': (0,  0,  1,) },
     'get'           : {'get': True},
     'open'          : {'open': True},
+    'sprint'        : {'sprint': True},
+    'throw'         : {'throw': True},
     'look'          : {'look': True},
     'move view'     : {'move view': True},
     'fixed view'    : {'fixed view': True},
@@ -341,6 +353,8 @@ COMMANDS = {        # translate commands into actions
     'quit'          : {'quit game': True},
     
     'help'          : {'help': True},
+    'inventory'     : {'inventory': True},
+    'msg history'   : {'message history': True},
     'select'        : {'select': True},
     'exit'          : {'exit': True},
     'pgup'          : {'page up': True},
@@ -350,8 +364,6 @@ COMMANDS = {        # translate commands into actions
     'delete'        : {'delete': True},
     'insert'        : {'insert': True},
     'backspace'     : {'backspace': True},
-    'msg history'   : {'message history': True},
-    'inventory'     : {'inventory': True},
     
     'console'       : {'console': True},
     'last cmd'      : {'last cmd': True},

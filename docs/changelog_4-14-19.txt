@@ -1,0 +1,8 @@
+changelog_4-14-19.txt
+
+Implemented equipping, dequipping of any item type
+	need to implement the [action] of equipping/dequipping, too (action.py)
+Finished create_gear and create_weapon functions
+	for gear.py, weapons.py and rogue.py
+
+Several minor improvements

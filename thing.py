@@ -139,9 +139,10 @@ class Stats:  # Stats and attributes of a obj
         self.mp         = 0     # current mana
         self.mpmax      = 0     # maximum mana
         self.element    = 0     # what type of damage does it deal?
-        self.resfire    = 0     # resist fire and heat
-        self.resbio     = 0     # resist hazards (bio, chem, rads)
+        self.resfire    = 0     # resist heat
+        self.resbio     = 0     # resist biohazards
         self.reselec    = 0     # resist electricity
+        self.resphys    = 0     # resist physical damage
         self.temp       = 0     # temperature (fire damage)
         self.rads       = 0     # radiation (rad damage)
         self.expo       = 0     # exposure (chem damage)
@@ -317,6 +318,22 @@ def exposure(obj, dmg):
         obj.stats.expo = 0          #reset exposure meter
         rog.hurt(obj, CHEM_DAMAGE)  #instant damage when expo meter fills
         _random_chemical_effect(obj) #inflict chem status effect
+#coughing
+def cough(obj, dmg):
+    res = obj.stats.resbio
+    dmg = int(dmg * (1-(res/100)) / 10)
+    obj.stats.expo += max(0, dmg)
+    if obj.stats.expo >= 100:
+        obj.stats.expo = 0          #reset exposure meter
+        rog.set_status(obj, COUGH)
+#vomiting
+def vomit(obj, dmg):
+    res = obj.stats.resbio
+    dmg = int(dmg * (1-(res/100)) / 10)
+    obj.stats.expo += max(0, dmg)
+    if obj.stats.expo >= 100:
+        obj.stats.expo = 0          #reset exposure meter
+        rog.set_status(obj, VOMIT)
 #elec damage  
 def electrify(obj, dmg):
     res = obj.stats.reselec

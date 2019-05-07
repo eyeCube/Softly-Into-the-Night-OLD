@@ -44,6 +44,10 @@ def play(pc, pcAct):
 #-------------------#
 
     if pc.stats.nrg <= 0:
+
+        #beginning of turn is considered when the monsters begin their turns
+        #   /right after player turn.
+        rog.managers_beginturn_run()
         
         for mon in rog.list_creatures():
             if rog.on(mon,DEAD): continue
@@ -53,7 +57,8 @@ def play(pc, pcAct):
             rog.gain(mon, 'nrg', monspd, Max=monspd) # give action points
         
         rog.turn_pass()
-        rog.managers_perturn_run()            
+        #end of turn is considered to be right before player does his turn
+        rog.managers_endturn_run()            
         return
 
 #-------------------#
