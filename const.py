@@ -95,6 +95,23 @@ THIEF       = i; i+=1;  # Creature desires gold / treasure and will steal it
 MEAN        = i; i+=1;  # Creature is always hostile to rogues
 DEAD        = i; i+=1;  # Is dead
 WATERKILLS  = i; i+=1;  # Is killed by water
+NVISION     = i; i+=1;  # Has Night vision
+IMMUNE      = i; i+=1;  # Immune to poison
+SEEINV      = i; i+=1;  # Can see invisible
+SEEXRAY     = i; i+=1;  # LOS not blocked by walls
+FLYING      = i; i+=1;  # Is currently flying
+CANFLY      = i; i+=1;  # Can fly
+CANWET      = i; i+=1;  # Can get wet
+CANTALK     = i; i+=1;  # Can engage in jolly conversation
+CANEAT      = i; i+=1;  # Can be eaten
+CANQUAFF    = i; i+=1;  # Can be quaffed
+CANEQUIP    = i; i+=1;  # Can be equipped
+CANUSE      = i; i+=1;  # Can be used
+CANPUSH     = i; i+=1;  # Can be pushed
+CANOPEN     = i; i+=1;  # Can open it like a container (not doors)
+HOLDSFLUID  = i; i+=1;  # Can contain fluids
+REACH       = i; i+=1;  # Has long reach
+#status flags
 WET         = i; i+=1;  # Is wet
 OILY        = i; i+=1;  # Is oily
 BLOODY      = i; i+=1;  # Is covered in blood
@@ -118,23 +135,11 @@ DRUNK       = i; i+=1;  # Is drunk
 DEAF        = i; i+=1;  # Is deafened
 INVIS       = i; i+=1;  # Is invisible
 TRAUMA      = i; i+=1;  # Is psychologically traumatized
-NVISION     = i; i+=1;  # Has Night vision
-IMMUNE      = i; i+=1;  # Immune to poison
-SEEINV      = i; i+=1;  # Can see invisible
-SEEXRAY     = i; i+=1;  # LOS not blocked by walls
-FLYING      = i; i+=1;  # Is currently flying
-CANFLY      = i; i+=1;  # Can fly
-CANWET      = i; i+=1;  # Can get wet
-CANTALK     = i; i+=1;  # Can engage in jolly conversation
-CANEAT      = i; i+=1;  # Can be eaten
-CANQUAFF    = i; i+=1;  # Can be quaffed
-CANEQUIP    = i; i+=1;  # Can be equipped
-CANUSE      = i; i+=1;  # Can be used
-CANPUSH     = i; i+=1;  # Can be pushed
-CANOPEN     = i; i+=1;  # Can open it like a container (not doors)
-HOLDSFLUID  = i; i+=1;  # Can contain fluids
-
-
+STATUSFLAGS=(
+WET, OILY, BLOODY, CHARRED, HASTE, SLOW, SPRINT, TIRED,
+CONFU, TRIPN, SLEEP, FIRE, ACID, SICK, IRRIT, BLIND,
+PARAL, COUGH, VOMIT, DRUNK, DEAF, INVIS, TRAUMA,
+    )
 
 #
 # Gameplay Constants
@@ -194,7 +199,7 @@ SICK    : (100,     "is", "sick",),
 ACID    : (7,       "begins", "corroding",),
 IRRIT   : (200,     "is", "irritated",),
 PARAL   : (5,       "is", "paralyzed",),
-COUGH   : (20,      "is", "in a coughing fit",),
+COUGH   : (10,      "is", "in a coughing fit",),
 VOMIT   : (25,      "is", "wretching",),
 BLIND   : (20,      "is", "blinded",),
 DEAF    : (100,     "is", "deafened",),
@@ -277,6 +282,8 @@ FLOOR           =   249     # centered dot
 WALL            = ord('#')
 DOORCLOSED      = ord('+')
 DOOROPEN        = ord('-')
+VAULTCLOSED     =   241     # +/-
+VAULTOPEN       =   240     # =_
 STAIRUP         = ord('<')
 STAIRDOWN       = ord('>')
 FUNGUS          = ord('\"')
@@ -297,13 +304,15 @@ T_SHROOM        =   6       # spade
 T_FUNGUS        = ord('\"')
 T_FOUNTAIN      =   144     # faucet-looking thing
 T_MONEY         = ord('$')
-T_BOTTLE        =   173     # upside down '!'
+T_FLASK         =   173     # upside down '!'
 T_DEVICE        =   168     # upside down '?' - basically a "magic scroll"
 T_TERMINAL      =   167     # o underlined
-T_TORCH         = ord(';')
 T_CORPSE        = ord('%')
-T_FOOD          = ord('&')
-T_BULLET        = ord('.')
+T_MEAL          = ord('&')
+T_RATION        = ord(',')
+T_STONE         = ord('.')
+T_BULLET        = ord(':')
+T_TORCH         = ord(';')
 T_BOULDER       = ord('0')
 T_DUST          = ord('^')
 T_POLE          = ord('|')
@@ -314,10 +323,12 @@ T_GUN           =   169     # pistol-looking char
 T_ENERGYWEAPON  =   170     # backward pistol-looking char
 T_BOMB          = ord('*')
 #T_LAUNCHER      =   151     # sqrt
-T_SHIELD        = ord(')')
-T_CLOAK         = ord('(')
+T_STRING        = ord(')')
+T_CLOTH         = ord('(')
 T_ARMOR         = ord(']')
 T_HELMET        = ord('[')
+T_SHIELD        = ord('}')
+T_CLOAK         = ord('{')
 T_FLUID         =   247     # ~~
 T_GAS           = ord('~')
 T_SCRAPMETAL    =   171     # 1/2
@@ -327,9 +338,12 @@ T_WOOD          =   246     # div
 T_TOWEL         =   254     # vertical rectangle
 T_BOX           =   22      # horizontal rectangle
 T_LOG           =   28      # upside down gun-looking char
-T_CHEST         =   127     # house looking thing
+T_POT           =   151     # u accented
+T_STILL         =   150     # u ^
+T_TABLE         =   10      # pi
 T_VORTEX        =   21 
-T_GRAVE         =   241     # +/-
+T_GRAVE         =   127     # house looking thing
+T_BALLOFSTRING  =   237     # circle with line through it
 
 '''
 unused chars:
@@ -575,6 +589,7 @@ FL_BLOOD        =i; i+=1;
 FL_ACID         =i; i+=1;
 FL_STRONGACID   =i; i+=1;
 FL_SMOKE        =i; i+=1;
+FL_MOONSHINE    =i; i+=1;
 
 
 
@@ -597,6 +612,7 @@ SND_FIGHT       = (100,"a struggle",NOISE_LOUD,)
 SND_DOUSE       = (30, "a fire going out",NOISE_WHISPER,)
 SND_QUAFF       = (20, "gulping noises",NOISE_SOME,)
 SND_COUGH       = (80, "someone coughing",NOISE_SCREECH,)
+SND_COUGH       = (80, "someone vomiting",NOISE_WATERFALL,)
 
 
 class Struct_Sound():
@@ -622,7 +638,6 @@ class THG:#(Flag)
     GRAVE               = i; i+=1;
     BOX                 = i; i+=1;
     POT                 = i; i+=1;
-    BIGPOT              = i; i+=1;
     STILL               = i; i+=1;
     DOSIMETER           = i; i+=1;
     TOWEL               = i; i+=1;

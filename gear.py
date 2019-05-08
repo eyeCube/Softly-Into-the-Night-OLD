@@ -107,37 +107,39 @@ GEAR = {
     }        
 
 WEAPONS = {
-# $$$, KG, Dur      price, mass, durability
-# Ac                Accuracy (for ranged weapons or for throwing weapons),
+# Type              Weapon type
+# $$$, KG, Dur      Value, mass, durability
 # Cap               Ammo Capacity (for ranged weapons)
+# Mat               Material
+# Ac                Accuracy (for ranged weapons or for throwing weapons),
 # At,Dm             Attack, Damage,
 # DV,AV,            Dodge Value, Armor Value,
 # Asp,Msp           Attack Speed, Move Speed,
 # FIR,BIO,          FIRE damage, BIO damage
 # Ammo              Ammunition / Fuel required to use weapon
     
-           ##------- Type, $$$$, KG,  Dur, Mat, (Ac,Cap,At,Dm, DV, AV, Asp,Msp,ELEM),Ammo,{Misc.Mods},
+           ##------- Type, $$$$, KG,  Dur, Cap,Mat, (Ac,At,Dm, DV, AV, Asp,Msp,ELEM),Ammo,{Misc.Mods},
     # melee weapons
-"pocket knife"      :(MEL, 100,  0.2, 120, METL,(4, 0,  8, 3,   2,  0,  50, 0, PH,),None,(),),
-"dagger"            :(MEL, 275,  0.4, 120, METL,(4, 0,  12,5,   3,  0,  40, 0, PH,),None,(),),
-"baton"             :(MEL, 75,   0.75,400, PLAS,(3, 0,  5, 2,   0,  0,  10,-3, PH,),None,(),),
-"staff"             :(MEL, 15,   1.0, 480, WOOD,(4, 0,  9, 4,   1,  0,  33,-15,PH,),None,(REACH,),),
-"cudgel"            :(MEL, 1,    1.5, 680, WOOD,(2, 0,  3, 10,  -3, 0, -33,-12,PH,),None,(),),
-"axe"               :(MEL, 120,  1.25,350, METL,(3, 0,  5, 12,  -1, 0, -25,-12,PH,),None,(),),
-"sword"             :(MEL, 850,  1.25,260, METL,(4, 0,  12,6,   4,  0,  25,-6, PH,),None,(),),
-"spear"             :(MEL, 150,  1.5, 325, METL,(6, 0,  16,6,   -2, 0,  33,-18,PH,),None,(REACH,),),
+"pocket knife"      :(MEL, 100,  0.2, 120, 0,  METL,(4, 8, 3,   2,  0,  50, 0, PH,),None,(),),
+"dagger"            :(MEL, 275,  0.4, 120, 0,  METL,(4, 12,5,   3,  0,  40, 0, PH,),None,(),),
+"baton"             :(MEL, 75,   0.75,400, 0,  PLAS,(3, 5, 2,   0,  0,  10,-3, PH,),None,(),),
+"staff"             :(MEL, 15,   1.0, 480, 0,  WOOD,(4, 9, 4,   1,  0,  33,-15,PH,),None,(REACH,),),
+"cudgel"            :(MEL, 1,    1.5, 680, 0,  WOOD,(2, 3, 10,  -3, 0, -33,-12,PH,),None,(),),
+"axe"               :(MEL, 120,  1.25,350, 0,  METL,(3, 5, 12,  -1, 0, -25,-12,PH,),None,(),),
+"sword"             :(MEL, 850,  1.25,260, 0,  METL,(4, 12,6,   4,  0,  25,-6, PH,),None,(),),
+"spear"             :(MEL, 150,  1.5, 325, 0,  METL,(6, 16,6,   -2, 0,  33,-18,PH,),None,(REACH,),),
     # heavy weapons
-"shitstormer"       :(HEVY,1090, 2.5, 220, PLAS,(6, 50, 25,25, -4,  0, -25,-15,BI,),A_HAZM,(),),
-"raingun"           :(HEVY,1990, 2.85,175, PLAS,(5, 50, 26,40, -5,  0,  0, -18,CH,),A_ACID,(),),
-"supersoaker 9000"  :(HEVY,6750, 3.5, 100, PLAS,(4, 100,32,1,  -10, 0, -10,-18,None,),A_FLUIDS,(),),
+"shitstormer"       :(HEVY,1090, 2.5, 220, 50, PLAS,(6, 25,25, -4,  0, -25,-15,BI,),A_HAZM,(),),
+"raingun"           :(HEVY,1990, 2.85,175, 50, PLAS,(5, 26,40, -5,  0,  0, -18,CH,),A_ACID,(),),
+"supersoaker 9000"  :(HEVY,6750, 3.5, 100, 100,PLAS,(4, 32,1,  -10, 0, -10,-18,None,),A_FLUID,(),),
     # guns
-"musket"            :(GUN, 1100, 2.5, 120, METL,(8, 1,  14,8,  -3,  0, -45,-12,PH,),A_BALL,(),),
-"flintlock pistol"  :(GUN, 1750, 1.3, 150, METL,(8, 1,  10,4,   0,  0,  0, -3, PH,),A_BALL,(),),
-"revolver"          :(GUN, 3990, 1.0, 360, METL,(12,6,  12,6,   0,  0,  0, -3, PH,),A_BULL,(),),
-"rifle"             :(GUN, 4575, 2.2, 280, METL,(20,1,  20,12, -3,  0, -35,-12,PH,),A_BULL,(),),
-"shotgun"           :(GUN, 2350, 2.0, 325, METL,(6, 1,  6, 3,  -2,  0, -25,-9, PH,),A_SHOT,(),),
+"musket"            :(GUN, 1100, 2.5, 120, 1,  METL,(8, 14,8,  -3,  0, -45,-12,PH,),A_BALL,(),),
+"flintlock pistol"  :(GUN, 1750, 1.3, 150, 1,  METL,(8, 10,4,   0,  0,  0, -3, PH,),A_BALL,(),),
+"revolver"          :(GUN, 3990, 1.0, 360, 6,  METL,(12,12,6,   0,  0,  0, -3, PH,),A_BULL,(),),
+"rifle"             :(GUN, 4575, 2.2, 280, 1,  METL,(20,20,12, -3,  0, -35,-12,PH,),A_BULL,(),),
+"shotgun"           :(GUN, 2350, 2.0, 325, 1,  METL,(6, 6, 3,  -2,  0, -25,-9, PH,),A_SHOT,(),),
     # energy weapons
-"battery gun"       :(ENER,3250, 4.20,175, PLAS,(5, 20, 40,70, -7,  0, -60,-24,EL,),A_ELEC,(),),
+"battery gun"       :(ENER,3250, 4.20,175, 20, PLAS,(5, 40,70, -7,  0, -60,-24,EL,),A_ELEC,(),),
     # heavy weapons
 }
 '''
@@ -173,7 +175,6 @@ def create_gear(name,x,y,quality):
 
     g.color = COL['white']
     g.mask = g.type    
-    g.hp = int(quality*g.hpmax)
     
     rog.make(g,CANEQUIP)
     if g.type == ARMR:
@@ -196,27 +197,30 @@ def create_weapon(name, x,y):
     weap.y = y
 
     data = WEAPONS[name]
+    j = 0
     weap.name       = name
-    weap.type       = data[0]
+    weap.type       = data[j]; j+=1;
     weap.mask       = weap.type
-    weap.value      = data[1]   # $$$
-    weap.stats.mass = data[2]   # kg
-    weap.stats.hpmax= data[3]   # durability
-    weap.stats.hp   = data[3]   # durability
-    weap.material   = data[4]
+    weap.value      = data[j]; j+=1;    # $$$
+    weap.stats.mass = data[j]; j+=1;    # kg
+    weap.stats.hpmax= data[j]; j+=1;    # durability
+    weap.capacity   = data[j]; j+=1;
+    weap.material   = data[j]; j+=1;
     weap.statMods   = {}        # stat modifiers for equipping
-    if data[5][0]:  weap.statMods.update({'range':data[5][0]})
-    if data[5][1]:  weap.statMods.update({'atk':data[5][1]})
-    if data[5][2]:  weap.statMods.update({'dmg':data[5][2]})
-    if data[5][3]:  weap.statMods.update({'dfn':data[5][3]})
-    if data[5][4]:  weap.statMods.update({'arm':data[5][4]})
-    if data[5][5]:  weap.statMods.update({'asp':data[5][5]})
-    if data[5][6]:  weap.statMods.update({'msp':data[5][6]})
-    if data[5][7]:  weap.statMods.update({'element':data[5][7]})
-    weap.ammoType   = data[6]
-    mods = gData[7]
-    #for mod in data[7]:
+    if data[j][0]:  weap.statMods.update({'range':data[j][0]})
+    if data[j][1]:  weap.statMods.update({'atk':data[j][1]})
+    if data[j][2]:  weap.statMods.update({'dmg':data[j][2]})
+    if data[j][3]:  weap.statMods.update({'dfn':data[j][3]})
+    if data[j][4]:  weap.statMods.update({'arm':data[j][4]})
+    if data[j][5]:  weap.statMods.update({'asp':data[j][5]})
+    if data[j][6]:  weap.statMods.update({'msp':data[j][6]})
+    if data[j][7]:  weap.statMods.update({'element':data[j][7]})
+    j+=1
+    weap.ammoType   = data[j]; j+=1;
+    mods = data[j]; j+=1;
+    #for mod in data[j]:
     #    weap.mods.append(mod)
+    #j+=1;
     
     weap.color      = COL['white']
     weap.equipType  = EQ_MAINHAND

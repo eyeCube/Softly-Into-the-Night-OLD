@@ -64,9 +64,9 @@ def main():
     
     ##TESTING
     rog.gain(pc,"hpmax",100)
-    log=rog.create_stuff(18,18,THG.LOG)
+    log=rog.create_stuff(THG.LOG, 18,18)
     rog.burn(log,200)
-    box=rog.create_stuff(20,18,THG.BOX)
+    box=rog.create_stuff(THG.BOX,20,18)
     #fluids.smoke(16,16)
     '''pc.stats.hpmax      = 20
     pc.stats.mpmax      = 20
@@ -131,7 +131,7 @@ def main():
     yyy.color=COL['dkmagenta']
     rog.register_inanimate(yyy)
     ##
-
+    '''
     yyy=Thing()
     yyy.name="wood"
     yyy.mask=chr(15)
@@ -154,7 +154,7 @@ def main():
     yyy.stats.hp=400
     yyy.color=COL['brown']
     rog.register_inanimate(yyy)
-    rog.set_status(yyy, FIRE)
+    rog.set_status(yyy, FIRE)'''
     '''
     yyy=rog.create_light(25,25, 15)
     yyy=rog.create_light(14,11, 7)'''

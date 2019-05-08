@@ -171,6 +171,9 @@ class Manager_Fires(Manager):
             if food >= _FOOD_THRESHOLD:
                 iterations = 1+int((food - _FOOD_THRESHOLD)/3)
                 self._spread(fx,fy,iterations)
+            elif food == 0:
+                self.removeList.append((fx,fy,))
+                continue
                     
         #end for (fires)
 
@@ -333,6 +336,7 @@ class Manager_Status(Manager):
     def remove(self, obj, status):
         if self.statuses[status].get(obj, None):
             del self.statuses[status][obj]
+            #if rog.on(obj, status): # HACK
             rog.makenot(obj, status)    #remove flag
             self._remove_statMods(obj, status) # clear attribute modifiers
             self._apply_auxRemoveEffects(obj, status) #aux remove effects
@@ -367,7 +371,7 @@ class Manager_Status(Manager):
         return STATUSES[status][1]
     def _get_verb2(self, status):
         return STATUSES[status][2]
-    def _should_write_message(obj):
+    def _should_write_message(self, obj):
         return obj==rog.pc() #or pc has super observation and is in sight...
     
     #change the timer for a status effect
@@ -377,7 +381,7 @@ class Manager_Status(Manager):
         else:
             self.statuses[status].update( {obj : dur} )
 
-    def _apply_statMods(obj, status):
+    def _apply_statMods(self, obj, status):
         #stat mods
             
         if status == SPRINT:
@@ -470,7 +474,9 @@ class Manager_Status(Manager):
         elif status == FIRE:
             if obj.stats.get('temp') < FIRE_TEMP: #cooled down too much to keep burning
                 self.remove(obj, status)
+                print("removing fire due to low temp for {} at {},{}".format(obj.name,obj.x,obj.y))
                 return
+            #damage is based on temperature of the object
             dmg = max( 1, int(obj.stats.get('temp') / 100) )
             rog.hurt(obj, dmg)
             #create a fire at the location of burning things
@@ -478,6 +484,7 @@ class Manager_Status(Manager):
                 rog.set_fire(obj.x,obj.y)
             
         elif status == ACID:
+            #damage is based on time remaining, more time = more dmg
             dmg = max( 1, dice.roll(2) - 2 + math.ceil(math.sqrt(time-1)) )
             rog.hurt(obj, dmg)
             

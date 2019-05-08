@@ -66,7 +66,6 @@ class Thing(Observable):
         self.mask       = _type  # char displayed to screen
         self.mass       = 0         # KG
         self.material   = material  # what's it made of?
-        self.nutrition  = None  # amount of hunger recovery
         
     #   values for creatures
         self.ai         = None
@@ -81,7 +80,10 @@ class Thing(Observable):
 
     #   inanimate things
         self.ammoType   = None  # which type of ammo does it use?
+        self.capacity   = None  # how much can fit? (ammo, energy,...)
         self.equipType  = None  # which slot can it be equipped in?
+        self.nutrition  = None  # amount of hunger recovery
+        self.taste      = None  # flag describing flavor when eaten
         
     def __hash__(self):
         return self.id
@@ -93,8 +95,8 @@ class Thing(Observable):
     
     @classmethod
     def get_new_id(cls):
-        cls.new_id +=1
-        return cls.new_id
+        Thing.new_id +=1
+        return Thing.new_id
     
     
     #def __repr__(self):         return self.name
@@ -428,7 +430,9 @@ def create_corpse(obj):
     corpse.stats.resfire= obj.stats.resfire
     corpse.stats.resbio = obj.stats.resbio
     corpse.stats.reselec= obj.stats.reselec
-    rog.copyflags(corpse, obj)
+    corpse.stats.temp   = obj.stats.temp
+    #copy status effects?
+    rog.copyflags(corpse, obj, copyStatusFlags=False)
     rog.givehp(corpse)
     return corpse
 

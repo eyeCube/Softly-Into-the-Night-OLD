@@ -24,6 +24,7 @@ import monsters
 import managers
 import maths
 import player
+import stuff
 import thing
 import tilemap
 from colors import COLORS as COL
@@ -37,7 +38,8 @@ IDENTIFIER = {
     WALL            : "a rough stone wall",
     STAIRDOWN       : "a staircase leading down",
     STAIRUP         : "a staircase leading up",
-    T_FOOD          : "some foodstuffs",
+    T_RATION        : "a ration",
+    T_MEAL          : "a meal",
     T_STONE         : "a rock or stone",
     T_CORPSE        : "a corpse or skeleton",
     ord("?")        : "a silhouette or light",
@@ -404,16 +406,17 @@ def is_creature(obj):   return obj.isCreature
 def is_solid(obj):      return obj.isSolid
 def make(obj,flag):     obj.flags.add(flag)
 def makenot(obj,flag):  obj.flags.remove(flag)
-def copyflags(toObj,fromObj): #use this to set an object's flags to that of another object.
+def copyflags(toObj,fromObj,copyStatusFlags=True): #use this to set an object's flags to that of another object.
     for flag in fromObj.flags:
-        make(toObj, flag)
+        if (copyStatusFlags or not flag in STATUSFLAGS):
+            make(toObj, flag)
 def has_equip(obj,item):return item in obj.equip
 def on  (obj,flag):     return (flag in obj.flags)
 def give(obj,item):
     if on(item,FIRE):
-        burn(obj, FIREBURN)
+        burn(obj, FIRE_BURN)
         cooldown(item)
-        obj.inv.add(item)
+    obj.inv.add(item)
 def take(obj,item):
     obj.inv.remove(item)
 def mutate(obj):
@@ -467,6 +470,7 @@ def sap(obj, dmg):
         zombify(obj)
 #deal fire damage
 def burn(obj, dmg, maxTemp=FIRE_MAXTEMP):
+    if on(obj, DEAD): return False
     if on(obj,WET):
         clear_status(obj, WET)
         #steam=create_fluid(obj.x, obj.y, "steam")
@@ -474,24 +478,46 @@ def burn(obj, dmg, maxTemp=FIRE_MAXTEMP):
     thing.burn(obj, dmg, maxTemp)
     return True
 def cooldown(obj, temp=999):
+    if on(obj, DEAD): return False
     thing.cooldown(obj, temp)
 #deal bio damage
-def disease(obj, dmg): thing.disease(obj, dmg)      #sick damage
-def exposure(obj, dmg): thing.exposure(obj, dmg)    #chem damage
-def corrode(obj, dmg): thing.corrode(obj, dmg)      #acid damage
-def irradiate(obj, dmg): thing.irradiate(obj, dmg)  #rad damage
-def intoxicate(obj, dmg): thing.intoxicate(obj, dmg)#drunk damage
+def disease(obj, dmg):
+    if on(obj, DEAD): return False
+    thing.disease(obj, dmg)      #sick damage
+def exposure(obj, dmg):
+    if on(obj, DEAD): return False
+    thing.exposure(obj, dmg)    #chem damage
+def corrode(obj, dmg):
+    if on(obj, DEAD): return False
+    thing.corrode(obj, dmg)      #acid damage
+def irradiate(obj, dmg):
+    if on(obj, DEAD): return False
+    thing.irradiate(obj, dmg)  #rad damage
+def intoxicate(obj, dmg):
+    if on(obj, DEAD): return False
+    thing.intoxicate(obj, dmg)#drunk damage
+def cough(obj, dmg): #coughing fit status
+    if on(obj, DEAD): return False
+    thing.cough(obj, dmg)
+def vomit(obj, dmg): #vomiting fit status
+    if on(obj, DEAD): return False
+    thing.vomit(obj, dmg)
 #deal electric damage
-def electrify(obj, dmg): thing.electrify(obj, dmg)
+def electrify(obj, dmg):
+    if on(obj, DEAD): return False
+    thing.electrify(obj, dmg)
 #paralyze
-def paralyze(obj, turns): thing.paralyze(obj, turns)
-#cough
-def cough(obj, dmg): thing.cough(obj, dmg)
+def paralyze(obj, turns):
+    if on(obj, DEAD): return False
+    thing.paralyze(obj, turns)
 #mutate
-def mutate(obj): thing.mutate(obj)
+def mutate(obj):
+    if on(obj, DEAD): return False
+    thing.mutate(obj)
 def kill(obj): #remove a thing from the world
     if on(obj,DEAD): return
     make(obj,DEAD)
+    clear_status_all(obj)
     #drop inventory
     if obj.inv:
         for tt in obj.inv:
@@ -513,7 +539,6 @@ def kill(obj): #remove a thing from the world
                 ):
                 create_ashes(obj)
     #remove dead thing
-    clear_status_all(obj)
     if on(obj,ONGRID):
         if obj.isCreature:
             Ref.environ.kill(obj)
@@ -786,10 +811,12 @@ def deequip(obj,equipType): # remove equipment from slot 'equipType'
 # build equipment and place in the world
 def create_weapon(name,x,y):
     weap=gear.create_weapon(name,x,y)
+    givehp(weap) #give random quality based on dlvl?
     register_inanimate(weap)
     return weap
 def create_gear(name,x,y):
     obj=gear.create_gear(name,x,y)
+    givehp(weap) #give random quality based on dlvl?
     register_inanimate(obj)
     return obj
 

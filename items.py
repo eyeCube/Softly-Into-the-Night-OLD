@@ -15,6 +15,8 @@ class Inventory:
         self.size=size      #maximum mass capacity
         self.totalMass = 0  #current amount of mass stored in the inventory
         self.data=[]
+    def __iter__(self):
+        yield from self.data
     @property
     def items(self): return self.data
     def add(self, item): #try to add an item. Return success

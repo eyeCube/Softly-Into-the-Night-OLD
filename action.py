@@ -10,7 +10,6 @@
 from const import *
 import rogue as rog
 import dice
-import weapons
 import maths
 import items
 
@@ -31,19 +30,19 @@ def do_towel(obj, item):
 
 # player only actions #
 
-def bomb_pc(pc): # drop a lit bomb
-    rog.alert("Place bomb where?{d}".format(d=dirStr))
-    args=rog.get_direction()
-    if not args: return
-    dx,dy,dz=args
-    xx,yy=pc.x + dx, pc.y + dy
-    
-    if not rog.thingat(xx,yy):
-        weapons.Bomb(xx,yy, 8)
-        rog.drain(pc, 'nrg', NRG_BOMB)
-        rog.msg("{t}{n} placed a bomb.".format(t=pc.title,n=pc.name))
-    else:
-        rog.alert("You cannot put that in an occupied space.")
+##def bomb_pc(pc): # drop a lit bomb
+##    rog.alert("Place bomb where?{d}".format(d=dirStr))
+##    args=rog.get_direction()
+##    if not args: return
+##    dx,dy,dz=args
+##    xx,yy=pc.x + dx, pc.y + dy
+##    
+##    if not rog.thingat(xx,yy):
+##        weapons.Bomb(xx,yy, 8)
+##        rog.drain(pc, 'nrg', NRG_BOMB)
+##        rog.msg("{t}{n} placed a bomb.".format(t=pc.title,n=pc.name))
+##    else:
+##        rog.alert("You cannot put that in an occupied space.")
 
 
 # pickup
@@ -75,6 +74,9 @@ def pickup_pc(pc):
             choice=things[0]
 
     if (choice and not choice == "all"):
+
+        if choice == K_ESCAPE:
+            return
         
         #thing is creature! You can't pick up creatures :(
         if choice.isCreature:
