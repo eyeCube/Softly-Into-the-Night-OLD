@@ -115,13 +115,13 @@ class Manager_Fires(Manager):
         #self.strongFires={} #fires that can't be put out
         self.lights={}
         self.removeList=[]
-        self.soundsList=[]
+        self.soundsList={}
 
     def run(self):
         super(Manager_Fires, self).run()
 
         self.removeList=[]
-        self.soundsList=[]
+        self.soundsList={}
         for fx,fy in self.fires:
             #print("running fire manager for fire at {},{}".format(x,y))
             _fluids = rog.fluidsat(fx,fy)
@@ -191,6 +191,12 @@ class Manager_Fires(Manager):
                 if rog.on(tt, FIRE):
                     doNotDie=True
             if doNotDie == False:'''
+
+        #sounds
+        for k,v in self.soundsList.items():
+            xx,yy = k
+            snd = v
+            rog.event_sound(xx,yy, snd)
                     
     #end def
             
@@ -222,6 +228,7 @@ class Manager_Fires(Manager):
         light=self.lights[(x,y,)]
         rog.release_light(light)
         del self.lights[(x,y,)]
+        #TODO: Douse sound
         '''obj=rog.thingat(x,y)
         if obj:
             textSee="The fire on {n} is extinguished.".format(n=obj.name)
@@ -256,9 +263,9 @@ class Manager_Fires(Manager):
         #print("gobbling object {} at {},{}".format(obj.name,obj.x,obj.y))
         food = 0
         if obj.material == MAT_WOOD:
-            #print("wood")
-            self.soundsList.append({(obj.x,obj.y,):SND_FIRE})
             food = 10
+            if dice.roll(6) == 1: #chance to make popping fire sound
+                self.soundsList.update( {(obj.x,obj.y,) : SND_FIRE} )
         elif obj.material == MAT_FLESH:
             food = 2
             if not obj.isCreature: #corpses burn better than alive people
@@ -534,13 +541,16 @@ class Manager_Meters(Manager):
             #print(thing.name," is getting cooled down") #TESTING
             # cool down temperature meter if not currently burning
             if (thing.stats.temp > 0 and not rog.on(thing,FIRE)):
-                thing.stats.temp -= FIRE_METERLOSS
+                thing.stats.temp = max(0, thing.stats.temp - FIRE_METERLOSS)
+            #warm up
+            if (thing.stats.temp < 0):
+                thing.stats.temp = min(0, thing.stats.temp + FIRE_METERGAIN)
             # sickness meter
             if (thing.stats.sick > 0):
-                thing.stats.sick -= BIO_METERLOSS
+                thing.stats.sick = max(0, thing.stats.sick - BIO_METERLOSS)
             # exposure meter
             if (thing.stats.expo > 0):
-                thing.stats.expo -= CHEM_METERLOSS
+                thing.stats.expo = max(0, thing.stats.expo - CHEM_METERLOSS)
             # rads meter
             #if (thing.stats.rads > 0):
             #    thing.stats.rads -= 1
@@ -580,7 +590,7 @@ class Manager_Events():
             data=rog.can_hear(obj, x,y, volume)
             if data:
                 dx,dy,volHeard=data
-                if volHeard <= obj.stats.get('hearing')*0.2:
+                if volHeard <= 1:
                     dx=dy=0
             #   each entity gets its own Event object,
             #   specific to its own perception.
@@ -695,18 +705,21 @@ class Manager_SoundsHeard(Manager):
         atLeastOneMsg=False
         text="You hear "
         for k,v in self.sounds.items():
+            vol,lis=v
+            if not vol: continue
+            if vol > VOLUME_DEAFEN:
+                rog.set_status(rog.pc(), DEAF)
+            #super hearing
             if rog.pc().stats.get("hearing") >= SUPER_HEARING:
-                vol,lis=v
-                if not vol: continue
-                if vol > VOLUME_DEAFEN:
-                    rog.set_status(rog.pc(), DEAF)
                 volTxt=self.get_volume_name(vol)
                 dirStr=DIRECTIONS_TERSE[k]
                 if not dirStr == "self":
                     text += "<{d}>".format(d=dirStr)
                 text += "({v}) ".format(v=volTxt)
+            #combine strings with commas
             for strng in lis:
                 text += "{s}, ".format(s=strng)
+            #terminate with a period
             text=text[:-2] + "."
             atLeastOneMsg=True
 

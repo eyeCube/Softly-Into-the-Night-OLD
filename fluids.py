@@ -7,6 +7,7 @@ import thing
 from colors import COLORS as COL
 
 #non-tile container of fluids
+#object to be a component of a thing that holds water
 class FluidContainer:
     def __init__(self,size):
         self.size=size
@@ -31,11 +32,10 @@ class Data:
         self.extinguish=putsout  #does it put out fires?
 
 #Tile fluid container
-class Fluid:
+class Fluid(thing.Thing):
 
     def __init__(self, x,y):
-        self.x=x
-        self.y=y
+        super(Fluid, self).__init__(x, y)
         self.dic={}
         self.size=0 #total quantity of fluid in this tile
 
@@ -126,6 +126,14 @@ FL_ACID     : Data(T_FLUID,"acid",    COL['green'],   1.21, 0.6,  0.2, False,Fal
 FL_STRONGACID:Data(T_FLUID,"strong acid",COL['bio'],  1.3,  0.9,  0.2, False,False,_strongAcid,_quaffStrongAcid,),
 FL_OIL      : Data(T_FLUID,"oil",  COL['truepurple'], 0.9,  3,    0.3, True,False, _oily, _sick,),
 FL_MOONSHINE: Data(T_FLUID,"moonshine",COL['orange'], 1.2,  0.8,  0.15,True,False, _wet, _drunk,),
+#FL_LAVA
+#FL_HEALING
+#FL_CONFU
+#FL_DRUNK
+#FL_BLIND
+#FL_SLOW
+#FL_IRRIT
+#FL_SICK
     }
 FLUID_COMBONAMES={
 FL_SMOKE    : "smokey",

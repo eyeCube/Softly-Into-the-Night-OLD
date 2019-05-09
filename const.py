@@ -94,7 +94,6 @@ RAVAGED     = i; i+=1;  # Creature is starved: strong desire for food
 THIEF       = i; i+=1;  # Creature desires gold / treasure and will steal it
 MEAN        = i; i+=1;  # Creature is always hostile to rogues
 DEAD        = i; i+=1;  # Is dead
-WATERKILLS  = i; i+=1;  # Is killed by water
 NVISION     = i; i+=1;  # Has Night vision
 IMMUNE      = i; i+=1;  # Immune to poison
 SEEINV      = i; i+=1;  # Can see invisible
@@ -110,6 +109,7 @@ CANUSE      = i; i+=1;  # Can be used
 CANPUSH     = i; i+=1;  # Can be pushed
 CANOPEN     = i; i+=1;  # Can open it like a container (not doors)
 HOLDSFLUID  = i; i+=1;  # Can contain fluids
+WATERKILLS  = i; i+=1;  # Is killed by water
 REACH       = i; i+=1;  # Has long reach
 #status flags
 WET         = i; i+=1;  # Is wet
@@ -144,6 +144,9 @@ PARAL, COUGH, VOMIT, DRUNK, DEAF, INVIS, TRAUMA,
 #
 # Gameplay Constants
 #
+
+#sounds
+VOLUME_DEAFEN       = 500
 
 #items
 RATIONFOOD          = 100
@@ -195,7 +198,7 @@ TIRED   : (50,      "is", "tired",),
 HASTE   : (20,      "is", "hasty",),
 SLOW    : (10,      "is", "slowed",),
 FIRE    : (99999999,"catches", "on fire",),
-SICK    : (100,     "is", "sick",),
+SICK    : (500,     "is", "sick",),
 ACID    : (7,       "begins", "corroding",),
 IRRIT   : (200,     "is", "irritated",),
 PARAL   : (5,       "is", "paralyzed",),
@@ -222,7 +225,8 @@ HASTE_SPEEDMOD      = 50    # speed bonus when hasty
 SLOW_SPEEDMOD       = -33   # speed penalty while slowed
 
 # temp (fire)
-FIRE_METERLOSS  = 10    #temperature points lost per turn
+FIRE_METERLOSS  = 3     #temperature points lost per turn
+FIRE_METERGAIN  = FIRE_METERLOSS
 FIRE_METERMAX   = 1000  #maximum temperature a thing can reach
 FIRE_MAXTEMP    = 400   #max temperature you can reach from normal means
 FIRE_TEMP       = 100   #avg. temperature at which a thing will set fire
@@ -232,7 +236,7 @@ FIRE_LIGHT      = 12    #how much light is produced by fire?
 #FIRE_LEVELMAX     = 3     #max fire level; 0 is no fire, max is blazing flame
 
 # bio (sick)
-BIO_METERLOSS   = 2     # sickness points lost per turn
+BIO_METERLOSS   = 1     # sickness points lost per turn
 BIO_HURT        = 1     # damage per turn while sick
 
 # chem (exposure)
@@ -299,14 +303,8 @@ SHROOM          =   6       # spade
 #
 
 T_TRAP          = ord('!')
-T_TREE          =   5       # club
-T_SHROOM        =   6       # spade
 T_FUNGUS        = ord('\"')
-T_FOUNTAIN      =   144     # faucet-looking thing
 T_MONEY         = ord('$')
-T_FLASK         =   173     # upside down '!'
-T_DEVICE        =   168     # upside down '?' - basically a "magic scroll"
-T_TERMINAL      =   167     # o underlined
 T_CORPSE        = ord('%')
 T_MEAL          = ord('&')
 T_RATION        = ord(',')
@@ -319,31 +317,39 @@ T_POLE          = ord('|')
 T_MELEEWEAPON   = ord('/')
 T_THROWWEAPON   = ord('\\')
 T_HEAVYWEAPON   = ord('=')
-T_GUN           =   169     # pistol-looking char
-T_ENERGYWEAPON  =   170     # backward pistol-looking char
+T_MGUN          =   20      # backward |P
 T_BOMB          = ord('*')
-#T_LAUNCHER      =   151     # sqrt
-T_STRING        = ord(')')
-T_CLOTH         = ord('(')
+T_BOW           = ord(')')
+T_ARROW         = ord('(')
 T_ARMOR         = ord(']')
 T_HELMET        = ord('[')
 T_SHIELD        = ord('}')
 T_CLOAK         = ord('{')
-T_FLUID         =   247     # ~~
 T_GAS           = ord('~')
-T_SCRAPMETAL    =   171     # 1/2
-T_SCRAPELEC     =   172     # 1/4
-#T_CREDIT        =   172     # 1/4
-T_WOOD          =   246     # div
-T_TOWEL         =   254     # vertical rectangle
+T_TREE          =   5       # club
+T_SHROOM        =   6       # spade
+T_TABLE         =   10      # pi
+T_FIREPIT       =   15      # gear-looking thing
+T_VORTEX        =   21 
 T_BOX           =   22      # horizontal rectangle
 T_LOG           =   28      # upside down gun-looking char
-T_POT           =   151     # u accented
-T_STILL         =   150     # u ^
-T_TABLE         =   10      # pi
-T_VORTEX        =   21 
 T_GRAVE         =   127     # house looking thing
+T_POT           =   129     # u umlaut
+T_STILL         =   150     # u ^
+T_CRUCIBLE      =   154     # U umlaut
+T_CREDITS       =   155     # cents symbol
+T_TERMINAL      =   167     # o underlined
+T_DEVICE        =   168     # upside down '?' - basically a "magic scroll"
+T_GUN           =   169     # pistol-looking char
+T_ENERGYWEAPON  =   170     # backward pistol-looking char
+T_SCRAPMETAL    =   171     # 1/2
+T_SCRAPELEC     =   172     # 1/4
+T_FLASK         =   173     # upside down '!'
 T_BALLOFSTRING  =   237     # circle with line through it
+T_FOUNTAIN      =   244     # faucet-looking thing
+T_WOOD          =   246     # div
+T_FLUID         =   247     # ~~
+T_TOWEL         =   254     # vertical rectangle
 
 '''
 unused chars:
@@ -460,15 +466,18 @@ MAT_WATER       = i; i+=1;
 # Ammo types
 #
 i=0;
-AMMO_BULLETS    = i; i+=1;  #bullets for rifles, pistols, etc.
-AMMO_BALLS      = i; i+=1;  #balls for muskets
-AMMO_SHOT       = i; i+=1;  #shotgun shells
-AMMO_ELEC       = i; i+=1;  #electricity
-AMMO_FLUIDS     = i; i+=1;  #any fluids
+AMMO_BULLETS    = i; i+=1;  # bullets for rifles, pistols, etc.
+AMMO_BALLS      = i; i+=1;  # balls for muskets
+AMMO_SHOT       = i; i+=1;  # shotgun shells
+AMMO_ELEC       = i; i+=1;  # electricity
+AMMO_FLUIDS     = i; i+=1;  # any fluids
 AMMO_OIL        = i; i+=1;
 AMMO_HAZMATS    = i; i+=1;
 AMMO_ACID       = i; i+=1;
 AMMO_CHEMS      = i; i+=1;
+AMMO_ROCKETS    = i; i+=1;
+AMMO_GRENADES   = i; i+=1;
+AMMO_ANYTHING   = i; i+=1;  # literally anything
 
 
 
@@ -570,11 +579,11 @@ QU_POLICE   =i; i+=1;
 QU_MILITARY =i; i+=1;
 
 QUALITIES={
-# ID        :   name        %Acc,Atk,Dmg,Dur,$$$,KG,
-QU_CRUDE    : ("crude",     (-50,-25,-25,-50,-50,33,),),
-QU_MARKET   : ("market",    (-25,0,  0,  -25,-25,10,),),
-QU_POLICE   : ("police",    (0,  25, 0,  0,  0,  0,),),
-QU_MILITARY : ("military",  (25, 50, 25, 25, 50, -5,),),
+# ID        :   name        Color,      %Acc,Atk,Dmg,Dur,$$$,KG,
+QU_CRUDE    : ("crude",     "accent",   (-50,-25,-25,-50,-50,33,),),
+QU_MARKET   : ("market",    "green",    (-25,0,  0,  -25,-25,10,),),
+QU_POLICE   : ("police",    "blue",     (0,  25, 0,  0,  0,  0,),),
+QU_MILITARY : ("military", "truepurple",(25, 50, 25, 25, 50, -5,),),
     }
 
 
@@ -612,7 +621,8 @@ SND_FIGHT       = (100,"a struggle",NOISE_LOUD,)
 SND_DOUSE       = (30, "a fire going out",NOISE_WHISPER,)
 SND_QUAFF       = (20, "gulping noises",NOISE_SOME,)
 SND_COUGH       = (80, "someone coughing",NOISE_SCREECH,)
-SND_COUGH       = (80, "someone vomiting",NOISE_WATERFALL,)
+SND_VOMIT       = (80, "someone vomiting",NOISE_WATERFALL,)
+SND_GUNSHOT     = (450,"a gunshot",NOISE_BANG,)
 
 
 class Struct_Sound():
@@ -629,15 +639,20 @@ class Struct_Sound():
 class THG:#(Flag)
     i=0;
     GORE                = i; i+=1;
+    GUNPOWDER           = i; i+=1;
+    PEBBLE              = i; i+=1;
+    SAND                = i; i+=1;
     JUG                 = i; i+=1;
     CORPSE_SHROOM       = i; i+=1;
     TREE                = i; i+=1;
     LOG                 = i; i+=1;
     WOOD                = i; i+=1;
     SAWDUST             = i; i+=1;
+    DUST                = i; i+=1;
     GRAVE               = i; i+=1;
     BOX                 = i; i+=1;
     POT                 = i; i+=1;
+    CASTIRONPAN         = i; i+=1;
     STILL               = i; i+=1;
     DOSIMETER           = i; i+=1;
     TOWEL               = i; i+=1;
@@ -651,6 +666,16 @@ class THG:#(Flag)
     BALLOFSTRING        = i; i+=1;
     GNATSPRAY           = i; i+=1;
     TORCH               = i; i+=1;
+    BARREL              = i; i+=1;
+    METALDRUM           = i; i+=1;
+    TABLE               = i; i+=1;
+    TERMINAL            = i; i+=1;
+    COPPERTUBING        = i; i+=1;
+    COPPERWIRE          = i; i+=1;
+    SCRAPMETAL          = i; i+=1;
+    SCRAPELECTRONICS    = i; i+=1;
+    SPRING              = i; i+=1;
+    CHAINGUN            = i; i+=1;
 
 
 

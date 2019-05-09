@@ -19,13 +19,10 @@ import items
 occupations={}
 dirStr=" <hjklyubn.>"
 
-
-#do functions pick which action to do based on whether it's the player acting
-def do_towel(obj, item):
-    if obj==Ref.pc():
-        towel_pc(obj, item)
-    else:
-        towel(obj, item)
+#use
+#"use" an item, whatever that means for the specific item
+def use_pc(obj, item):
+    item.useFunctionPlayer(obj)
 
 
 # player only actions #
@@ -242,6 +239,7 @@ def towel_pc(pc, item):
                 rog.alert("It doesn't seem clean enough.")
             elif rog.on(item, WET):
                 rog.alert("It's too wet.")
+                
 
 ################################################
 
@@ -357,15 +355,15 @@ def fight(attkr,dfndr,adv=0):
         if attkr.stats.element == ELEM_PHYS:
             dmg = max(0, attkr.stats.get('dmg') - dfndr.stats.get('arm') )
             rog.hurt(dfndr, dmg)
-        if attkr.stats.element == ELEM_FIRE:
+        elif attkr.stats.element == ELEM_FIRE:
             rog.burn(dfndr, dmg)
-        if attkr.stats.element == ELEM_BIO:
+        elif attkr.stats.element == ELEM_BIO:
             rog.disease(dfndr, dmg)
-        if attkr.stats.element == ELEM_ELEC:
+        elif attkr.stats.element == ELEM_ELEC:
             rog.electrify(dfndr, dmg)
-        if attkr.stats.element == ELEM_CHEM:
+        elif attkr.stats.element == ELEM_CHEM:
             rog.exposure(dfndr, dmg)
-        if attkr.stats.element == ELEM_RADS:
+        elif attkr.stats.element == ELEM_RADS:
             rog.irradiate(dfndr, dmg)
         
         killed = rog.on(dfndr,DEAD) #...did we kill it?

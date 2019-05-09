@@ -544,6 +544,11 @@ def kill(obj): #remove a thing from the world
             Ref.environ.kill(obj)
         else:
             release_inanimate(obj)
+def explosion(name, x, y, radius):
+    event_sight(x, y, "{n} explodes!".format(n=name))
+def makeEquip(obj, _type):
+    make(obj, CANEQUIP)
+    obj.equipType==_type
 
 
 

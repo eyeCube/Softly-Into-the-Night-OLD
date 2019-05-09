@@ -58,8 +58,8 @@ TILES={         #                 fgcolor ,  bg,costEnter,Leave, opaque,damp
     WALL        : Tile(WALL,      'dkred', 'orange',     0,0,  True, 50,),
     STAIRDOWN   : Tile(STAIRDOWN, 'accent', 'purple',  100,0,  False,1,),
     STAIRUP     : Tile(STAIRUP,   'accent', 'purple',  100,0,  False,1,),
-    FUNGUS      : Tile(FUNGUS,    'green', 'dkgreen',  100,20, False,1,),
-    SHROOM      : Tile(SHROOM,    'yellow', 'dkgreen',  150,20,  True,2,),
+    FUNGUS      : Tile(FUNGUS,    'dkgreen', 'vdkgreen',100,20, False,1,),
+    SHROOM      : Tile(SHROOM,    'green', 'vdkgreen', 150,20,  True,2,),
     DOOROPEN    : Tile(DOOROPEN,  'brown', 'deep',    100,0,  False,1,),
     DOORCLOSED  : Tile(DOORCLOSED,'brown', 'deep',    0,0,    True,10,),
     VAULTOPEN   : Tile(VAULTOPEN, 'metal', 'deep',    100,0,  False,1,),
@@ -86,6 +86,7 @@ TILES={         #                 fgcolor ,  bg,costEnter,Leave, opaque,damp
 class TileMap():
 
     def __init__(self,w,h):
+        self.BG_COLOR_MAIN = COL['deep']
 
         self.w = w
         self.h = h
@@ -199,166 +200,52 @@ Reason: other.'''.format(x,y,typ))
         lis = self.grid_things[x][y]
         return lis[-1] if lis else None
     def inanat(self,x,y): #return inanimate thing at top of the pile at tile
-        thing=self.thingat(x,y)
-        if not thing: return None
+        obj=self.thingat(x,y)
+        if not obj: return None
         gridTile=self.grid_things[x][y]
-        if (thing.isCreature and len(gridTile) > 1):
-            thing=gridTile[-2]
-            if thing: return thing
-        else: return thing
+        if (obj.isCreature and len(gridTile) > 1):
+            obj=gridTile[-2]
+            if obj: return obj
+        else: return obj
     def monat (self,x,y):    # get monster in tile (only 1 mon per tile is allowed at a time. Monster is always on top of list i.e. appended to end.)
-        thing = self.thingat(x,y)
-        return thing if (thing and thing.isCreature ) else None
+        obj = self.thingat(x,y)
+        return obj if (obj and obj.isCreature ) else None
     def solidat(self,x,y):    # get solid thing in tile i.e. things that cannot be moved through... only 1 allowed per tile
-        thing = self.thingat(x,y)
-        return thing if (thing and thing.isSolid ) else None
+        obj = self.thingat(x,y)
+        return obj if (obj and obj.isSolid ) else None
     def lightsat(self,x,y):
         return self.grid_lights[x][y]
     def fluidsat(self,x,y):
         return self.grid_fluids[x][y]
     def countNeighbors(self, x,y, char): #count number tiles of char char adjacent to (x,y) on the terrain grid
         num=0
-        for xx in range(3):
-            for yy in range(3):
-                x1=x-1+xx #position in the tilemap
-                y1=y-1+yy
-                if ((xx==1 and yy==1) or x1<0 or x1>=self.w or y1<0 or y1>=self.h):
-                    continue #ignore self and out of bounds
-                if (self.get_char(x1,y1) == char):
-                    num+=1
+        for _dir in DIRECTIONS.keys():
+            xx,yy = _dir
+            if xx==0 and yy==0:
+                continue #ignore self
+            x1=x+xx #position in the tilemap
+            y1=y+yy
+            if (x1<0 or x1>=self.w or y1<0 or y1>=self.h):
+                continue #ignore out of bounds
+            if (self.get_char(x1,y1) == char):
+                num+=1
         return num
     
-    #
-
-
-    def discover_place(self, x,y,obj=None):
-        thing = self.thingat(x,y)
-        if thing and not thing.isCreature:
-            libtcod.console_put_char_ex(self.con_memories, x,y, thing.mask,
-                                        COL['dkgray'], COL['black'])
-        else:
-            libtcod.console_put_char_ex(self.con_memories, x,y, self.get_char(x,y),
-                                        COL['dkgray'], COL['black'])
+    # draw functions
     
-    def create_memories(self, pc):
-        
-        rang = pc.stats.sight
-        for x in     range( max(0, pc.x-rang), min(self.w, pc.x+rang+1) ):
-            for y in range( max(0, pc.y-rang), min(self.h, pc.y+rang+1) ):
-                
-                if rog.can_see(pc,x,y):
-                    self.discover_place(x,y,self.inanat(x,y))
-    
-
     def render_gameArea(self, pc, view_x,view_y,view_w,view_h):
-        self.create_memories(pc)
+        self._create_memories(pc)
         
-        self.recall_memories( view_x,view_y,view_w,view_h)
+        self._recall_memories( view_x,view_y,view_w,view_h)
         
-        self.draw_distant_lights(pc, view_x,view_y,view_w,view_h)
-        self.draw_what_player_sees(pc)
+        self._draw_distant_lights(pc, view_x,view_y,view_w,view_h)
+        self._draw_what_player_sees(pc)
         return self.con_map_state
-            
-    def draw_what_player_sees(self, pc):
-        
-        rang=pc.stats.sight
-        for     x in range( max(0, pc.x-rang), min(self.w, pc.x+rang+1) ):
-            for y in range( max(0, pc.y-rang), min(self.h, pc.y+rang+1) ):
-                canSee=False
-                
-                if not rog.in_range(pc.x,pc.y, x,y, rang):
-                    continue
-                if not libtcod.map_is_in_fov(pc.fov_map, x,y):
-                    continue
-                thing=self.thingat(x, y)
-                if (not rog.on(pc,NVISION) and self.get_light_value(x,y) == 0):
-                    self.draw_silhouettes(pc, x,y, thing)
-                    continue
-                
-                if thing:
-                    libtcod.console_put_char(
-                        self.con_map_state, x,y,
-                        thing.mask)
-                    libtcod.console_set_char_foreground(
-                        self.con_map_state, x,y, thing.color)
-                    self.apply_rendered_bgcol(x,y, thing)
-                else:
-                    libtcod.console_put_char_ex(self.con_map_state, x,y,
-                        self.get_char(x, y),
-                        self.get_color(x, y), self.get_bgcolor(x, y))
-
-    def draw_distant_lights(self, pc, view_x,view_y,view_w,view_h):
-        for light in rog.list_lights():
-            lx=light.x
-            ly=light.y
-            if (lx == pc.x and ly == pc.y): continue
-            if not (lx >= view_x
-                    and ly >= view_y
-                    and lx <= view_x + view_w
-                    and ly <= view_y + view_h
-            ): continue
-            libtcod.line_init(pc.x,pc.y, lx,ly)
-            canSee=True
-            while True:
-                x,y=libtcod.line_step()
-                if x == None: break;
-                if self.get_blocks_sight(x,y): canSee=False;break;
-            if canSee:
-                libtcod.console_put_char(self.con_map_state, lx,ly, "?")
-    
-    def draw_silhouettes(self, pc, tx,ty, thing):
-    #   extend a line from tile tx,ty to a distant tile
-    #   which is in the same direction from the player.
-    #   Check for lit tiles, and if we find any along the way,
-    #   draw a silhouette for the location of interest.
-    #   Basically, if the obj is backlit, you can see
-    #   a silhouette.
-        if not (thing and thing.isCreature): return
-        
-        dist=maths.dist(pc.x,pc.y, tx,ty)
-        dx=(tx - pc.x)/dist
-        dy=(ty - pc.y)/dist
-        xdest=tx + int(dx*pc.stats.sight)
-        ydest=ty + int(dy*pc.stats.sight)
-        libtcod.line_init(tx,ty, xdest,ydest)
-        while True:
-            x,y=libtcod.line_step()
-            if x == None: return
-            if maths.dist(pc.x,pc.y, x,y) > pc.stats.sight: return
-            if self.get_blocks_sight(x,y):  return
-            if self.get_light_value(x,y):
-                libtcod.console_put_char(self.con_map_state, tx,ty, "?")
-                return
-
-    # get and apply the proper background color
-    #   for the tile containing a thing
-    def apply_rendered_bgcol(self, x, y, thing):
-        bgTile=self.get_bgcolor(x, y) #terrain, fires
-        bgCol=bgTile
-        if not rog.fireat(x,y):
-            if (self.get_char(x,y) == STAIRDOWN
-                    or self.get_char(x,y) == STAIRUP ):
-                bgCol=bgTile
-            elif self.nthings(x, y) >= 2: bgCol=COL['dkgreen']
-            elif thing==rog.pc():
-                if rog.settings().highlightPC:
-                    bgCol=COL[rog.settings().highlightColor]
-                else: bgCol=thing.bgcolor
-            elif thing: bgCol=thing.bgcolor
-        #
-        libtcod.console_set_char_background(
-            self.con_map_state, x,y, bgCol)
-    #end def
         
     def get_map_state(self):
-        self.recall_memories( 0,0,ROOMW,ROOMH)
-        view=rog.Ref.view
-        self.draw_what_player_sees(rog.Ref.pc)
+        self._recall_memories( 0,0,ROOMW,ROOMH)
+        self._draw_what_player_sees(rog.Ref.pc)
         return self.con_map_state
-
-    def recall_memories(self, view_x,view_y, view_w,view_h):
-        libtcod.console_blit(self.con_memories, view_x,view_y,view_w,view_h,
-                             self.con_map_state, view_x,view_y)
     
     # A* paths wrappers
 
@@ -402,6 +289,119 @@ Reason: other.'''.format(x,y,typ))
         
     def _update_fov_map_cell_opacity(self, x,y, value):
         libtcod.map_set_properties( self.fov_map, x, y, value, True)
+
+    def _recall_memories(self, view_x,view_y, view_w,view_h):
+        libtcod.console_blit(self.con_memories, view_x,view_y,view_w,view_h,
+                             self.con_map_state, view_x,view_y)
+            
+    def _draw_what_player_sees(self, pc):
+        
+        rang=pc.stats.sight
+        for     x in range( max(0, pc.x-rang), min(self.w, pc.x+rang+1) ):
+            for y in range( max(0, pc.y-rang), min(self.h, pc.y+rang+1) ):
+                canSee=False
+                
+                if not rog.in_range(pc.x,pc.y, x,y, rang):
+                    continue
+                if not libtcod.map_is_in_fov(pc.fov_map, x,y):
+                    continue
+                obj=self.thingat(x, y)
+                if (not rog.on(pc,NVISION) and self.get_light_value(x,y) == 0):
+                    self._draw_silhouettes(pc, x,y, obj)
+                    continue
+                
+                if obj:
+                    libtcod.console_put_char(
+                        self.con_map_state, x,y,
+                        obj.mask)
+                    libtcod.console_set_char_foreground(
+                        self.con_map_state, x,y, obj.color)
+                    self._apply_rendered_bgcol(x,y, obj)
+                else:
+                    libtcod.console_put_char_ex(self.con_map_state, x,y,
+                        self.get_char(x, y),
+                        self.get_color(x, y), self.get_bgcolor(x, y))
+
+    # get and apply the proper background color
+    #   for the tile containing a thing
+    def _apply_rendered_bgcol(self, x, y, obj):
+        bgTile=self.get_bgcolor(x, y) #terrain, fires
+        bgCol=bgTile
+        if not rog.fireat(x,y):
+            if self.nthings(x, y) >= 2:
+                bgCol=COL['dkgreen']
+            elif (obj==rog.pc() and rog.settings().highlightPC ):
+                bgCol=COL[rog.settings().highlightColor]
+            elif not bgTile == self.BG_COLOR_MAIN:
+                bgCol=bgTile
+            else:
+                bgCol=obj.bgcolor
+        #
+        libtcod.console_set_char_background(
+            self.con_map_state, x,y, bgCol)
+    #end def
+        
+    def _discover_place(self, x,y,obj=None):
+        obj = self.thingat(x,y)
+        if obj and not obj.isCreature:
+            libtcod.console_put_char_ex(self.con_memories, x,y, obj.mask,
+                                        COL['dkgray'], COL['black'])
+        else:
+            libtcod.console_put_char_ex(self.con_memories, x,y, self.get_char(x,y),
+                                        COL['dkgray'], COL['black'])
+    
+    def _create_memories(self, pc):
+        
+        rang = pc.stats.sight
+        for x in     range( max(0, pc.x-rang), min(self.w, pc.x+rang+1) ):
+            for y in range( max(0, pc.y-rang), min(self.h, pc.y+rang+1) ):
+                
+                if rog.can_see(pc,x,y):
+                    self._discover_place(x,y,self.inanat(x,y))
+                    
+
+    def _draw_distant_lights(self, pc, view_x,view_y,view_w,view_h):
+        for light in rog.list_lights():
+            lx=light.x
+            ly=light.y
+            if (lx == pc.x and ly == pc.y): continue
+            if not (lx >= view_x
+                    and ly >= view_y
+                    and lx <= view_x + view_w
+                    and ly <= view_y + view_h
+            ): continue
+            libtcod.line_init(pc.x,pc.y, lx,ly)
+            canSee=True
+            while True:
+                x,y=libtcod.line_step()
+                if x == None: break;
+                if self.get_blocks_sight(x,y): canSee=False;break;
+            if canSee:
+                libtcod.console_put_char(self.con_map_state, lx,ly, "?")
+    
+    def _draw_silhouettes(self, pc, tx,ty, obj):
+    #   extend a line from tile tx,ty to a distant tile
+    #   which is in the same direction from the player.
+    #   Check for lit tiles, and if we find any along the way,
+    #   draw a silhouette for the location of interest.
+    #   Basically, if the obj is backlit, you can see
+    #   a silhouette.
+        if not (obj and obj.isCreature): return
+        
+        dist=maths.dist(pc.x,pc.y, tx,ty)
+        dx=(tx - pc.x)/dist
+        dy=(ty - pc.y)/dist
+        xdest=tx + int(dx*pc.stats.sight)
+        ydest=ty + int(dy*pc.stats.sight)
+        libtcod.line_init(tx,ty, xdest,ydest)
+        while True:
+            x,y=libtcod.line_step()
+            if x == None: return
+            if maths.dist(pc.x,pc.y, x,y) > pc.stats.sight: return
+            if self.get_blocks_sight(x,y):  return
+            if self.get_light_value(x,y):
+                libtcod.console_put_char(self.con_map_state, tx,ty, "?")
+                return
 
 
 #-----------------------#

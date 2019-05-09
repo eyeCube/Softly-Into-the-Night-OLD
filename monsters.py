@@ -32,21 +32,23 @@ diplomacy={
 
 bestiary={
     # Column names in more detail:
-    # Lo qi, Hi qi, Attack, Power, Dodge, Armor, Speed, Move Speed, Attack Speed, Carrying Capacity, Mass, Gold.
+    # Lo qi, Hi qi, Attack, Damage, Dodge, Armor, Speed, Move Speed, Attack Speed, Carrying Capacity, Mass, Gold.
     
-#Type,  Name,                   (Lo\ Hi\ At\Pw\DV\AV\Spd\Msp\Asp\FIR\BIO\SIGT\HEAR\CARRY\KG\$$\),   FLAGS,
+#Type,  Name,                   (Lo\ Hi\ At\Dm\DV\AV\Spd\Msp\Asp\FIR\BIO\SIGT\HEAR\CARRY\KG\$$\),   FLAGS,
 
 '@' : ('human',                 (10, 10, 5, 2, 2, 0, 100,100,100, 10, 10, 20, 100, 30,  65, 500, ),(CANEAT,),),
-'a' : ('abomination',           (12, 4,  0, 4, -8,2, 100,90, 110, 40, 50, 6,  0,   15,  100,0,  ),(),),
+'a' : ('abomination',           (12, 4,  0, 4, -8,2, 100,90, 110, 40, 50, 6,  0,   15,  80, 0,  ),(),),
 'b' : ('bug-eyed business guy', (10, 25, 5, 2, 2, 0, 150,120,100, 10, 10, 25, 100, 30,  60, 500, ),(CANEAT,),),
-'B' : ('butcher',               (30, 3,  5, 6, -4,0, 100,100,100,  0, 25, 10, 100, 20,  90, 300, ),(),),
+'B' : ('butcher',               (30, 3,  5, 6, -4,0, 100,100,100,  0, 25, 10, 100, 20,  130,300, ),(CANEAT,),),
+'L' : ('raving lunatic',        (10, 20, 3, 2, 2, 0, 100,100,100,  0, 15, 10, 0,   30,  50, 0, ),(),), #BABBLES,
 'r' : ('ravaged',               (3,  1,  1, 2, -8,-1,100,80, 70,   0,  0, 10, 0,   5,   35, 0,  ),(RAVAGED,),),
-'R' : ('orctepus',              (15, 5,  6, 2,-12,0, 100,80, 145,  0, 60, 8,  0,   20,  125,0,  ),(CANEAT,),),
-'s' : ('slithera',              (6,  10, 10,4, -4,0, 100,33, 150,  0, 20, 5,  0,   5,   30, 0, ),(CANEAT,),),
-'U' : ('obese scrupula',        (20, 20, 4, 8,-16,3, 100,50, 90,   0, 55, 10, 0,   25,  140,100,  ),(),),
-'V' : ('vampire',               (50, 80, 8, 5, 8, 0, 100,120,100, 10, 75, 5,  200, 30,  30, 1000,  ),(MEAN,NVISION,),),
-'W' : ('whipmaster',            (14, 10, 5, 5, 4, 2, 100,80, 100, 25, 60, 15, 0,   10,  70, 1000, ),(MEAN,NVISION,),),
-'z' : ('zombie',                (8,  4,  0, 3,-12,-1,50, 40, 100,  5, 25, 5,  0,   5,   45, 0,  ),(MEAN,),),
+'R' : ('orctepus',              (15, 5,  6, 2,-12,0, 100,80, 145,  0, 60, 8,  0,   20,  100,0,  ),(CANEAT,),),
+'s' : ('slithera',              (6,  15, 10,4, -4,0, 100,33, 150,  0, 20, 5,  0,   5,   30, 0, ),(CANEAT,),),
+'U' : ('obese scrupula',        (20, 2,  4, 8,-16,3, 100,50, 90,   0, 55, 10, 0,   25,  140,100,  ),(),),
+'V' : ('ash vampire',           (50, 80, 8, 5, 8, 0, 100,120,100, 10, 75, 5,  200, 30,  30, 1000,  ),(MEAN,NVISION,),),
+'w' : ('dire wolf',             (6,  3,  12,5, 8, 0, 100,225,115, 15, 15, 15, 0,   5,   50, 0,  ),(RAVAGED,),),
+'W' : ('whipmaster',            (14, 10, 5, 5, 4, 2, 100,80, 100, 25, 60, 15, 0,   10,  75, 1000, ),(MEAN,NVISION,),),
+'z' : ('zombie',                (8,  1,  0, 3,-12,-1,50, 40, 100,  5, 25, 5,  0,   5,   45, 0,  ),(MEAN,),),
 
 
 }

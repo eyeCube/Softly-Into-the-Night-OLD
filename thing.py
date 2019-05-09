@@ -66,6 +66,7 @@ class Thing(Observable):
         self.mask       = _type  # char displayed to screen
         self.mass       = 0         # KG
         self.material   = material  # what's it made of?
+        self.deathFunction = None
         
     #   values for creatures
         self.ai         = None
@@ -79,11 +80,18 @@ class Thing(Observable):
         self.satiation  = None  # fullness / hunger tracker
 
     #   inanimate things
-        self.ammoType   = None  # which type of ammo does it use?
-        self.capacity   = None  # how much can fit? (ammo, energy,...)
-        self.equipType  = None  # which slot can it be equipped in?
-        self.nutrition  = None  # amount of hunger recovery
-        self.taste      = None  # flag describing flavor when eaten
+    #   only need to be set under specific thing circumstances
+##        self.ammoType   = None  # which type of ammo does it use?
+##        self.capacity   = None  # how much can fit? (ammo, energy,...)
+##        self.equipType  = None  # which slot can it be equipped in?
+##        self.nutrition  = None  # amount of hunger recovery
+##        self.taste      = None  # flag describing flavor when eaten
+##        self.useFunctionPlayer = None
+##        self.useFunctionMonster = None
+
+    def __del__(self):
+        if self.deathFunction:
+            self.deathFunction()
         
     def __hash__(self):
         return self.id
@@ -126,14 +134,15 @@ class Stats:  # Stats and attributes of a obj
             # Base stats
         self.sight      = 0
         self.hearing    = 0
-        self.range      = 0     # maximum effective range
         self.nrg        = 0     # energy, capacity to do actions
         self.spd        = 0     # energy restored per turn
         self.asp        = 0     # attack speed; mods energy cost of attacking
         self.msp        = 0     # move speed; mods energy cost of moving
         self.carry      = 0     # carrying capacity maximum
+        self.range      = 0     # maximum effective range
         self.atk        = 0     # attack
         self.dmg        = 0     # damage
+        self.pow        = 0     # range damage
         self.dfn        = 0     # defense
         self.arm        = 0     # armor
         self.hp         = 0     # current life
@@ -146,6 +155,7 @@ class Stats:  # Stats and attributes of a obj
         self.expo       = 0     # exposure (chem meter)
         self.sick       = 0     # sickness (bio meter)
         self.resfire    = 0     # resist heat
+        self.rescold    = 0     # resist cold
         self.resbio     = 0     # resist biohazards
         self.reselec    = 0     # resist electricity
         self.resphys    = 0     # resist physical damage
