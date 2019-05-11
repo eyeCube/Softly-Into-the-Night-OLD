@@ -344,16 +344,23 @@ def fight(attkr,dfndr,adv=0):
     nrg_cost = round( NRG_ATTACK*AVG_SPD/max(1, attkr.stats.get('asp')) )
     attkr.stats.nrg -= nrg_cost
 
-    die=20
+    die=COMBATROLL
     acc=attkr.stats.get('atk')
     dv=dfndr.stats.get('dfn')
     hit = False
-    if (dice.roll(die + acc + adv - dv) >= dice.roll(die)): # HIT!!!
+    rol = dice.roll(die + acc + adv - dv) - dice.roll(die)
+    if (rol >= 0): # HIT!!!
         hit = True
         
         #type of damage dealt depends on the element attacker is using
         if attkr.stats.element == ELEM_PHYS:
-            dmg = max(0, attkr.stats.get('dmg') - dfndr.stats.get('arm') )
+            #high attack values can pierce armor
+##            if rol > ATK_BONUS_DMG_CUTOFF:
+##                pierce = int( (rol - ATK_BONUS_DMG_CUTOFF)/2 )
+##            else:
+##                pierce = 0
+            armor = dfndr.stats.get('arm') #max(0, dfndr.stats.get('arm') - pierce)
+            dmg = max(0, attkr.stats.get('dmg') - armor)
             rog.hurt(dfndr, dmg)
         elif attkr.stats.element == ELEM_FIRE:
             rog.burn(dfndr, dmg)

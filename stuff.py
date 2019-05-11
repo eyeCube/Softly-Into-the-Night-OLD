@@ -27,46 +27,48 @@ def _edible(tt, nutrition, taste):
     tt.nutrition=nutrition
     
 def _food_poison(tt):
-    _edible(tt, RATIONFOOD)
+    _edible(tt, RATIONFOOD, TASTE_SWEET) #deceptively sweet
     rog.make(tt,SICK) #makes you sick when you eat it
-    
 def _food_ration_savory(tt):
-    _edible(tt, RATIONFOOD, TASTE_SAVORY)
-    
+    _edible(tt, FOOD_MORSEL, TASTE_SAVORY)
+def _food_ration_savory(tt):
+    _edible(tt, FOOD_RATION, TASTE_SAVORY)
 def _food_serving_savory(tt):
-    _edible(tt, RATIONFOOD*3, TASTE_SAVORY)
-    
+    _edible(tt, FOOD_RATION*3, TASTE_SAVORY)
 def _food_meal_savory(tt):
-    _edible(tt, RATIONFOOD*9, TASTE_SAVORY)
-    
+    _edible(tt, FOOD_RATION*9, TASTE_SAVORY)
 def _food_bigMeal_savory(tt):
-    _edible(tt, RATIONFOOD*18, TASTE_SAVORY)
-    
-def _fluidContainer(tt):
-    rog.init_fluidContainer(tt, 20)
-    
-def _bigFluidContainer(tt):
-    rog.init_fluidContainer(tt, 100)
+    _edible(tt, FOOD_RATION*18, TASTE_SAVORY)
     
 def _wood(tt):
     rog.make(tt, CANWET)
     
-def _pot(tt):
-    _bigFluidContainer(tt)
+def _pot(tt): #metal pot
+    rog.init_fluidContainer(tt, 200)
 ##    rog.make(tt, CANUSE)
 ##    tt.useFunctionPlayer = action.pot_pc
 ##    tt.useFunctionMonster = action.pot
+
+def _clayPot(tt):
+    rog.make(tt, HOLDSFLUID)
+    tt.capacity = 20
     
 def _gunpowder(tt):
-    pass
+    rog.make(tt, WATERKILLS)
 
 def _boxOfItems1(tt):
-    rog.init_inventory(tt, 100)
+    rog.init_inventory(tt, 200)
     #newt=
     #rog.give(tt, newt)
+
+def _safe(tt):
+    rog.init_inventory(tt, 200)
+    rog.make(tt, CANOPEN)
+    rog.make(tt, INTERACT) #interact to lock or unlock
     
 def _still(tt):
     rog.make(tt, HOLDSFLUID)
+    rog.make(tt, INTERACT)
     #...
     
 def _dosimeter(tt):
@@ -80,6 +82,10 @@ def _dosimeter(tt):
         yy=obj.y
         reading = rog.radsat(xx,yy)
         rog.msg("The geiger counter reads '{} RADS'".format(reading))
+        #could do, instead:
+        # use turns it on, activates an observer.
+        # updates when rad damage received by player. Adds rad value to dosimeter
+        # when you use again, you can either read it or turn it off.
         rog.drain(obj, 'nrg', NRG_USE)
     def funcMonster(self, obj):
         rog.drain(obj, 'nrg', NRG_USE)
@@ -112,6 +118,8 @@ def _extinguisher(tt):
     rog.make(tt, CANUSE)
 ##    tt.useFunctionPlayer = action.extinguisher_pc
 ##    tt.useFunctionMonster = action.extinguisher
+    rog.makeEquip(tt, EQ_MAINHAND)
+    tt.statMods = {"dmg":5, "asp":-33,}
     
 def _cloak(tt):
     rog.make(tt, CANEQUIP)
@@ -125,14 +133,17 @@ def _cloak(tt):
 STUFF={
 #flag           : name                  type     material, color,  HP,kg,  solid,push?,script,
 #THG.CLOAK
-THG.CHAINGUN    :("chaingun",           T_MGUN, DUST,  'gray', 1, 0.1, False,False,_gunpowder,),
+#THG.GENERATOR
+THG.SAFE        :("safe",               T_BOX,  METL, 'metal', 2000,420,True,False,  _safe,),
+THG.CHAINGUN    :("chaingun",           T_MGUN, METL,  'gray', 80, 55, False,False,_gunpowder,),
 THG.GUNPOWDER   :("gunpowder",          T_DUST, DUST,  'gray', 1, 0.1, False,False,_gunpowder,),
 THG.GORE        :("hunk of flesh",      T_MEAL, FLSH, 'red',  1, 1,   False,False,_food_meal_savory,),
-THG.LOG         :("log",                T_LOG,  WOOD, 'brown',500,20,  False,False,_wood,),
-THG.WOOD        :("wood",               T_WOOD, WOOD, 'brown',100,2,   False,False,_wood,),
-THG.BOX         :("crate",              T_BOX,  WOOD, 'brown',100,10,  True,True,  _boxOfItems1,),
-THG.GRAVE       :("grave",              T_GRAVE,STON,'silver',100,200,True,False, None,),
-THG.POT         :("pot",                T_POT,  METL,'metal',1000,100,True,True, _pot,),
+THG.LOG         :("log",                T_LOG,  WOOD, 'brown',800,100, False,False,_wood,),
+THG.WOOD        :("wood",               T_WOOD, WOOD, 'brown',200,2,   False,False,_wood,),
+THG.BOX         :("crate",              T_BOX,  WOOD, 'brown',200,50,  True,True,  _boxOfItems1,),
+THG.GRAVE       :("grave",              T_GRAVE,STON,'silver',300,300,True,False, None,),
+THG.POT         :("pot",                T_POT,  METL,'metal', 800,100,True,True, _pot,),
+THG.CLAYPOT     :("clay pot",           T_MISC, STON,'scarlet',10,5, False,False, _clayPot,),
 THG.STILL       :("still",              T_STILL,METL,'metal', 20, 100,True,False, _still,),
 THG.TORCH       :("torch",              T_TORCH,WOOD, 'brown',500,1.1, False,False,_torch,),
 THG.DOSIMETER   :("geiger counter",     T_DEVICE,METL,'yellow',1,0.5, False,False,_dosimeter,),

@@ -36,7 +36,7 @@ SPD_PERAGI  =
 class Thing(Observable):
     new_id = -1
     
-    def __init__(self, x=None,y=None,z=0,_type=None,name=None,
+    def __init__(self, x=None,y=None,z=None,_type=None,name=None,
                  color=None,material=None):
         super(Thing,self).__init__()
 
@@ -52,37 +52,40 @@ class Thing(Observable):
         self.color      = color  # drawing color
         self.bgcolor    = COL['black']
         self.flags      = set()
-        self.skills     = {}
-        self.equip      = Equip()
+        self.skills     = {} ###
+        self.equip      = Equip() ###
         self.stats      = Stats(self)
-        self.statMods   = {}    # when equipped by someone else
+        self.statMods   = {} ### # when equipped by someone else
         self.inv        = None  # inventory
         self.isSolid    = False # cannot be moved through if solid
         self.isCreature = False
-        self.x          = x     # position in the game world
-        self.y          = y
-        self.z          = z
         self.type       = _type  # char represents type/species
         self.mask       = _type  # char displayed to screen
         self.mass       = 0         # KG
         self.material   = material  # what's it made of?
         self.deathFunction = None
+
+##        self.position   = None      # position in the game world
         
     #   values for creatures
-        self.ai         = None
-        self.mutations  = None  # number of mutations this obj has undergone
-        self.gender     = None
-        self.job        = None  # what class/profession?
-        self.faction    = None  # for diplomacy
-        self.fov_map    = None  # libtcod fov_map object
-        self.senseEvents= None
-        self.purse      = None  # value of currency held
-        self.satiation  = None  # fullness / hunger tracker
+    #   only need to be set for creatures
+##        self.ai         = None
+##        self.mutations  = None  # number of mutations this obj has undergone
+##        self.gender     = None
+##        self.job        = None  # what class/profession?
+##        self.faction    = None  # for diplomacy
+##        self.fov_map    = None  # libtcod fov_map object
+##        self.senseEvents= None
+##        self.purse      = None  # value of currency held
+##        self.survival   = None  # influences rate of hunger/thirst increase
 
     #   inanimate things
     #   only need to be set under specific thing circumstances
+##        self.fluidContainer= None
 ##        self.ammoType   = None  # which type of ammo does it use?
 ##        self.capacity   = None  # how much can fit? (ammo, energy,...)
+##        self.reloadTime = None  # turns it takes to load (1 ammo for bullets, ...)
+##        self.jamChance  = None  # % chance to jam (guns)
 ##        self.equipType  = None  # which slot can it be equipped in?
 ##        self.nutrition  = None  # amount of hunger recovery
 ##        self.taste      = None  # flag describing flavor when eaten
@@ -105,6 +108,13 @@ class Thing(Observable):
     def get_new_id(cls):
         Thing.new_id +=1
         return Thing.new_id
+
+    @property
+    def x(self): return self.pos.x
+    @property
+    def y(self): return self.pos.y
+    @property
+    def z(self): return self.pos.z
     
     
     #def __repr__(self):         return self.name
@@ -112,8 +122,14 @@ class Thing(Observable):
 
 
 
-
-
+#
+# Position
+#
+class Position:
+    def __init__(self,x,y,z):
+        self.x=x
+        self.y=y
+        self.z=z
 
 
 

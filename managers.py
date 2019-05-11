@@ -430,6 +430,11 @@ class Manager_Status(Manager):
             _id=rog.effect_add( {"resfire" : WET_RESFIRE} )
             #"mass" : WET_EXTRAMASS*obj.mass
             self.statMods[status].update( {obj : _id} )
+            
+##        elif status == TRAUMA:
+##            _id=rog.effect_add( {"resfire" : TRAUMA_} )
+##            #"mass" : WET_EXTRAMASS*obj.mass
+##            self.statMods[status].update( {obj : _id} ) 
 
     #statuses that cause other statuses when they begin
     def _apply_auxEffects(self, obj, status):

@@ -32,6 +32,7 @@ class Data:
         self.extinguish=putsout  #does it put out fires?
 
 #Tile fluid container
+        #***SHOULD THIS BE A THING, OR SHOULD IT BE A CONTAINER OF FLUIDS WHICH ARE THINGS?
 class Fluid(thing.Thing):
 
     def __init__(self, x,y):
@@ -125,7 +126,7 @@ FL_BLOOD    : Data(T_FLUID,"blood",   COL['red'],     1.1,  2,    0.12,False,Tru
 FL_ACID     : Data(T_FLUID,"acid",    COL['green'],   1.21, 0.6,  0.2, False,False,_acid,_quaffAcid,),
 FL_STRONGACID:Data(T_FLUID,"strong acid",COL['bio'],  1.3,  0.9,  0.2, False,False,_strongAcid,_quaffStrongAcid,),
 FL_OIL      : Data(T_FLUID,"oil",  COL['truepurple'], 0.9,  3,    0.3, True,False, _oily, _sick,),
-FL_MOONSHINE: Data(T_FLUID,"moonshine",COL['orange'], 1.2,  0.8,  0.15,True,False, _wet, _drunk,),
+FL_ALCOHOL  : Data(T_FLUID,"moonshine",COL['gold'],   1.2,  0.8,  0.15,True,False, _wet, _drunk,),
 #FL_LAVA
 #FL_HEALING
 #FL_CONFU
@@ -142,7 +143,7 @@ FL_BLOOD    : "bloody",
 FL_ACID     : "acidic",
 FL_STRONGACID: "acidic",
 FL_OIL      : "oily",
-FL_MOONSHINE: "alcoholic",
+FL_ALCOHOL  : "alcoholic",
     }
 
 #create a fluid

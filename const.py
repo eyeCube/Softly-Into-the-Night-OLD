@@ -108,6 +108,7 @@ CANEQUIP    = i; i+=1;  # Can be equipped
 CANUSE      = i; i+=1;  # Can be used
 CANPUSH     = i; i+=1;  # Can be pushed
 CANOPEN     = i; i+=1;  # Can open it like a container (not doors)
+INTERACT    = i; i+=1;  # Can interact with it (like a computer terminal, etc.)
 HOLDSFLUID  = i; i+=1;  # Can contain fluids
 WATERKILLS  = i; i+=1;  # Is killed by water
 REACH       = i; i+=1;  # Has long reach
@@ -149,7 +150,8 @@ PARAL, COUGH, VOMIT, DRUNK, DEAF, INVIS, TRAUMA,
 VOLUME_DEAFEN       = 500
 
 #items
-RATIONFOOD          = 100
+FOOD_RATION         = 3
+FOOD_MORSEL         = 1
 
 SATIETY_PER_RATION  = 100   # how much hunger is healed per ration of food
 WATER_HYDRATION     = 25    # how much hydration is healed per unit of water
@@ -164,6 +166,7 @@ AVG_SPD             = 100
 
 #combat
 COMBATROLL          = 20    # die roll
+ATK_BONUS_DMG_CUTOFF= 10    # affects attack bonus to pierce armor
 
 #action potential cost to perform actions
 NRG_MOVE            = 1     # multiplier 
@@ -182,7 +185,7 @@ NRG_USE             = 100   # generic use function
 NRGSAVED_FASTSHOT   = 50
 
 #fluids
-MAX_FLUID_IN_TILE   = 100
+MAX_FLUID_IN_TILE   = 1000
 
 
 
@@ -225,7 +228,7 @@ HASTE_SPEEDMOD      = 50    # speed bonus when hasty
 SLOW_SPEEDMOD       = -33   # speed penalty while slowed
 
 # temp (fire)
-FIRE_METERLOSS  = 3     #temperature points lost per turn
+FIRE_METERLOSS  = 2     #temperature points lost per turn
 FIRE_METERGAIN  = FIRE_METERLOSS
 FIRE_METERMAX   = 1000  #maximum temperature a thing can reach
 FIRE_MAXTEMP    = 400   #max temperature you can reach from normal means
@@ -304,21 +307,22 @@ SHROOM          =   6       # spade
 
 T_TRAP          = ord('!')
 T_FUNGUS        = ord('\"')
+T_MISC          = ord('\'')
 T_MONEY         = ord('$')
 T_CORPSE        = ord('%')
 T_MEAL          = ord('&')
 T_RATION        = ord(',')
 T_STONE         = ord('.')
-T_BULLET        = ord(':')
+T_BULLET        = ord(':')  # bullet / shell / ball
 T_TORCH         = ord(';')
 T_BOULDER       = ord('0')
 T_DUST          = ord('^')
 T_POLE          = ord('|')
 T_MELEEWEAPON   = ord('/')
-T_THROWWEAPON   = ord('\\')
+T_OFFHANDWEAP   = ord('\\')
 T_HEAVYWEAPON   = ord('=')
 T_MGUN          =   20      # backward |P
-T_BOMB          = ord('*')
+T_EXPLOSIVE     = ord('*')
 T_BOW           = ord(')')
 T_ARROW         = ord('(')
 T_ARMOR         = ord(']')
@@ -470,13 +474,14 @@ AMMO_BULLETS    = i; i+=1;  # bullets for rifles, pistols, etc.
 AMMO_BALLS      = i; i+=1;  # balls for muskets
 AMMO_SHOT       = i; i+=1;  # shotgun shells
 AMMO_ELEC       = i; i+=1;  # electricity
-AMMO_FLUIDS     = i; i+=1;  # any fluids
 AMMO_OIL        = i; i+=1;
 AMMO_HAZMATS    = i; i+=1;
 AMMO_ACID       = i; i+=1;
 AMMO_CHEMS      = i; i+=1;
 AMMO_ROCKETS    = i; i+=1;
 AMMO_GRENADES   = i; i+=1;
+AMMO_FLUIDS     = i; i+=1;  # any fluids
+AMMO_FLAMMABLE  = i; i+=1;  # any flammable fluid
 AMMO_ANYTHING   = i; i+=1;  # literally anything
 
 
@@ -573,17 +578,19 @@ i=0;
 # gear qualities
 #
 i=0;
-QU_CRUDE    =i; i+=1;
-QU_MARKET   =i; i+=1;
-QU_POLICE   =i; i+=1;
-QU_MILITARY =i; i+=1;
+QU_CRUDE        =i; i+=1;
+QU_COUNTERFEIT  =i; i+=1;
+QU_MARKET       =i; i+=1;
+QU_POLICE       =i; i+=1;
+QU_MILITARY     =i; i+=1;
 
 QUALITIES={
-# ID        :   name        Color,      %Acc,Atk,Dmg,Dur,$$$,KG,
-QU_CRUDE    : ("crude",     "accent",   (-50,-25,-25,-50,-50,33,),),
-QU_MARKET   : ("market",    "green",    (-25,0,  0,  -25,-25,10,),),
-QU_POLICE   : ("police",    "blue",     (0,  25, 0,  0,  0,  0,),),
-QU_MILITARY : ("military", "truepurple",(25, 50, 25, 25, 50, -5,),),
+# ID            :   name        Color,      %Acc,Atk,Dmg,Dur,$$$,KG%,
+QU_CRUDE        : ("crude",     "gray",     (-50,-50,-50,-50,-66,22,),),
+QU_COUNTERFEIT  : ("counterfeit","white",   (-25,-25,-25,-25,-33,-10,),),
+QU_MARKET       : ("market",    "green",    (0,  0,  0,  0,  0,  0,),),
+QU_POLICE       : ("police",    "blue",     (25, 25, 25, 25, 50, -10,),),
+QU_MILITARY     : ("military", "truepurple",(50, 50, 50, 50, 150,50,),),
     }
 
 
@@ -598,7 +605,10 @@ FL_BLOOD        =i; i+=1;
 FL_ACID         =i; i+=1;
 FL_STRONGACID   =i; i+=1;
 FL_SMOKE        =i; i+=1;
-FL_MOONSHINE    =i; i+=1;
+FL_ALCOHOL      =i; i+=1;
+FL_NAPALM       =i; i+=1;
+FL_GASOLINE     =i; i+=1;
+FL_HAZMATS      =i; i+=1;
 
 
 
@@ -609,9 +619,10 @@ FL_MOONSHINE    =i; i+=1;
 NOISE_SOME      = "something"
 NOISE_WHISPER   = "a whisper"
 NOISE_SQUEAK    = "a squeak"
-NOISE_LOUD      = "loud noises"
-NOISE_BANG      = "loud banging noises"
+NOISE_LOUD      = "a racket"
 NOISE_POP       = "popping noises"
+NOISE_BANG      = "banging noises"
+NOISE_DING      = "a high-pitched ring"
 NOISE_SCREECH   = "someone screeching"
 NOISE_WATERFALL = "water falling"
 
@@ -650,6 +661,7 @@ class THG:#(Flag)
     SAWDUST             = i; i+=1;
     DUST                = i; i+=1;
     GRAVE               = i; i+=1;
+    SAFE                = i; i+=1;
     BOX                 = i; i+=1;
     POT                 = i; i+=1;
     CASTIRONPAN         = i; i+=1;

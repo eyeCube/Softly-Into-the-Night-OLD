@@ -404,6 +404,7 @@ def singe(x,y): #burn tile
 # Thing functions
 def is_creature(obj):   return obj.isCreature
 def is_solid(obj):      return obj.isSolid
+def on  (obj,flag):     return (flag in obj.flags)
 def make(obj,flag):     obj.flags.add(flag)
 def makenot(obj,flag):  obj.flags.remove(flag)
 def copyflags(toObj,fromObj,copyStatusFlags=True): #use this to set an object's flags to that of another object.
@@ -411,7 +412,6 @@ def copyflags(toObj,fromObj,copyStatusFlags=True): #use this to set an object's 
         if (copyStatusFlags or not flag in STATUSFLAGS):
             make(toObj, flag)
 def has_equip(obj,item):return item in obj.equip
-def on  (obj,flag):     return (flag in obj.flags)
 def give(obj,item):
     if on(item,FIRE):
         burn(obj, FIRE_BURN)
@@ -754,8 +754,8 @@ def init_inventory(obj, capacity):
 #   Fluids   #
 #------------#
 
-def create_fluid(x,y,name):
-    fluid = fluids.create_fluid(x,y,name)
+def create_fluid(name, x,y, volume):
+    fluid = fluids.create_fluid(x,y,name,volume)
     register_fluid(fluid)
 '''def port_fluid(fluid, xto, yto):
     grid_fluids_remove(fluid)
