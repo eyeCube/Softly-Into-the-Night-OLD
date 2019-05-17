@@ -47,6 +47,9 @@ class Thing(Observable):
         self.id=Thing.get_new_id()
         
         self.name           = name  # unique or generic
+        self.x          =x
+        self.y          =y
+        self.z          =z
         self.title          = "the "
         self.pronouns   = ("it","it","its",)
         self.color      = color  # drawing color
@@ -69,15 +72,15 @@ class Thing(Observable):
         
     #   values for creatures
     #   only need to be set for creatures
-##        self.ai         = None
-##        self.mutations  = None  # number of mutations this obj has undergone
-##        self.gender     = None
-##        self.job        = None  # what class/profession?
-##        self.faction    = None  # for diplomacy
-##        self.fov_map    = None  # libtcod fov_map object
-##        self.senseEvents= None
-##        self.purse      = None  # value of currency held
-##        self.survival   = None  # influences rate of hunger/thirst increase
+        self.ai         = None
+        self.mutations  = None  # number of mutations this obj has undergone
+        self.gender     = None
+        self.job        = None  # what class/profession?
+        self.faction    = None  # for diplomacy
+        self.fov_map    = None  # libtcod fov_map object
+        self.senseEvents= None
+        self.purse      = None  # value of currency held
+        self.survival   = None  # influences rate of hunger/thirst increase
 
     #   inanimate things
     #   only need to be set under specific thing circumstances
@@ -108,13 +111,6 @@ class Thing(Observable):
     def get_new_id(cls):
         Thing.new_id +=1
         return Thing.new_id
-
-    @property
-    def x(self): return self.pos.x
-    @property
-    def y(self): return self.pos.y
-    @property
-    def z(self): return self.pos.z
     
     
     #def __repr__(self):         return self.name

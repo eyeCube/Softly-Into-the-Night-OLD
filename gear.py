@@ -206,7 +206,7 @@ WEAPONS = {
 "staff"             :(MEL, 15,   1.2, 400, 0,  0,  0,  WOOD,(4, 9, 4, 0,  1,  0,  33,-15,PH,),None,(REACH,),),
 "axe"               :(MEL, 20,   1.25,650, 0,  0,  0,  WOOD,(4, 5, 12,0,  -2, 0, -25,-12,PH,),None,(),), #CUTS, CHOPS #(CHOPS TREES)
 "baton"             :(MEL, 35,   0.75,500, 0,  0,  0,  PLAS,(3, 5, 2, 0,  0,  0,  10,-3, PH,),None,(),),
-"spear"             :(MEL, 35,   1.5, 325, 0,  0,  0,  WOOD,(10,16,8, 0,  -1, 0,  33,-18,PH,),None,(REACH,), #CUTS),
+"spear"             :(MEL, 35,   1.5, 325, 0,  0,  0,  WOOD,(10,16,8, 0,  -1, 0,  33,-18,PH,),None,(REACH,),), #CUTS),
 "pocket knife"      :(MEL, 95,   0.2, 120, 0,  0,  0,  METL,(5, 8, 3, 0,  2,  0,  50, 0, PH,),None,(),), #CUTS
 "bayonet"           :(MEL, 150,  0.3, 200, 0,  0,  0,  METL,(5, 9, 4, 0,  2,  0,  40, 0, PH,),None,(),), #CUTS
 "dagger"            :(MEL, 275,  0.4, 240, 0,  0,  0,  METL,(6, 12,5, 0,  3,  0,  40, 0, PH,),None,(),), #CUTS
@@ -255,13 +255,13 @@ WEAPONS = {
 #"grenade launcher"  :(HEVY,45910,8.2, 200, 1,  3,  0,  METL,(12,5, 0, 4,  -15,0, -33,-30,PH,),A_GREN,(),),
 }
 #add extra weapons (variations)
-BAYONETS=("musket","rifle","shotgun","'03 Springfield",)
-for wpn in BAYONETS:
-##    _stats = WEAPONS[wpn]
-##    bayonetDmg = 4
-##    _stats.update( {set_weapon_dmg() : get_weapon_dmg(WEAPONS[wpn]) + bayonetDmg} )
-    WEAPONS.update( {"{} with bayonet".format(wpn) : _stats} ))
-
+##BAYONETS=("musket","rifle","shotgun","'03 Springfield",)
+##for wpn in BAYONETS:
+####    _stats = WEAPONS[wpn]
+####    bayonetDmg = 4
+####    _stats.update( {set_weapon_dmg() : get_weapon_dmg(WEAPONS[wpn]) + bayonetDmg} )
+##    WEAPONS.update( {"{} with bayonet".format(wpn) : _stats} ))
+##
 
 AMMUNITION={
 # Attributes:
@@ -270,17 +270,17 @@ AMMUNITION={
 #   n           number shots
 #   Acc, Atk, Dmg, Asp      Range, Attack, Damage, Attack Speed
 # name                  : type,  $$$, KG, n, (Acc,Atk,Dmg,Asp,),script
-"metal ball"            :(A_BALL,5,  0.1, 1, (0,  0,  4,  0,), None,)
-"shotgun shell"         :(A_SHOT,5,  0.1, 5, (-4, -4, 2,  0,), None,)
-"shotgun slug"          :(A_SHOT,6,  0.1, 1, (0,  0,  10, -10,), None,)
-"small cartridge"       :(A_BULL,4,  0.02,1, (0,  2,  2,  0,), None,)
-"magnum cartridge"      :(A_BULL,25, 0.04,1, (-2, -2, 8,  -33,), None,)
-"large cartridge"       :(A_BULL,12, 0.06,1, (2,  6,  6,  -15,), None,)
-"incendiary cartridge"  :(A_BULL,45, 0.1, 1, (-2, 12, 12, -33,), _incendiary)
+"metal ball"            :(A_BALL,5,  0.1, 1, (0,  0,  4,  0,), None,),
+"shotgun shell"         :(A_SHOT,5,  0.1, 5, (-4, -4, 2,  0,), None,),
+"shotgun slug"          :(A_SHOT,6,  0.1, 1, (0,  0,  10, -10,), None,),
+"small cartridge"       :(A_BULL,4,  0.02,1, (0,  2,  2,  0,), None,),
+"magnum cartridge"      :(A_BULL,25, 0.04,1, (-2, -2, 8,  -33,), None,),
+"large cartridge"       :(A_BULL,12, 0.06,1, (2,  6,  6,  -15,), None,),
+"incendiary cartridge"  :(A_BULL,45, 0.1, 1, (-2, 12, 12, -33,), _incendiary),
     }
 
 
-
+'''
 #non-weapon gear
 #pass in the name of a gear item
 #   quality = 0 to 1. Determines starting condition of the item
@@ -368,7 +368,7 @@ def create_weapon(name, x,y):
     return weap
 #
 
-
+'''
 
 
 

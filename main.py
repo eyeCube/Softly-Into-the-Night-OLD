@@ -80,8 +80,8 @@ def main():
     rog.givemp(pc)
         #EQUIP
     #print(pc.stats.get('atk'))
-    item=gear.create_weapon("sword",pc.x,pc.y)
-    rog.equip(pc, item, EQ_MAINHAND)
+    #item=gear.create_weapon("sword",pc.x,pc.y)
+    #rog.equip(pc, item, EQ_MAINHAND)
     #print(pc.stats.get('atk'))
     #rog.deequip(pc,EQ_MAINHAND)
     #print(pc.stats.get('atk'))

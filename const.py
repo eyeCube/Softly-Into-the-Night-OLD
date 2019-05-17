@@ -471,6 +471,7 @@ MAT_WATER       = i; i+=1;
 #
 i=0;
 AMMO_BULLETS    = i; i+=1;  # bullets for rifles, pistols, etc.
+AMMO_ARROWS     = i; i+=1;  # bullets for rifles, pistols, etc.
 AMMO_BALLS      = i; i+=1;  # balls for muskets
 AMMO_SHOT       = i; i+=1;  # shotgun shells
 AMMO_ELEC       = i; i+=1;  # electricity
@@ -688,6 +689,8 @@ class THG:#(Flag)
     SCRAPELECTRONICS    = i; i+=1;
     SPRING              = i; i+=1;
     CHAINGUN            = i; i+=1;
+    CLAYPOT             = i; i+=1;
+    EXTINGUISHER        = i; i+=1;
 
 
 
